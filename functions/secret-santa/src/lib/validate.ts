@@ -37,8 +37,10 @@ export function parseBudget(value: unknown): string {
 export function parseEventDate(value: unknown): string {
   const date = cleanLine(value)
   if (date === '') return ''
+  const parsed = new Date(`${date}T00:00:00Z`)
+  // Datas impossíveis como 2026-13-01 viram Invalid Date; 2026-02-30 "rola" para março e não bate.
   const isReal =
-    /^\d{4}-\d{2}-\d{2}$/.test(date) && new Date(`${date}T00:00:00Z`).toISOString().slice(0, 10) === date
+    /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date
   if (!isReal) {
     throw new SantaError('INVALID_INPUT', 'Informe a data no formato AAAA-MM-DD, por exemplo 2026-12-24.')
   }
