@@ -78,17 +78,17 @@ function onNext() {
 
       <div v-if="step === 1" class="space-y-2">
         <Label for="group-name">Nome do grupo</Label>
-        <Input id="group-name" v-model="name" maxlength="80" autocomplete="off" placeholder="Família Silva" />
+        <Input class="h-11" id="group-name" v-model="name" maxlength="80" autocomplete="off" placeholder="Família Silva" />
       </div>
 
       <div v-else-if="step === 2" class="space-y-4">
         <div class="space-y-2">
           <Label for="budget">Valor sugerido</Label>
-          <Input id="budget" v-model="budget" maxlength="40" placeholder="R$ 50" />
+          <Input class="h-11" id="budget" v-model="budget" maxlength="40" placeholder="R$ 50" />
         </div>
         <div class="space-y-2">
           <Label for="event-date">Data da troca</Label>
-          <Input id="event-date" v-model="eventDate" type="date" />
+          <Input class="h-11" id="event-date" v-model="eventDate" type="date" />
         </div>
       </div>
 
@@ -100,11 +100,11 @@ function onNext() {
         <template v-if="participates">
           <div class="space-y-2">
             <Label for="my-name">Seu nome</Label>
-            <Input id="my-name" v-model="myName" maxlength="60" autocomplete="off" />
+            <Input class="h-11" id="my-name" v-model="myName" maxlength="60" autocomplete="off" />
           </div>
           <div class="space-y-2">
             <Label for="my-pin">PIN (4 a 6 números)</Label>
-            <Input id="my-pin" v-model="myPin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" />
+            <Input class="h-11" id="my-pin" v-model="myPin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" />
             <p class="text-sm text-muted-foreground">Você usa o PIN para ver quem tirou. Anote, não dá para recuperar.</p>
           </div>
           <div class="space-y-2">
@@ -120,11 +120,11 @@ function onNext() {
       <p v-if="error" class="text-sm text-destructive" role="alert">{{ error }}</p>
 
       <div class="flex items-center gap-3">
-        <Button v-if="step > 1" type="button" variant="ghost" size="lg" @click="step -= 1">
+        <Button class="h-11" v-if="step > 1" type="button" variant="ghost" size="lg" @click="step -= 1">
           <ArrowLeft class="size-4" aria-hidden="true" />
           Voltar
         </Button>
-        <Button type="submit" size="lg" class="flex-1" :disabled="!canContinue || loading">
+        <Button type="submit" size="lg" class="flex-1 h-11" :disabled="!canContinue || loading">
           {{ step < 3 ? 'Continuar' : loading ? 'Criando...' : 'Criar grupo' }}
         </Button>
       </div>

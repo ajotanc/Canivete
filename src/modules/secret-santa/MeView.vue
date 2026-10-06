@@ -68,7 +68,7 @@ async function onSave() {
     <div v-else-if="state === 'error'" class="space-y-4 py-12">
       <h1 class="font-display text-3xl leading-tight">Não foi possível abrir seu painel</h1>
       <p class="text-muted-foreground">{{ errorMessage }}</p>
-      <Button size="lg" @click="$router.go(0)">Tentar de novo</Button>
+      <Button class="h-11" size="lg" @click="$router.go(0)">Tentar de novo</Button>
     </div>
 
     <template v-else-if="result">
@@ -79,11 +79,11 @@ async function onSave() {
         </header>
         <GiftTag :name="result.receiver.name" :revealed="revealed" />
         <div class="flex justify-center">
-          <Button v-if="!revealed" size="lg" @click="reveal">
+          <Button class="h-11" v-if="!revealed" size="lg" @click="reveal">
             <Eye class="size-4" aria-hidden="true" />
             Revelar
           </Button>
-          <Button v-else size="lg" variant="outline" @click="hide">
+          <Button class="h-11" v-else size="lg" variant="outline" @click="hide">
             <EyeOff class="size-4" aria-hidden="true" />
             Esconder
           </Button>
@@ -104,9 +104,9 @@ async function onSave() {
         <form class="space-y-3" @submit.prevent="onSave">
           <Label for="my-wishlist">O que você gostaria de ganhar</Label>
           <Textarea id="my-wishlist" v-model="wishlist" maxlength="500" rows="4" />
-          <Button type="submit" size="lg" class="w-full" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar lista' }}</Button>
+          <Button type="submit" size="lg" class="w-full h-11" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar lista' }}</Button>
         </form>
-        <Button as-child variant="ghost"><RouterLink :to="invitePath(groupId)">Voltar ao grupo</RouterLink></Button>
+        <Button class="h-11" as-child variant="ghost"><RouterLink :to="invitePath(groupId)">Voltar ao grupo</RouterLink></Button>
       </template>
     </template>
   </section>

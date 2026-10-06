@@ -77,13 +77,13 @@ async function onSubmit() {
     <div v-else-if="state === 'not-found'" class="space-y-4 py-12">
       <h1 class="font-display text-3xl leading-tight">Grupo não encontrado</h1>
       <p class="text-muted-foreground">Confira se o link do convite está completo.</p>
-      <Button as-child size="lg"><RouterLink to="/secret-santa">Criar um grupo</RouterLink></Button>
+      <Button class="h-11" as-child size="lg"><RouterLink to="/secret-santa">Criar um grupo</RouterLink></Button>
     </div>
 
     <div v-else-if="state === 'error'" class="space-y-4 py-12">
       <h1 class="font-display text-3xl leading-tight">Não foi possível abrir o grupo</h1>
       <p class="text-muted-foreground">{{ errorMessage }}</p>
-      <Button size="lg" @click="$router.go(0)">Tentar de novo</Button>
+      <Button class="h-11" size="lg" @click="$router.go(0)">Tentar de novo</Button>
     </div>
 
     <template v-else-if="group">
@@ -100,18 +100,18 @@ async function onSubmit() {
       </header>
 
       <div v-if="group.status === 'open'" class="flex gap-2" role="tablist">
-        <Button :variant="mode === 'join' ? 'default' : 'outline'" role="tab" :aria-selected="mode === 'join'" @click="mode = 'join'">Entrar no grupo</Button>
-        <Button :variant="mode === 'return' ? 'default' : 'outline'" role="tab" :aria-selected="mode === 'return'" @click="mode = 'return'">Já entrei</Button>
+        <Button class="h-11" :variant="mode === 'join' ? 'default' : 'outline'" role="tab" :aria-selected="mode === 'join'" @click="mode = 'join'">Entrar no grupo</Button>
+        <Button class="h-11" :variant="mode === 'return' ? 'default' : 'outline'" role="tab" :aria-selected="mode === 'return'" @click="mode = 'return'">Já entrei</Button>
       </div>
 
       <form class="space-y-4" @submit.prevent="onSubmit">
         <div class="space-y-2">
           <Label for="name">Seu nome</Label>
-          <Input id="name" v-model="name" maxlength="60" autocomplete="off" />
+          <Input class="h-11" id="name" v-model="name" maxlength="60" autocomplete="off" />
         </div>
         <div class="space-y-2">
           <Label for="pin">{{ mode === 'join' ? 'Crie um PIN (4 a 6 números)' : 'Seu PIN' }}</Label>
-          <Input id="pin" v-model="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" />
+          <Input class="h-11" id="pin" v-model="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" />
           <p v-if="mode === 'join'" class="text-sm text-muted-foreground">Você vai usar o PIN para ver quem tirou. Anote, não dá para recuperar.</p>
         </div>
         <div v-if="mode === 'join'" class="space-y-2">
@@ -119,7 +119,7 @@ async function onSubmit() {
           <Textarea id="wishlist" v-model="wishlist" maxlength="500" rows="3" />
         </div>
         <p v-if="formError" class="text-sm text-destructive" role="alert">{{ formError }}</p>
-        <Button type="submit" size="lg" class="w-full" :disabled="submitting || !name.trim() || !/^\d{4,6}$/.test(pin)">
+        <Button type="submit" size="lg" class="w-full h-11" :disabled="submitting || !name.trim() || !/^\d{4,6}$/.test(pin)">
           {{ submitting ? 'Aguarde...' : mode === 'join' ? 'Entrar no grupo' : 'Ver meu painel' }}
         </Button>
       </form>

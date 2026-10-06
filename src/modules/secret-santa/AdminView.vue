@@ -118,18 +118,18 @@ async function onDraw() {
       <p class="text-muted-foreground">
         Abra o link de administração que apareceu quando você criou o grupo. Sem ele, não dá para sortear nem remover pessoas.
       </p>
-      <Button as-child size="lg"><RouterLink :to="`/secret-santa/g/${groupId}`">Ir para o convite</RouterLink></Button>
+      <Button class="h-11" as-child size="lg"><RouterLink :to="`/secret-santa/g/${groupId}`">Ir para o convite</RouterLink></Button>
     </div>
 
     <div v-else-if="state === 'not-found'" class="space-y-4 py-12">
       <h1 class="font-display text-3xl leading-tight">Grupo não encontrado</h1>
-      <Button as-child size="lg"><RouterLink to="/secret-santa">Criar um grupo</RouterLink></Button>
+      <Button class="h-11" as-child size="lg"><RouterLink to="/secret-santa">Criar um grupo</RouterLink></Button>
     </div>
 
     <div v-else-if="state === 'error'" class="space-y-4 py-12">
       <h1 class="font-display text-3xl leading-tight">Não foi possível abrir o painel</h1>
       <p class="text-muted-foreground">{{ errorMessage }}</p>
-      <Button size="lg" @click="refresh">Tentar de novo</Button>
+      <Button class="h-11" size="lg" @click="refresh">Tentar de novo</Button>
     </div>
 
     <template v-else>
@@ -144,12 +144,12 @@ async function onDraw() {
       <div class="space-y-3">
         <h2 class="font-display text-xl">Convite</h2>
         <div class="flex gap-2">
-          <Input :model-value="invite" readonly aria-label="Link do convite" />
-          <Button variant="secondary" size="icon" aria-label="Copiar convite" @click="copy(invite, 'Convite')">
+          <Input class="h-11" :model-value="invite" readonly aria-label="Link do convite" />
+          <Button class="size-11" variant="secondary" size="icon" aria-label="Copiar convite" @click="copy(invite, 'Convite')">
             <Copy class="size-4" aria-hidden="true" />
           </Button>
         </div>
-        <Button as-child variant="outline" size="lg" class="w-full">
+        <Button as-child variant="outline" size="lg" class="w-full h-11">
           <a :href="whatsappUrl(groupName, invite)" target="_blank" rel="noopener noreferrer">
             <MessageCircle class="size-4" aria-hidden="true" />
             Enviar pelo WhatsApp
@@ -160,7 +160,7 @@ async function onDraw() {
       <div class="space-y-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
         <p class="flex items-center gap-2 font-semibold"><TriangleAlert class="size-4" aria-hidden="true" />Guarde o link de administração</p>
         <p class="text-sm text-muted-foreground">É o único jeito de voltar a este painel em outro aparelho. Não envie para o grupo.</p>
-        <Button variant="outline" size="sm" @click="copy(adminLink, 'Link de administração')">
+        <Button class="h-11" variant="outline" size="sm" @click="copy(adminLink, 'Link de administração')">
           <Copy class="size-4" aria-hidden="true" />
           Copiar link de administração
         </Button>
@@ -172,7 +172,7 @@ async function onDraw() {
         <ul v-else class="divide-y rounded-lg bg-card">
           <li v-for="person in participants" :key="person.name" class="flex items-center justify-between gap-2 px-4 py-3">
             <span>{{ person.name }}<span v-if="person.isOrganizer" class="ml-2 text-sm text-muted-foreground">(você)</span></span>
-            <Button
+            <Button class="size-11"
               v-if="status === 'open'"
               variant="ghost"
               size="icon"
@@ -183,11 +183,11 @@ async function onDraw() {
             </Button>
           </li>
         </ul>
-        <Button variant="ghost" size="sm" @click="refresh">Atualizar lista</Button>
+        <Button class="h-11" variant="ghost" size="sm" @click="refresh">Atualizar lista</Button>
       </div>
 
       <div v-if="status === 'open'" class="space-y-2">
-        <Button size="lg" class="w-full" :disabled="!canDraw" @click="confirmOpen = true">
+        <Button size="lg" class="w-full h-11" :disabled="!canDraw" @click="confirmOpen = true">
           <Dices class="size-4" aria-hidden="true" />
           Sortear
         </Button>
@@ -203,8 +203,8 @@ async function onDraw() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" @click="confirmOpen = false">Cancelar</Button>
-            <Button :disabled="drawing" @click="onDraw">{{ drawing ? 'Sorteando...' : 'Sortear' }}</Button>
+            <Button class="h-11" variant="outline" @click="confirmOpen = false">Cancelar</Button>
+            <Button class="h-11" :disabled="drawing" @click="onDraw">{{ drawing ? 'Sorteando...' : 'Sortear' }}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
