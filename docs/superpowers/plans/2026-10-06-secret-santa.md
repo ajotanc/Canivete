@@ -14,6 +14,7 @@
 
 - Identificadores (arquivos, funções, variáveis, tipos, rotas, chaves) em **inglês**; textos de interface, mensagens de erro, comentários e JSDoc em **português (pt-BR)**.
 - Estilo 100% **Tailwind v4**; `style` inline só para valores dinâmicos; sem `<style>` em componentes. Componentes shadcn-vue em `src/components/ui/`; ícones só de `@lucide/vue`, sem emoji.
+- **Toda manipulação, comparação e formatação de data usa `dayjs`** (pedido da usuária em 2026-10-06), no front-end e na Function: nada de `new Date(...)` cru nem `toLocaleDateString`. Isso inclui `parseEventDate` (validação estrita AAAA-MM-DD com `customParseFormat`), o bloqueio de 15 minutos, a normalização do datetime do Appwrite (`+00:00` para ISO com `Z`) e a formatação em pt-BR. O código de data já escrito (`parseEventDate` na Task 1 e, no sorteador, `share.ts`, `useRaffle.ts`, `DrawHistory.vue`, `SharedResultView.vue`) migra para `dayjs` na retomada.
 - Vue com `<script setup lang="ts">`. Um módulo nunca importa de outro módulo (`secret-santa` não importa de `raffle`); `functions/` nunca importa de `src/` e vice-versa.
 - **Todos os testes ficam em `tests/`**, espelhando a estrutura (`tests/functions/secret-santa/...`, `tests/modules/secret-santa/...`), com imports por `@/` (front) ou caminho relativo `../../../functions/secret-santa/src/...` (Function).
 - Limites: grupo com até 100 participantes; nome do grupo 80 caracteres; valor sugerido 40; nome de pessoa 60; desejos 500; PIN com 4 a 6 dígitos (apenas números); sorteio exige 3 ou mais participantes.
