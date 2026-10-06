@@ -11,6 +11,8 @@ export interface ToolManifest {
   description: string
   /** Ícone de @lucide/vue exibido no card. */
   icon: Component
+  /** Cor de destaque do card na home; `secondary` (coral) é para módulos festivos. Padrão: `primary`. */
+  accent?: 'primary' | 'secondary'
   /** Categoria usada no filtro da home. */
   category: string
   /** True se o módulo depende do Appwrite. */

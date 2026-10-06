@@ -16,9 +16,9 @@ const visibleTools = computed(() => filterTools(tools, query.value, category.val
 
 <template>
   <section class="space-y-6">
-    <div class="space-y-2">
-      <h1 class="text-3xl font-bold tracking-tight">Ferramentas</h1>
-      <p class="text-muted-foreground">Escolha uma ferramenta para começar.</p>
+    <div class="space-y-2 pt-2">
+      <h1 class="font-display text-4xl leading-tight sm:text-5xl">Ferramentas</h1>
+      <p class="max-w-prose text-lg text-muted-foreground">Escolha uma ferramenta para começar.</p>
     </div>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -48,11 +48,24 @@ const visibleTools = computed(() => filterTools(tools, query.value, category.val
     </p>
 
     <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      <RouterLink v-for="tool in visibleTools" :key="tool.id" :to="`/${tool.id}`">
-        <Card class="h-full transition hover:border-primary hover:shadow-md">
+      <RouterLink
+        v-for="tool in visibleTools"
+        :key="tool.id"
+        :to="`/${tool.id}`"
+        class="group rounded-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        <Card
+          class="h-full transition-all group-hover:-translate-y-0.5 group-hover:shadow-md motion-reduce:transition-none motion-reduce:group-hover:translate-y-0"
+          :class="tool.accent === 'secondary' ? 'group-hover:border-secondary' : 'group-hover:border-primary'"
+        >
           <CardHeader>
-            <component :is="tool.icon" class="mb-2 size-8 text-primary" />
-            <CardTitle>{{ tool.title }}</CardTitle>
+            <span
+              class="mb-3 flex size-12 items-center justify-center rounded-xl"
+              :class="tool.accent === 'secondary' ? 'bg-secondary text-secondary-foreground' : 'bg-primary text-primary-foreground'"
+            >
+              <component :is="tool.icon" class="size-6" aria-hidden="true" />
+            </span>
+            <CardTitle class="font-display text-xl">{{ tool.title }}</CardTitle>
             <CardDescription>{{ tool.description }}</CardDescription>
           </CardHeader>
         </Card>

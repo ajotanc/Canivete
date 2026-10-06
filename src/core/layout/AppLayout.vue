@@ -9,10 +9,12 @@ const { isDark, toggle } = useTheme()
 
 <template>
   <div class="flex min-h-screen flex-col bg-background text-foreground">
-    <header class="border-b">
+    <header class="sticky top-0 z-10 border-b bg-background/85 backdrop-blur">
       <div class="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-        <RouterLink to="/" class="flex items-center gap-2 text-lg font-semibold">
-          <Wrench class="size-5" />
+        <RouterLink to="/" class="flex items-center gap-2.5 font-display text-xl">
+          <span class="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Wrench class="size-4" aria-hidden="true" />
+          </span>
           Canivete
         </RouterLink>
         <Button variant="ghost" size="icon" :aria-label="isDark ? 'Usar tema claro' : 'Usar tema escuro'" @click="toggle">
