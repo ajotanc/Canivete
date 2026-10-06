@@ -97,6 +97,6 @@ describe('draw', () => {
     db.failUpdateParticipantAfter(1)
     await errorCode(handleAction(db, { action: 'draw', groupId, adminToken }))
     const result = await handleAction(db, { action: 'reveal', groupId, name: 'A', pin: '1000' })
-    expect(result).toEqual({ status: 'open', wishlist: '' })
+    expect(result).toEqual({ status: 'open', wishlist: [] })
   })
 })

@@ -5,13 +5,20 @@ import { hashPin, verifyPin } from './lib/pin.js'
 import type { RandomInt } from './lib/random.js'
 import { generateToken, hashToken, tokenMatches } from './lib/tokens.js'
 import {
+  MAX_ANSWER,
   MAX_PARTICIPANTS,
+  MAX_POST,
+  MAX_QUESTION,
+  MAX_QUESTIONS_PER_PERSON,
+  MAX_SLUG,
   parseBudget,
   parseEventDate,
   parseGroupId,
   parseGroupName,
+  parseMessage,
   parsePersonName,
   parsePin,
+  parseSlug,
   parseWishlist,
   toNameKey,
 } from './lib/validate.js'
@@ -23,6 +30,8 @@ export const LOCK_MINUTES = 15
 export interface HandlerDeps {
   now?: () => Date
   randomInt?: RandomInt
+  /** Id do usuário da sessão do Appwrite que fez a chamada (cabeçalho x-appwrite-user-id). */
+  userId?: string | null
 }
 
 type Input = Record<string, unknown>
@@ -34,38 +43,56 @@ export async function handleAction(db: SantaDb, body: unknown, deps: HandlerDeps
 
   switch (input.action) {
     case 'createGroup':
-      return createGroup(db, input)
+      return createGroup(db, input, deps)
     case 'getGroup':
       return getGroup(db, input)
     case 'addParticipant':
-      return addParticipant(db, input)
+      return addParticipant(db, input, deps)
     case 'setupPin':
       return setupPin(db, input)
     case 'listParticipants':
-      return listParticipants(db, input)
+      return listParticipants(db, input, deps)
     case 'removeParticipant':
-      return removeParticipant(db, input)
+      return removeParticipant(db, input, deps)
     case 'resetPin':
-      return resetPin(db, input)
+      return resetPin(db, input, deps)
     case 'updateWishlist':
       return updateWishlist(db, input, now)
     case 'reveal':
       return reveal(db, input, now)
     case 'draw':
       return draw(db, input, deps)
+    case 'listMyGroups':
+      return listMyGroups(db, deps)
+    case 'setSlug':
+      return setSlug(db, input, deps)
+    case 'askQuestion':
+      return askQuestion(db, input, now)
+    case 'listQuestions':
+      return listQuestions(db, input, now)
+    case 'answerQuestion':
+      return answerQuestion(db, input, now)
+    case 'postMessage':
+      return postMessage(db, input, now)
+    case 'listPosts':
+      return listPosts(db, input, now)
     default:
       throw new SantaError('INVALID_INPUT', 'Ação desconhecida.')
   }
 }
 
+/** Aceita o id do grupo ou o endereço amigável (slug). */
 async function requireGroup(db: SantaDb, rawId: unknown): Promise<GroupRow> {
-  const group = await db.getGroup(parseGroupId(rawId))
+  const id = parseGroupId(rawId)
+  const group = (await db.getGroupBySlug(id)) ?? (await db.getGroup(id))
   if (!group) throw new SantaError('GROUP_NOT_FOUND', 'Grupo não encontrado.')
   return group
 }
 
-function requireOrganizer(group: GroupRow, token: unknown): void {
-  if (!tokenMatches(token, group.organizerTokenHash)) {
+/** O organizador entra com o token de administração ou, se a sessão for a do dono, sem ele. */
+function requireOrganizer(group: GroupRow, token: unknown, deps: HandlerDeps = {}): void {
+  const isOwner = Boolean(deps.userId) && group.ownerId === deps.userId
+  if (!isOwner && !tokenMatches(token, group.organizerTokenHash)) {
     throw new SantaError('FORBIDDEN', 'Você não tem permissão para fazer isso neste grupo.')
   }
 }
@@ -76,7 +103,7 @@ function requireOpen(group: GroupRow): void {
   }
 }
 
-async function createGroup(db: SantaDb, input: Input) {
+async function createGroup(db: SantaDb, input: Input, deps: HandlerDeps) {
   const name = parseGroupName(input.name)
   const budget = parseBudget(input.budget)
   const eventDate = parseEventDate(input.eventDate)
@@ -98,6 +125,8 @@ async function createGroup(db: SantaDb, input: Input) {
     eventDate,
     organizerTokenHash: hashToken(adminToken),
     status: 'open',
+    ownerId: deps.userId || null,
+    slug: null,
   })
 
   if (organizerData) {
@@ -121,6 +150,8 @@ async function getGroup(db: SantaDb, input: Input) {
   const group = await requireGroup(db, input.groupId)
   const participants = await db.listParticipants(group.id)
   return {
+    id: group.id,
+    slug: group.slug,
     name: group.name,
     budget: group.budget,
     eventDate: group.eventDate,
@@ -132,9 +163,9 @@ async function getGroup(db: SantaDb, input: Input) {
 }
 
 /** O organizador cadastra uma pessoa pelo nome; ela cria o PIN no primeiro acesso. */
-async function addParticipant(db: SantaDb, input: Input) {
+async function addParticipant(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
-  requireOrganizer(group, input.adminToken)
+  requireOrganizer(group, input.adminToken, deps)
   requireOpen(group)
 
   const name = parsePersonName(input.name)
@@ -152,7 +183,7 @@ async function addParticipant(db: SantaDb, input: Input) {
     groupId: group.id,
     name,
     nameKey,
-    wishlist: '',
+    wishlist: null,
     pinHash: null,
     failedAttempts: 0,
     lockedUntil: null,
@@ -187,7 +218,7 @@ async function setupPin(db: SantaDb, input: Input) {
     pinHash,
     failedAttempts: 0,
     lockedUntil: null,
-    ...(group.status === 'open' && wishlist !== '' ? { wishlist } : {}),
+    ...(group.status === 'open' && wishlist !== null ? { wishlist } : {}),
   })
 
   // Duas pessoas criando o PIN do mesmo nome ao mesmo tempo: só quem gravou por último fica.
@@ -201,9 +232,9 @@ async function setupPin(db: SantaDb, input: Input) {
   return {}
 }
 
-async function listParticipants(db: SantaDb, input: Input) {
+async function listParticipants(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
-  requireOrganizer(group, input.adminToken)
+  requireOrganizer(group, input.adminToken, deps)
   const participants = await db.listParticipants(group.id)
   return {
     status: group.status,
@@ -215,9 +246,9 @@ async function listParticipants(db: SantaDb, input: Input) {
   }
 }
 
-async function removeParticipant(db: SantaDb, input: Input) {
+async function removeParticipant(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
-  requireOrganizer(group, input.adminToken)
+  requireOrganizer(group, input.adminToken, deps)
   requireOpen(group)
 
   const key = toNameKey(typeof input.name === 'string' ? input.name : '')
@@ -228,9 +259,9 @@ async function removeParticipant(db: SantaDb, input: Input) {
 }
 
 /** O organizador zera o PIN de alguém (nome errado no primeiro acesso ou PIN esquecido). */
-async function resetPin(db: SantaDb, input: Input) {
+async function resetPin(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
-  requireOrganizer(group, input.adminToken)
+  requireOrganizer(group, input.adminToken, deps)
 
   const key = toNameKey(typeof input.name === 'string' ? input.name : '')
   const target = (await db.listParticipants(group.id)).find((p) => p.nameKey === key)
@@ -310,7 +341,7 @@ async function reveal(db: SantaDb, input: Input, now: () => Date) {
   const { group, participant, participants } = await authenticate(db, input, now)
 
   if (group.status !== 'drawn') {
-    return { status: 'open' as const, wishlist: participant.wishlist }
+    return { status: 'open' as const, wishlist: participant.wishlist ?? [] }
   }
 
   const receiver = participants.find((p) => p.id === participant.assignedToId)
@@ -319,8 +350,8 @@ async function reveal(db: SantaDb, input: Input, now: () => Date) {
   }
   return {
     status: 'drawn' as const,
-    wishlist: participant.wishlist,
-    receiver: { name: receiver.name, wishlist: receiver.wishlist },
+    wishlist: participant.wishlist ?? [],
+    receiver: { name: receiver.name, wishlist: receiver.wishlist ?? [] },
   }
 }
 
@@ -330,7 +361,7 @@ async function reveal(db: SantaDb, input: Input, now: () => Date) {
  */
 async function draw(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
-  requireOrganizer(group, input.adminToken)
+  requireOrganizer(group, input.adminToken, deps)
   requireOpen(group)
 
   const participants = await db.listParticipants(group.id)
@@ -351,4 +382,120 @@ async function draw(db: SantaDb, input: Input, deps: HandlerDeps) {
     throw new SantaError('INTERNAL', 'Não foi possível concluir o sorteio. Tente de novo.')
   }
   return {}
+}
+
+/** Grupos criados pela sessão atual (vazio sem sessão). */
+async function listMyGroups(db: SantaDb, deps: HandlerDeps) {
+  if (!deps.userId) return { groups: [] }
+  const groups = await db.listGroupsByOwner(deps.userId)
+  return { groups: groups.map((g) => ({ id: g.id, slug: g.slug, name: g.name, status: g.status })) }
+}
+
+/** Sugestões livres de endereço parecidas com o pedido (`slug-2`, `slug-3`...). */
+async function suggestSlugs(db: SantaDb, slug: string): Promise<string[]> {
+  const suggestions: string[] = []
+  for (let n = 2; suggestions.length < 3 && n < 20; n++) {
+    const candidate = `${slug.slice(0, MAX_SLUG - String(n).length - 1)}-${n}`
+    if (!(await db.getGroupBySlug(candidate)) && !(await db.getGroup(candidate))) suggestions.push(candidate)
+  }
+  return suggestions
+}
+
+/** Define o endereço amigável do grupo. Se já existir, responde com sugestões. */
+async function setSlug(db: SantaDb, input: Input, deps: HandlerDeps) {
+  const group = await requireGroup(db, input.groupId)
+  requireOrganizer(group, input.adminToken, deps)
+  const slug = parseSlug(input.slug)
+  if (slug === group.slug) return { slug }
+
+  const conflict = async () => {
+    const suggestions = await suggestSlugs(db, slug)
+    return new SantaError(
+      'SLUG_TAKEN',
+      `O endereço "${slug}" já está em uso. Tente ${suggestions.join(', ')}.`,
+      { suggestions },
+    )
+  }
+  if ((await db.getGroupBySlug(slug)) !== null || (await db.getGroup(slug)) !== null) throw await conflict()
+  try {
+    await db.setGroupSlug(group.id, slug)
+  } catch (error) {
+    if (error instanceof SantaError && error.code === 'SLUG_TAKEN') throw await conflict()
+    throw error
+  }
+  return { slug }
+}
+
+/**
+ * Pergunta anônima: vai para a pessoa que o autor tirou, sem dizer quem perguntou.
+ * Só depois do sorteio.
+ */
+async function askQuestion(db: SantaDb, input: Input, now: () => Date) {
+  const { group, participant } = await authenticate(db, input, now)
+  if (group.status !== 'drawn' || !participant.assignedToId) {
+    throw new SantaError('INVALID_INPUT', 'Dá para perguntar só depois do sorteio.')
+  }
+  const question = parseMessage(input.question, MAX_QUESTION, 'A pergunta')
+  const asked = await db.listQuestions(group.id, { fromId: participant.id })
+  if (asked.length >= MAX_QUESTIONS_PER_PERSON) {
+    throw new SantaError('INVALID_INPUT', `Você já fez ${MAX_QUESTIONS_PER_PERSON} perguntas, que é o limite.`)
+  }
+  await db.createQuestion({
+    groupId: group.id,
+    fromId: participant.id,
+    toId: participant.assignedToId,
+    question,
+    answer: null,
+  })
+  return {}
+}
+
+/**
+ * `received`: perguntas feitas a mim, sem dizer quem perguntou.
+ * `sent`: minhas perguntas, com a resposta quando já existe (só eu vejo).
+ */
+async function listQuestions(db: SantaDb, input: Input, now: () => Date) {
+  const { group, participant } = await authenticate(db, input, now)
+  const [received, sent] = await Promise.all([
+    db.listQuestions(group.id, { toId: participant.id }),
+    db.listQuestions(group.id, { fromId: participant.id }),
+  ])
+  return {
+    received: received.map((q) => ({ id: q.id, question: q.question, answer: q.answer })),
+    sent: sent.map((q) => ({ id: q.id, question: q.question, answer: q.answer })),
+  }
+}
+
+async function answerQuestion(db: SantaDb, input: Input, now: () => Date) {
+  const { group, participant } = await authenticate(db, input, now)
+  const answer = parseMessage(input.answer, MAX_ANSWER, 'A resposta')
+  const question = typeof input.questionId === 'string' ? await db.getQuestion(input.questionId) : null
+  // Pergunta de outro grupo ou feita a outra pessoa: mesma resposta que "não existe".
+  if (!question || question.groupId !== group.id || question.toId !== participant.id) {
+    throw new SantaError('INVALID_INPUT', 'Pergunta não encontrada.')
+  }
+  await db.answerQuestion(question.id, answer)
+  return {}
+}
+
+/** Mural do grupo: qualquer participante autenticado escreve e todos veem quem escreveu. */
+async function postMessage(db: SantaDb, input: Input, now: () => Date) {
+  const { group, participant } = await authenticate(db, input, now)
+  const text = parseMessage(input.text, MAX_POST, 'O recado')
+  await db.createPost({ groupId: group.id, authorId: participant.id, text })
+  return {}
+}
+
+async function listPosts(db: SantaDb, input: Input, now: () => Date) {
+  const { group, participants } = await authenticate(db, input, now)
+  const names = new Map(participants.map((p) => [p.id, p.name]))
+  const posts = await db.listPosts(group.id)
+  return {
+    posts: posts.map((p) => ({
+      id: p.id,
+      author: names.get(p.authorId) ?? 'Alguém que saiu do grupo',
+      text: p.text,
+      createdAt: p.createdAt,
+    })),
+  }
 }

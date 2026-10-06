@@ -23,10 +23,10 @@ async function newGroup(db = createFakeDb(), extra: Record<string, unknown> = {}
 
 describe('createGroup', () => {
   it('cria o grupo aberto e devolve o token do organizador, guardando só o hash', async () => {
-    const { db, groupId, adminToken } = await newGroup(createFakeDb(), { budget: 'R$ 50', eventDate: '2026-12-24' })
+    const { db, groupId, adminToken } = await newGroup(createFakeDb(), { budget: 50, eventDate: '2026-12-24' })
     const group = db.groups.get(groupId)!
     expect(group.status).toBe('open')
-    expect(group.budget).toBe('R$ 50')
+    expect(group.budget).toBe(50)
     expect(group.organizerTokenHash).toBe(hashToken(adminToken))
     expect(JSON.stringify([...db.groups.values()])).not.toContain(adminToken)
   })
@@ -36,7 +36,7 @@ describe('createGroup', () => {
       organizer: { name: 'Lia', pin: '4321', wishlist: 'livro' },
     })
     const [organizer] = await db.listParticipants(groupId)
-    expect(organizer).toMatchObject({ name: 'Lia', isOrganizer: true, wishlist: 'livro' })
+    expect(organizer).toMatchObject({ name: 'Lia', isOrganizer: true, wishlist: ['livro'] })
     expect(organizer.pinHash).not.toContain('4321')
   })
 
@@ -60,8 +60,10 @@ describe('getGroup', () => {
     await handleAction(db, { action: 'addParticipant', groupId, adminToken, name: 'Ana' })
     const info = (await handleAction(db, { action: 'getGroup', groupId })) as Record<string, unknown>
     expect(info).toEqual({
+      id: groupId,
+      slug: null,
       name: 'Família',
-      budget: '',
+      budget: null,
       eventDate: '',
       status: 'open',
       participantCount: 2,
@@ -134,7 +136,7 @@ describe('addParticipant (organizador)', () => {
     const { db, groupId, adminToken } = await newGroup()
     for (let i = 0; i < 100; i++) {
       await db.createParticipant({
-        groupId, name: `P${i}`, nameKey: `p${i}`, wishlist: '', pinHash: null,
+        groupId, name: `P${i}`, nameKey: `p${i}`, wishlist: null, pinHash: null,
         failedAttempts: 0, lockedUntil: null, assignedToId: null, isOrganizer: false,
       })
     }

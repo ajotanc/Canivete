@@ -27,11 +27,11 @@ export function createEntrypoint(getDb: (context: FunctionContext) => SantaDb) {
     }
 
     try {
-      const data = await handleAction(getDb(context), body)
+      const data = await handleAction(getDb(context), body, { userId: req.headers?.['x-appwrite-user-id'] || null })
       return res.json({ ok: true, data })
     } catch (caught) {
       if (caught instanceof SantaError) {
-        return res.json({ ok: false, error: { code: caught.code, message: caught.message } }, caught.status)
+        return res.json({ ok: false, error: { code: caught.code, message: caught.message, details: caught.details } }, caught.status)
       }
       error(String(caught))
       return res.json(

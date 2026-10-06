@@ -28,10 +28,10 @@ describe('setupPin (primeiro acesso)', () => {
     await handleAction(db, { action: 'setupPin', groupId, name: ' joão ', pin: '1234', wishlist: 'livro' })
     const [joao] = await db.listParticipants(groupId)
     expect(joao.pinHash).toMatch(/^scrypt\$/)
-    expect(joao.wishlist).toBe('livro')
+    expect(joao.wishlist).toEqual(['livro'])
     expect(await handleAction(db, { action: 'reveal', groupId, name: 'João', pin: '1234' })).toEqual({
       status: 'open',
-      wishlist: 'livro',
+      wishlist: ['livro'],
     })
   })
 
@@ -68,11 +68,11 @@ describe('setupPin (primeiro acesso)', () => {
     await handleAction(db, { action: 'setupPin', groupId, name: 'João', pin: '1234', wishlist: 'tarde demais' })
     const result = (await handleAction(db, { action: 'reveal', groupId, name: 'João', pin: '1234' })) as {
       status: string
-      wishlist: string
+      wishlist: string[]
       receiver: { name: string }
     }
     expect(result.status).toBe('drawn')
-    expect(result.wishlist).toBe('')
+    expect(result.wishlist).toEqual([])
     expect(['Ana', 'Bia']).toContain(result.receiver.name)
   })
 

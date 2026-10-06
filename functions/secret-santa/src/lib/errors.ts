@@ -3,6 +3,7 @@ export type SantaErrorCode =
   | 'GROUP_NOT_FOUND'
   | 'GROUP_CLOSED'
   | 'NAME_TAKEN'
+  | 'SLUG_TAKEN'
   | 'PIN_NOT_SET'
   | 'PIN_ALREADY_SET'
   | 'BAD_CREDENTIALS'
@@ -17,6 +18,7 @@ const STATUS: Record<SantaErrorCode, number> = {
   GROUP_NOT_FOUND: 404,
   GROUP_CLOSED: 409,
   NAME_TAKEN: 409,
+  SLUG_TAKEN: 409,
   PIN_NOT_SET: 409,
   PIN_ALREADY_SET: 409,
   BAD_CREDENTIALS: 401,
@@ -33,6 +35,8 @@ export class SantaError extends Error {
   constructor(
     public readonly code: SantaErrorCode,
     message: string,
+    /** Dados extras para a tela (ex.: sugestões de endereço). */
+    public readonly details?: Record<string, unknown>,
   ) {
     super(message)
     this.name = 'SantaError'

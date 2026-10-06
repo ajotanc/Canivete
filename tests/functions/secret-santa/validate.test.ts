@@ -54,10 +54,15 @@ describe('parseGroupName', () => {
 })
 
 describe('parseBudget', () => {
-  it('aceita vazio e até 40 caracteres', () => {
-    expect(parseBudget(undefined)).toBe('')
-    expect(parseBudget(' R$ 50 ')).toBe('R$ 50')
-    expect(codeOf(() => parseBudget('x'.repeat(41)))).toBe('INVALID_INPUT')
+  it('aceita vazio (null) e valores em reais de 0 a 1.000.000', () => {
+    expect(parseBudget(undefined)).toBeNull()
+    expect(parseBudget('')).toBeNull()
+    expect(parseBudget(50)).toBe(50)
+    expect(parseBudget('49,9')).toBe(49.9)
+    expect(parseBudget(10.456)).toBe(10.46)
+    expect(codeOf(() => parseBudget(-1))).toBe('INVALID_INPUT')
+    expect(codeOf(() => parseBudget('abc'))).toBe('INVALID_INPUT')
+    expect(codeOf(() => parseBudget(1_000_001))).toBe('INVALID_INPUT')
   })
 })
 
@@ -94,10 +99,16 @@ describe('parsePin', () => {
 })
 
 describe('parseWishlist', () => {
-  it('aceita vazio, preserva quebras de linha e limita a 500', () => {
-    expect(parseWishlist(undefined)).toBe('')
-    expect(parseWishlist(' livro\nmeias ')).toBe('livro\nmeias')
-    expect(codeOf(() => parseWishlist('x'.repeat(501)))).toBe('INVALID_INPUT')
+  it('devolve lista limpa, sem vazios nem repetidos, ou null', () => {
+    expect(parseWishlist(undefined)).toBeNull()
+    expect(parseWishlist([' ', ''])).toBeNull()
+    expect(parseWishlist([' livro ', 'Livro', 'meias'])).toEqual(['livro', 'meias'])
+    expect(parseWishlist(' livro\nmeias ')).toEqual(['livro', 'meias'])
+  })
+
+  it('limita o tamanho do item e a quantidade de itens', () => {
+    expect(codeOf(() => parseWishlist(['x'.repeat(101)]))).toBe('INVALID_INPUT')
+    expect(codeOf(() => parseWishlist(Array.from({ length: 21 }, (_, i) => `item ${i}`)))).toBe('INVALID_INPUT')
   })
 })
 

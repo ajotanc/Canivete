@@ -27,7 +27,7 @@ describe('reveal antes do sorteio', () => {
     const { db, groupId } = await setup()
     expect(await handleAction(db, { action: 'reveal', groupId, name: 'João', pin: '1234' })).toEqual({
       status: 'open',
-      wishlist: 'livro',
+      wishlist: ['livro'],
     })
   })
 
@@ -107,7 +107,7 @@ describe('updateWishlist', () => {
   it('atualiza a lista com nome e PIN certos', async () => {
     const { db, groupId } = await setup()
     await handleAction(db, { action: 'updateWishlist', groupId, name: 'João', pin: '1234', wishlist: ' meias \nchá' })
-    expect((await db.listParticipants(groupId))[0].wishlist).toBe('meias \nchá')
+    expect((await db.listParticipants(groupId))[0].wishlist).toEqual(['meias', 'chá'])
   })
 
   it('recusa PIN errado e recusa depois do sorteio', async () => {
@@ -127,7 +127,7 @@ describe('updateWishlist', () => {
     const { db, groupId } = await setup()
     expect(
       (await errorOf(
-        handleAction(db, { action: 'updateWishlist', groupId, name: 'João', pin: '1234', wishlist: 'x'.repeat(501) }),
+        handleAction(db, { action: 'updateWishlist', groupId, name: 'João', pin: '1234', wishlist: 'x'.repeat(101) }),
       ))?.code,
     ).toBe('INVALID_INPUT')
   })
@@ -148,8 +148,8 @@ describe('reveal depois do sorteio', () => {
     const result = await handleAction(db, { action: 'reveal', groupId, name: 'João', pin: '1234' })
     expect(result).toEqual({
       status: 'drawn',
-      wishlist: 'livro',
-      receiver: { name: 'Ana', wishlist: 'chocolate' },
+      wishlist: ['livro'],
+      receiver: { name: 'Ana', wishlist: ['chocolate'] },
     })
     const text = JSON.stringify(result)
     expect(text).not.toContain('Bia')
@@ -161,7 +161,7 @@ describe('reveal depois do sorteio', () => {
     await db.setGroupStatus(groupId, 'drawing')
     expect(await handleAction(db, { action: 'reveal', groupId, name: 'João', pin: '1234' })).toEqual({
       status: 'open',
-      wishlist: 'livro',
+      wishlist: ['livro'],
     })
   })
 })

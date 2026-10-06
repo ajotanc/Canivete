@@ -11,11 +11,17 @@ As duas ficam no mesmo banco do sorteador. Nenhuma tem permissões (nem para `an
 | Coluna | Tipo | Tamanho | Obrigatória |
 |---|---|---|---|
 | `name` | string | 80 | sim |
-| `budget` | string | 40 | não |
+| `budget` | float | | não (padrão `null`) |
 | `eventDate` | string | 10 | não |
 | `organizerTokenHash` | string | 64 | sim |
 | `status` | string | 10 | sim |
+| `ownerId` | string | 36 | não (padrão `null`) |
+| `slug` | string | 40 | não (padrão `null`) |
 | `createdAt` | datetime | | não |
+
+Índices: `idx_owner` (key) em `ownerId`; `uniq_slug` (unique) em `slug`.
+
+`ownerId` é o id do usuário da sessão do Appwrite (o site cria uma sessão anônima) que criou o grupo. Ele permite listar "meus grupos" e administrar sem o token. `slug` é o endereço amigável opcional (`/secret-santa/g/familia-da-bagunca`).
 
 ### `santa_participants`
 
@@ -24,8 +30,8 @@ As duas ficam no mesmo banco do sorteador. Nenhuma tem permissões (nem para `an
 | `groupId` | string | 36 | sim |
 | `name` | string | 60 | sim |
 | `nameKey` | string | 60 | sim |
-| `wishlist` | string | 500 | não |
-| `pinHash` | string | 200 | não (padrão vazio) |
+| `wishlist` | string, **array** | 100 por item | não (padrão `null`) |
+| `pinHash` | string | 200 | não (padrão `null`) |
 | `failedAttempts` | integer | | sim |
 | `lockedUntil` | datetime | | não |
 | `assignedToId` | string | 36 | não |
@@ -33,14 +39,38 @@ As duas ficam no mesmo banco do sorteador. Nenhuma tem permissões (nem para `an
 
 Índices: `idx_group` (key) em `groupId`; `uniq_group_name` (unique) em `groupId` + `nameKey`.
 
-O `pinHash` fica vazio até a pessoa fazer o primeiro acesso. Só um valor que começa com `scrypt$` conta como PIN criado, porque a CLI do Appwrite não consegue gravar `null` como padrão (ela grava o texto "null").
+### `santa_questions` (perguntas anônimas)
+
+| Coluna | Tipo | Tamanho | Obrigatória |
+|---|---|---|---|
+| `groupId` | string | 36 | sim |
+| `fromId` | string | 36 | sim |
+| `toId` | string | 36 | sim |
+| `question` | string | 200 | sim |
+| `answer` | string | 300 | não (padrão `null`) |
+
+Índices: `idx_q_from` (key) em `groupId` + `fromId`; `idx_q_to` (key) em `groupId` + `toId`. A pergunta vai para `toId` (a pessoa que `fromId` tirou) e a Function nunca devolve `fromId` a quem recebe; a resposta só volta para quem perguntou.
+
+### `santa_posts` (mural do grupo)
+
+| Coluna | Tipo | Tamanho | Obrigatória |
+|---|---|---|---|
+| `groupId` | string | 36 | sim |
+| `authorId` | string | 36 | sim |
+| `text` | string | 300 | sim |
+
+Índice: `idx_post_group` (key) em `groupId`. A ordem usa o `$createdAt` do Appwrite.
+
+Não dá para trocar o tipo de uma coluna que já existe: se `budget` era string e `wishlist` era string simples, apague as duas colunas e crie de novo com o tipo da tabela (os dados dessas colunas se perdem).
+
+O `pinHash` e a `wishlist` ficam `null` até a pessoa fazer o primeiro acesso e escrever a lista. Só um valor que começa com `scrypt$` conta como PIN criado; isso protege caso a CLI do Appwrite grave o texto "null" como padrão.
 
 As colunas de texto são `string`, porque o servidor (1.8.1) não tem a rota de `varchar`. As colunas obrigatórias não têm valor padrão, porque o Appwrite não aceita padrão em coluna obrigatória. O código sempre grava `failedAttempts` e `isOrganizer`.
 
 ## Function
 
 - Id `secret-santa`, runtime `node-22`, timeout de 15 segundos.
-- Permissão de execução: `any`.
+- Permissão de execução: `any`. Para o dono do grupo ser reconhecido, o site abre uma sessão anônima: ative *Auth → Anonymous* no console do Appwrite e cadastre o domínio do site como plataforma Web.
 - Entrypoint `dist/main.js`, com os comandos de build `npm install && npm run build`.
 - Escopos da chave gerada por execução: `databases.read`, `databases.write`, `tables.read`, `tables.write`, `rows.read`, `rows.write`.
 
@@ -51,6 +81,8 @@ As colunas de texto são `string`, porque o servidor (1.8.1) não tem a rota de 
 | `SANTA_DATABASE_ID` | sim | id do banco do sorteador |
 | `SANTA_GROUPS_TABLE_ID` | não | padrão `santa_groups` |
 | `SANTA_PARTICIPANTS_TABLE_ID` | não | padrão `santa_participants` |
+| `SANTA_QUESTIONS_TABLE_ID` | não | padrão `santa_questions` |
+| `SANTA_POSTS_TABLE_ID` | não | padrão `santa_posts` |
 | `APPWRITE_API_KEY` | não | veja abaixo |
 
 A Function usa a chave temporária que a Appwrite gera a cada execução (cabeçalho `x-appwrite-key`), limitada aos escopos acima. Por isso não é preciso criar nem guardar uma chave de API. Se `APPWRITE_API_KEY` for definida, ela tem prioridade; nesse caso, use uma chave só com os escopos de banco. Endpoint e projeto vêm das variáveis que a Appwrite injeta (`APPWRITE_FUNCTION_API_ENDPOINT` e `APPWRITE_FUNCTION_PROJECT_ID`).
