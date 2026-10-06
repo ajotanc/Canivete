@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_NAMES, MAX_NAME_LENGTH, parseNames, removeNames, validateNames } from './names'
+import { MAX_NAMES, MAX_NAME_LENGTH, parseNames, removeNames, validateNames } from '@/modules/raffle/lib/names'
 
 describe('parseNames', () => {
   it('separa por linha, aplica trim e remove linhas vazias', () => {

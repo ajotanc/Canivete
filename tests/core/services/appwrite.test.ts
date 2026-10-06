@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { AppwriteConfigError, getAppwrite, getAppwriteIds, resetAppwriteForTests } from './appwrite'
+import { AppwriteConfigError, getAppwrite, getAppwriteIds, resetAppwriteForTests } from '@/core/services/appwrite'
 
 afterEach(() => {
   vi.unstubAllEnvs()

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { ToolManifest } from './types'
-import { buildRegistry } from './registry'
+import type { ToolManifest } from '@/core/modules/types'
+import { buildRegistry } from '@/core/modules/registry'
 
 const dummyIcon = {} as ToolManifest['icon']
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DrawError, drawWinners, secureRandomInt } from './draw'
+import { DrawError, drawWinners, secureRandomInt } from '@/modules/raffle/lib/draw'
 
 describe('secureRandomInt', () => {
   it('devolve 0 quando o limite é 1', () => {

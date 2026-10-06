@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ToolManifest } from '@/core/modules/types'
-import { filterTools } from './filterTools'
+import { filterTools } from '@/core/home/filterTools'
 
 const icon = {} as ToolManifest['icon']
 const base = { icon, usesBackend: false, routes: [] }

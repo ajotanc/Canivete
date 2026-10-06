@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canonicalJson, computeHash, sha256Hex, verifyRecord } from './verify'
+import { canonicalJson, computeHash, sha256Hex, verifyRecord } from '@/modules/raffle/lib/verify'
 
 const record = {
   participants: ['Ana', 'Bruno', 'Carla'],

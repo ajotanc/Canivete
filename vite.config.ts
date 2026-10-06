@@ -11,6 +11,6 @@ export default defineConfig({
   test: {
     // Testes de lógica rodam em node; testes de componente declaram jsdom no próprio arquivo.
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['tests/**/*.test.ts'],
   },
 })
