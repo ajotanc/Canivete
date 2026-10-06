@@ -1,6 +1,7 @@
 import dayjs from 'dayjs'
 import { Client, ID, Query, TablesDB } from 'node-appwrite'
 import { SantaError } from './lib/errors.js'
+import { storedPinHash } from './lib/pin.js'
 import type { GroupRow, GroupStatus, ParticipantRow, SantaDb } from './types.js'
 
 type Env = Record<string, string | undefined>
@@ -46,7 +47,7 @@ export function createAppwriteDb(env: Env): SantaDb {
     name: row.name,
     nameKey: row.nameKey,
     wishlist: row.wishlist ?? '',
-    pinHash: row.pinHash ?? null,
+    pinHash: storedPinHash(row.pinHash),
     failedAttempts: row.failedAttempts ?? 0,
     // O Appwrite devolve "+00:00"; normaliza para ISO com Z.
     lockedUntil: row.lockedUntil ? dayjs(row.lockedUntil).toISOString() : null,

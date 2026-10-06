@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hashPin, verifyPin } from '../../../functions/secret-santa/src/lib/pin'
+import { hashPin, storedPinHash, verifyPin } from '../../../functions/secret-santa/src/lib/pin'
 
 describe('hashPin / verifyPin', () => {
   it('confirma o PIN certo e recusa o errado', async () => {
@@ -21,5 +21,16 @@ describe('hashPin / verifyPin', () => {
   it('recusa valores guardados em formato inválido', async () => {
     expect(await verifyPin('1234', 'lixo')).toBe(false)
     expect(await verifyPin('1234', '')).toBe(false)
+  })
+})
+
+describe('storedPinHash', () => {
+  it('mantém hashes scrypt', async () => {
+    const stored = await hashPin('1234')
+    expect(storedPinHash(stored)).toBe(stored)
+  })
+
+  it.each(['', 'null', null, undefined, 42, 'lixo'])('trata %j como sem PIN', (value) => {
+    expect(storedPinHash(value)).toBeNull()
   })
 })

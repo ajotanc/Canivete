@@ -25,13 +25,15 @@ As duas ficam no mesmo banco do sorteador. Nenhuma tem permissões (nem para `an
 | `name` | string | 60 | sim |
 | `nameKey` | string | 60 | sim |
 | `wishlist` | string | 500 | não |
-| `pinHash` | string | 200 | sim |
+| `pinHash` | string | 200 | não (padrão vazio) |
 | `failedAttempts` | integer | | sim |
 | `lockedUntil` | datetime | | não |
 | `assignedToId` | string | 36 | não |
 | `isOrganizer` | boolean | | sim |
 
 Índices: `idx_group` (key) em `groupId`; `uniq_group_name` (unique) em `groupId` + `nameKey`.
+
+O `pinHash` fica vazio até a pessoa fazer o primeiro acesso. Só um valor que começa com `scrypt$` conta como PIN criado, porque a CLI do Appwrite não consegue gravar `null` como padrão (ela grava o texto "null").
 
 As colunas de texto são `string`, porque o servidor (1.8.1) não tem a rota de `varchar`. As colunas obrigatórias não têm valor padrão, porque o Appwrite não aceita padrão em coluna obrigatória. O código sempre grava `failedAttempts` e `isOrganizer`.
 
