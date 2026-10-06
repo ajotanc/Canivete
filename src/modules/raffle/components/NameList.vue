@@ -26,7 +26,7 @@ const error = computed(() => (count.value === 0 ? null : validateNames(parsed.va
       <span>{{ count }} {{ count === 1 ? 'nome' : 'nomes' }}</span>
     </div>
     <p v-if="error" class="text-sm text-destructive" role="alert">{{ error }}</p>
-    <p v-if="parsed.duplicates.length > 0" class="text-sm text-amber-600 dark:text-amber-400">
+    <p v-if="parsed.duplicates.length > 0" class="text-sm text-warning">
       Nomes duplicados (cada um conta como uma chance): {{ parsed.duplicates.join(', ') }}.
     </p>
   </div>

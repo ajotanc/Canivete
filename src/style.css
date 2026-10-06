@@ -33,7 +33,13 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-primary: var(--primary);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-surface: var(--surface);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -47,76 +53,92 @@
 }
 
 /*
- * Paleta do Canivete:
- *   #1D4ED8 (azul forte)  #3B82F6 (azul médio)  #1E293B (grafite)  #E3F2FD (azul claro)
- * Os demais tons são misturas dessas quatro cores.
+ * Paleta do Canivete.
+ *   primary   #2563EB azul royal (ações, links, foco)     secondary #F97316 coral (Amigo Secreto, CTAs festivos)
+ *   fundo     #F8FAFC   superfície #FFFFFF   borda #E2E8F0
+ *   texto     #0F172A   texto auxiliar #64748B
+ *   estados   success #10B981  warning #F59E0B  danger #EF4444  info #0EA5E9
+ * No tema escuro os mesmos papéis usam tons de Slate e um azul mais claro, para manter o contraste.
  */
 :root {
-  --radius: 0.625rem;
-  --background: #E3F2FD;
-  --foreground: #1E293B;
+  --radius: 0.75rem;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --surface: #FFFFFF;
   --card: #FFFFFF;
-  --card-foreground: #1E293B;
+  --card-foreground: #0F172A;
   --popover: #FFFFFF;
-  --popover-foreground: #1E293B;
-  --primary: #1D4ED8;
+  --popover-foreground: #0F172A;
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
   --primary-foreground: #FFFFFF;
-  --secondary: color-mix(in srgb, #3B82F6 15%, white);
-  --secondary-foreground: #1E293B;
-  --muted: color-mix(in srgb, #3B82F6 10%, white);
-  --muted-foreground: color-mix(in srgb, #1E293B 75%, white);
-  --accent: color-mix(in srgb, #3B82F6 20%, white);
-  --accent-foreground: #1E293B;
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: color-mix(in srgb, #3B82F6 30%, white);
-  --input: color-mix(in srgb, #3B82F6 30%, white);
-  --ring: #3B82F6;
-  --chart-1: #1D4ED8;
-  --chart-2: #3B82F6;
-  --chart-3: #1E293B;
-  --chart-4: color-mix(in srgb, #3B82F6 60%, white);
-  --chart-5: color-mix(in srgb, #1E293B 60%, white);
+  --secondary: #F97316;
+  --secondary-hover: #EA580C;
+  /* Texto escuro sobre o coral: branco daria só 2,8:1 de contraste. */
+  --secondary-foreground: #0F172A;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: color-mix(in srgb, #2563EB 10%, white);
+  --accent-foreground: #0F172A;
+  --destructive: #EF4444;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --info: #0EA5E9;
+  --border: #E2E8F0;
+  --input: #E2E8F0;
+  --ring: #2563EB;
+  --chart-1: #2563EB;
+  --chart-2: #F97316;
+  --chart-3: #10B981;
+  --chart-4: #0EA5E9;
+  --chart-5: #F59E0B;
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #1E293B;
-  --sidebar-primary: #1D4ED8;
+  --sidebar-foreground: #0F172A;
+  --sidebar-primary: #2563EB;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: color-mix(in srgb, #3B82F6 20%, white);
-  --sidebar-accent-foreground: #1E293B;
-  --sidebar-border: color-mix(in srgb, #3B82F6 30%, white);
-  --sidebar-ring: #3B82F6;
+  --sidebar-accent: color-mix(in srgb, #2563EB 10%, white);
+  --sidebar-accent-foreground: #0F172A;
+  --sidebar-border: #E2E8F0;
+  --sidebar-ring: #2563EB;
 }
 
 .dark {
-  --background: #1E293B;
-  --foreground: #E3F2FD;
-  --card: color-mix(in srgb, #E3F2FD 6%, #1E293B);
-  --card-foreground: #E3F2FD;
-  --popover: color-mix(in srgb, #E3F2FD 6%, #1E293B);
-  --popover-foreground: #E3F2FD;
+  --background: #0F172A;
+  --foreground: #F8FAFC;
+  --surface: #1E293B;
+  --card: #1E293B;
+  --card-foreground: #F8FAFC;
+  --popover: #1E293B;
+  --popover-foreground: #F8FAFC;
   --primary: #3B82F6;
-  --primary-foreground: #1E293B;
-  --secondary: color-mix(in srgb, #3B82F6 20%, #1E293B);
-  --secondary-foreground: #E3F2FD;
-  --muted: color-mix(in srgb, #3B82F6 12%, #1E293B);
-  --muted-foreground: color-mix(in srgb, #E3F2FD 70%, #1E293B);
-  --accent: color-mix(in srgb, #3B82F6 25%, #1E293B);
-  --accent-foreground: #E3F2FD;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: color-mix(in srgb, #E3F2FD 15%, #1E293B);
-  --input: color-mix(in srgb, #E3F2FD 20%, #1E293B);
+  --primary-hover: #60A5FA;
+  --primary-foreground: #0F172A;
+  --secondary: #FB923C;
+  --secondary-hover: #FDBA74;
+  --secondary-foreground: #0F172A;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --accent: color-mix(in srgb, #3B82F6 20%, #0F172A);
+  --accent-foreground: #F8FAFC;
+  --destructive: #F87171;
+  --success: #34D399;
+  --warning: #FBBF24;
+  --info: #38BDF8;
+  --border: #334155;
+  --input: #334155;
   --ring: #3B82F6;
   --chart-1: #3B82F6;
-  --chart-2: #1D4ED8;
-  --chart-3: #E3F2FD;
-  --chart-4: color-mix(in srgb, #3B82F6 60%, white);
-  --chart-5: color-mix(in srgb, #E3F2FD 60%, #1E293B);
-  --sidebar: color-mix(in srgb, #E3F2FD 6%, #1E293B);
-  --sidebar-foreground: #E3F2FD;
+  --chart-2: #FB923C;
+  --chart-3: #34D399;
+  --chart-4: #38BDF8;
+  --chart-5: #FBBF24;
+  --sidebar: #1E293B;
+  --sidebar-foreground: #F8FAFC;
   --sidebar-primary: #3B82F6;
-  --sidebar-primary-foreground: #1E293B;
-  --sidebar-accent: color-mix(in srgb, #3B82F6 25%, #1E293B);
-  --sidebar-accent-foreground: #E3F2FD;
-  --sidebar-border: color-mix(in srgb, #E3F2FD 15%, #1E293B);
+  --sidebar-primary-foreground: #0F172A;
+  --sidebar-accent: color-mix(in srgb, #3B82F6 20%, #0F172A);
+  --sidebar-accent-foreground: #F8FAFC;
+  --sidebar-border: #334155;
   --sidebar-ring: #3B82F6;
 }
 

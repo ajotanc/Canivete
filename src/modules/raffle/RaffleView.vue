@@ -109,7 +109,7 @@ async function onCopy() {
               </Button>
               <div v-if="shareUrl" class="flex gap-2">
                 <Input :model-value="shareUrl" readonly aria-label="Link do sorteio" />
-                <Button variant="secondary" size="icon" aria-label="Copiar link" @click="onCopy">
+                <Button variant="outline" size="icon" aria-label="Copiar link" @click="onCopy">
                   <Check v-if="copied" class="size-4" />
                   <Copy v-else class="size-4" />
                 </Button>

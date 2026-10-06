@@ -199,7 +199,7 @@ async function onDraw() {
         <h2 class="font-display text-xl">Convite</h2>
         <div class="flex gap-2">
           <Input class="h-11" :model-value="invite" readonly aria-label="Link do convite" />
-          <Button class="size-11" variant="secondary" size="icon" aria-label="Copiar convite" @click="copy(invite, 'Convite')">
+          <Button class="size-11" variant="outline" size="icon" aria-label="Copiar convite" @click="copy(invite, 'Convite')">
             <Copy class="size-4" aria-hidden="true" />
           </Button>
         </div>
@@ -211,7 +211,7 @@ async function onDraw() {
         </Button>
       </div>
 
-      <div class="space-y-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-4">
+      <div class="space-y-2 rounded-lg border border-warning/50 bg-warning/10 p-4">
         <p class="flex items-center gap-2 font-semibold"><TriangleAlert class="size-4" aria-hidden="true" />Guarde o link de administração</p>
         <p class="text-sm text-muted-foreground">É o único jeito de voltar a este painel em outro aparelho. Não envie para o grupo.</p>
         <Button class="h-11" variant="outline" size="sm" @click="copy(adminLink, 'Link de administração')">
@@ -248,7 +248,7 @@ async function onDraw() {
                 <p class="truncate">
                   {{ person.name }}<span v-if="person.isOrganizer" class="ml-2 text-sm text-muted-foreground">(você)</span>
                 </p>
-                <p class="text-sm" :class="person.hasPin ? 'text-muted-foreground' : 'text-amber-700 dark:text-amber-400'">
+                <p class="text-sm" :class="person.hasPin ? 'text-muted-foreground' : 'text-warning'">
                   {{ person.hasPin ? 'PIN criado' : 'Ainda não acessou' }}
                 </p>
               </div>
