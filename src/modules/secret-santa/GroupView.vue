@@ -158,11 +158,11 @@ async function onSubmit() {
           </p>
           <div class="space-y-2">
             <Label for="pin">Crie um PIN</Label>
-            <Input id="pin" v-model="pin" v-maska data-maska="######" class="h-11" type="password" inputmode="numeric" autocomplete="new-password" />
+            <Input id="pin" v-model="pin" v-maska data-maska="######" class="h-11 [-webkit-text-security:disc]" type="text" inputmode="numeric" autocomplete="off" data-1p-ignore data-lpignore="true" />
           </div>
           <div class="space-y-2">
             <Label for="pin-confirm">Repita o PIN</Label>
-            <Input id="pin-confirm" v-model="pinConfirm" v-maska data-maska="######" class="h-11" type="password" inputmode="numeric" autocomplete="new-password" />
+            <Input id="pin-confirm" v-model="pinConfirm" v-maska data-maska="######" class="h-11 [-webkit-text-security:disc]" type="text" inputmode="numeric" autocomplete="off" data-1p-ignore data-lpignore="true" />
             <p v-if="pinConfirm && PIN_PATTERN.test(pin) && pin !== pinConfirm" class="text-sm text-destructive">Os PINs não são iguais.</p>
           </div>
           <div v-if="group.status === 'open'" class="space-y-2">
@@ -173,7 +173,7 @@ async function onSubmit() {
 
         <div v-else class="space-y-2">
           <Label for="pin">Seu PIN</Label>
-          <Input id="pin" v-model="pin" v-maska data-maska="######" class="h-11" type="password" inputmode="numeric" autocomplete="current-password" />
+          <Input id="pin" v-model="pin" v-maska data-maska="######" class="h-11 [-webkit-text-security:disc]" type="text" inputmode="numeric" autocomplete="off" data-1p-ignore data-lpignore="true" />
         </div>
 
         <p v-if="formError" class="text-sm text-destructive" role="alert">{{ formError }}</p>

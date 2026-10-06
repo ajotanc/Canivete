@@ -108,7 +108,7 @@ export function parseMessage(value: unknown, max: number, label: string): string
   return text
 }
 
-/** Endereço amigável: minúsculas, números e hífens; acentos e espaços são convertidos. */
+/** Texto do link: minúsculas, números e hífens; acentos e espaços são convertidos. */
 export function toSlug(value: unknown): string {
   return cleanLine(value)
     .normalize('NFD')
@@ -118,10 +118,13 @@ export function toSlug(value: unknown): string {
     .replace(/^-+|-+$/g, '')
 }
 
+/** Nomes que são rotas do grupo (`/g/:id/me`, `/g/:id/admin`) e não podem ser texto de link. */
+const RESERVED_SLUGS = new Set(['me', 'admin'])
+
 export function parseSlug(value: unknown): string {
   const slug = toSlug(value)
   // Ids do Appwrite têm 20 caracteres hexadecimais: um endereço assim se confundiria com o id de outro grupo.
-  if (slug.length < MIN_SLUG || slug.length > MAX_SLUG || /^[0-9a-f]{20}$/.test(slug)) {
+  if (slug.length < MIN_SLUG || slug.length > MAX_SLUG || RESERVED_SLUGS.has(slug)) {
     throw new SantaError(
       'INVALID_INPUT',
       `O endereço precisa ter de ${MIN_SLUG} a ${MAX_SLUG} letras, números ou hífens (ex.: familia-da-bagunca).`,

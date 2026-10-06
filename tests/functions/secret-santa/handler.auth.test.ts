@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { handleAction } from '../../../functions/secret-santa/src/handler'
 import { enroll } from './enroll'
 import { createFakeDb } from './fakeDb'
+import { OWNER, STRANGER } from './owner'
 
 async function errorOf(promise: Promise<unknown>) {
   try {
@@ -14,12 +15,11 @@ async function errorOf(promise: Promise<unknown>) {
 
 async function setup() {
   const db = createFakeDb()
-  const { groupId, adminToken } = (await handleAction(db, { action: 'createGroup', name: 'Família' })) as {
+  const { groupId } = (await handleAction(db, { action: 'createGroup', name: 'Família' }, OWNER)) as {
     groupId: string
-    adminToken: string
   }
-  await enroll(db, groupId, adminToken, { name: 'João', pin: '1234', wishlist: 'livro' })
-  return { db, groupId, adminToken }
+  await enroll(db, groupId, { name: 'João', pin: '1234', wishlist: 'livro' })
+  return { db, groupId }
 }
 
 describe('reveal antes do sorteio', () => {
@@ -135,9 +135,9 @@ describe('updateWishlist', () => {
 
 describe('reveal depois do sorteio', () => {
   it('devolve só o par de quem pergunta e a lista dele', async () => {
-    const { db, groupId, adminToken } = await setup()
-    await enroll(db, groupId, adminToken, { name: 'Ana', pin: '1111', wishlist: 'chocolate' })
-    await enroll(db, groupId, adminToken, { name: 'Bia', pin: '2222', wishlist: 'caneca' })
+    const { db, groupId } = await setup()
+    await enroll(db, groupId, { name: 'Ana', pin: '1111', wishlist: 'chocolate' })
+    await enroll(db, groupId, { name: 'Bia', pin: '2222', wishlist: 'caneca' })
     const [joao, ana, bia] = await db.listParticipants(groupId)
     // Roda: João -> Ana -> Bia -> João
     await db.updateParticipant(joao.id, { assignedToId: ana.id })

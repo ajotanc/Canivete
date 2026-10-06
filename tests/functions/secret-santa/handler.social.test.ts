@@ -4,6 +4,7 @@ import { SantaError } from '../../../functions/secret-santa/src/lib/errors'
 import { toSlug } from '../../../functions/secret-santa/src/lib/validate'
 import { enroll } from './enroll'
 import { createFakeDb } from './fakeDb'
+import { OWNER, STRANGER } from './owner'
 
 async function errorOf(promise: Promise<unknown>): Promise<SantaError | undefined> {
   try {
@@ -14,24 +15,23 @@ async function errorOf(promise: Promise<unknown>): Promise<SantaError | undefine
   return undefined
 }
 
-async function newGroup(db = createFakeDb(), userId: string | null = null) {
+async function newGroup(db = createFakeDb(), userId: string = OWNER.userId) {
   const data = (await handleAction(db, { action: 'createGroup', name: 'Família' }, { userId })) as {
     groupId: string
-    adminToken: string
   }
   return { db, ...data }
 }
 
 /** Grupo sorteado com Ana, Bia e Caio, todos com PIN. */
 async function drawnGroup() {
-  const { db, groupId, adminToken } = await newGroup()
-  await enroll(db, groupId, adminToken, { name: 'Ana', pin: '1111' })
-  await enroll(db, groupId, adminToken, { name: 'Bia', pin: '2222' })
-  await enroll(db, groupId, adminToken, { name: 'Caio', pin: '3333' })
-  await handleAction(db, { action: 'draw', groupId, adminToken })
+  const { db, groupId } = await newGroup()
+  await enroll(db, groupId, { name: 'Ana', pin: '1111' })
+  await enroll(db, groupId, { name: 'Bia', pin: '2222' })
+  await enroll(db, groupId, { name: 'Caio', pin: '3333' })
+  await handleAction(db, { action: 'draw', groupId }, OWNER)
   const pins: Record<string, string> = { Ana: '1111', Bia: '2222', Caio: '3333' }
   const who = (name: string) => ({ groupId, name, pin: pins[name] })
-  return { db, groupId, adminToken, who }
+  return { db, groupId, who }
 }
 
 describe('dono do grupo', () => {
@@ -62,43 +62,43 @@ describe('dono do grupo', () => {
 })
 
 describe('setSlug', () => {
-  it('normaliza o texto e passa a achar o grupo pelo endereço', async () => {
-    const { db, groupId, adminToken } = await newGroup()
-    expect(await handleAction(db, { action: 'setSlug', groupId, adminToken, slug: 'Família da Bagunça!' })).toEqual({
+  it('normaliza o texto do link e não muda o id do grupo', async () => {
+    const { db, groupId } = await newGroup()
+    expect(await handleAction(db, { action: 'setSlug', groupId, slug: 'Família da Bagunça!' }, OWNER)).toEqual({
       slug: 'familia-da-bagunca',
     })
-    const info = (await handleAction(db, { action: 'getGroup', groupId: 'familia-da-bagunca' })) as { id: string }
-    expect(info.id).toBe(groupId)
+    const info = (await handleAction(db, { action: 'getGroup', groupId })) as { id: string; slug: string }
+    expect(info).toMatchObject({ id: groupId, slug: 'familia-da-bagunca' })
   })
 
-  it('recusa endereço em uso e sugere livres', async () => {
+  it('vários grupos podem ter o mesmo texto no link', async () => {
     const first = await newGroup()
-    await handleAction(first.db, { action: 'setSlug', groupId: first.groupId, adminToken: first.adminToken, slug: 'turma' })
     const second = await newGroup(first.db)
-    const error = await errorOf(
-      handleAction(second.db, { action: 'setSlug', groupId: second.groupId, adminToken: second.adminToken, slug: 'turma' }),
-    )
-    expect(error?.code).toBe('SLUG_TAKEN')
-    expect(error?.details).toEqual({ suggestions: ['turma-2', 'turma-3', 'turma-4'] })
+    for (const g of [first, second]) {
+      expect(await handleAction(g.db, { action: 'setSlug', groupId: g.groupId, slug: 'familia-buscape' }, OWNER)).toEqual({
+        slug: 'familia-buscape',
+      })
+    }
+    expect(first.groupId).not.toBe(second.groupId)
   })
 
   it('o próprio grupo pode repetir o endereço que já tem', async () => {
-    const { db, groupId, adminToken } = await newGroup()
-    await handleAction(db, { action: 'setSlug', groupId, adminToken, slug: 'turma' })
-    expect(await handleAction(db, { action: 'setSlug', groupId, adminToken, slug: 'turma' })).toEqual({ slug: 'turma' })
+    const { db, groupId } = await newGroup()
+    await handleAction(db, { action: 'setSlug', groupId, slug: 'turma' }, OWNER)
+    expect(await handleAction(db, { action: 'setSlug', groupId, slug: 'turma' }, OWNER)).toEqual({ slug: 'turma' })
   })
 
   it('só o organizador troca o endereço', async () => {
     const { db, groupId } = await newGroup()
-    expect((await errorOf(handleAction(db, { action: 'setSlug', groupId, adminToken: 'x', slug: 'turma' })))?.code).toBe(
+    expect((await errorOf(handleAction(db, { action: 'setSlug', groupId, slug: 'turma' }, STRANGER)))?.code).toBe(
       'FORBIDDEN',
     )
   })
 
-  it('recusa endereço curto ou parecido com um id', async () => {
-    const { db, groupId, adminToken } = await newGroup()
-    for (const slug of ['ab', '!!', 'abcdef0123456789abcd']) {
-      expect((await errorOf(handleAction(db, { action: 'setSlug', groupId, adminToken, slug })))?.code).toBe(
+  it('recusa texto curto, inválido ou que seja rota do grupo', async () => {
+    const { db, groupId } = await newGroup()
+    for (const slug of ['ab', '!!', 'me', 'Admin']) {
+      expect((await errorOf(handleAction(db, { action: 'setSlug', groupId, slug }, OWNER)))?.code).toBe(
         'INVALID_INPUT',
       )
     }
@@ -134,8 +134,8 @@ describe('perguntas anônimas', () => {
   })
 
   it('não dá para perguntar antes do sorteio', async () => {
-    const { db, groupId, adminToken } = await newGroup()
-    await enroll(db, groupId, adminToken, { name: 'Ana', pin: '1111' })
+    const { db, groupId } = await newGroup()
+    await enroll(db, groupId, { name: 'Ana', pin: '1111' })
     const error = await errorOf(
       handleAction(db, { action: 'askQuestion', groupId, name: 'Ana', pin: '1111', question: 'Oi?' }),
     )
@@ -187,5 +187,28 @@ describe('mural de recados', () => {
     expect((await errorOf(handleAction(db, { action: 'postMessage', ...who('Ana'), text: '  ' })))?.code).toBe(
       'INVALID_INPUT',
     )
+  })
+})
+
+describe('deleteGroup', () => {
+  it('apaga o grupo com participantes, perguntas e recados', async () => {
+    const { db, groupId, who } = await drawnGroup()
+    await handleAction(db, { action: 'postMessage', ...who('Ana'), text: 'Oi' })
+    await handleAction(db, { action: 'askQuestion', ...who('Ana'), question: 'Chocolate ou vinho?' })
+    const other = await newGroup(db)
+    await handleAction(db, { action: 'deleteGroup', groupId }, OWNER)
+    expect(db.groups.has(groupId)).toBe(false)
+    expect([...db.participants.values()].some((p) => p.groupId === groupId)).toBe(false)
+    expect(db.questions.size).toBe(0)
+    expect(db.posts.length).toBe(0)
+    expect(db.groups.has(other.groupId)).toBe(true)
+  })
+
+  it('só o dono apaga', async () => {
+    const { db, groupId } = await newGroup()
+    for (const caller of [undefined, STRANGER]) {
+      expect((await errorOf(handleAction(db, { action: 'deleteGroup', groupId }, caller)))?.code).toBe('FORBIDDEN')
+    }
+    expect(db.groups.has(groupId)).toBe(true)
   })
 })

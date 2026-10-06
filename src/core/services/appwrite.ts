@@ -11,7 +11,6 @@ export class AppwriteConfigError extends Error {
 type AppwriteInstance = { client: Client; tablesDB: TablesDB; functions: Functions; account: Account }
 
 let instance: AppwriteInstance | null = null
-let sessionPromise: Promise<void> | null = null
 
 /**
  * Devolve o cliente Appwrite, criando-o só na primeira chamada.
@@ -31,26 +30,6 @@ export function getAppwrite(): AppwriteInstance {
   const client = new Client().setEndpoint(endpoint).setProject(projectId)
   instance = { client, tablesDB: new TablesDB(client), functions: new Functions(client), account: new Account(client) }
   return instance
-}
-
-/**
- * Garante uma sessão (anônima, se ainda não houver). O Appwrite manda o id dessa sessão à Function,
- * que o usa como dono dos grupos criados. Falhas não derrubam o app: sem sessão, só some o "meus grupos".
- */
-export function ensureSession(): Promise<void> {
-  sessionPromise ??= (async () => {
-    const { account } = getAppwrite()
-    try {
-      await account.get()
-    } catch {
-      try {
-        await account.createAnonymousSession()
-      } catch {
-        // Login anônimo desativado ou sem rede: segue sem sessão.
-      }
-    }
-  })()
-  return sessionPromise
 }
 
 /** Ids do banco de dados e da tabela de sorteios. */
@@ -79,5 +58,4 @@ export function getSantaFunctionId(): string {
 /** Limpa o cliente em cache. Usado apenas nos testes. */
 export function resetAppwriteForTests(): void {
   instance = null
-  sessionPromise = null
 }

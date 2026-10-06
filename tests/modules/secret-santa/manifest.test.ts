@@ -14,7 +14,7 @@ describe('módulo secret-santa', () => {
   it('expõe as quatro rotas com o prefixo correto', () => {
     expect(santa?.routes.map((route) => route.path)).toEqual([
       '/secret-santa',
-      '/secret-santa/g/:id',
+      '/secret-santa/g/:id/:slug?',
       '/secret-santa/g/:id/me',
       '/secret-santa/g/:id/admin',
     ])

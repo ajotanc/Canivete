@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { handleAction } from '../../../functions/secret-santa/src/handler'
 import { enroll } from './enroll'
 import { createFakeDb } from './fakeDb'
+import { OWNER, STRANGER } from './owner'
 
 async function errorOf(promise: Promise<unknown>) {
   try {
@@ -14,12 +15,11 @@ async function errorOf(promise: Promise<unknown>) {
 
 async function setup() {
   const db = createFakeDb()
-  const { groupId, adminToken } = (await handleAction(db, { action: 'createGroup', name: 'Família' })) as {
+  const { groupId } = (await handleAction(db, { action: 'createGroup', name: 'Família' }, OWNER)) as {
     groupId: string
-    adminToken: string
   }
-  await handleAction(db, { action: 'addParticipant', groupId, adminToken, name: 'João' })
-  return { db, groupId, adminToken }
+  await handleAction(db, { action: 'addParticipant', groupId, name: 'João' }, OWNER)
+  return { db, groupId }
 }
 
 describe('setupPin (primeiro acesso)', () => {
@@ -60,10 +60,10 @@ describe('setupPin (primeiro acesso)', () => {
   })
 
   it('funciona depois do sorteio, sem mudar a lista de desejos', async () => {
-    const { db, groupId, adminToken } = await setup()
-    await enroll(db, groupId, adminToken, { name: 'Ana', pin: '1111', wishlist: 'chocolate' })
-    await enroll(db, groupId, adminToken, { name: 'Bia', pin: '2222' })
-    await handleAction(db, { action: 'draw', groupId, adminToken })
+    const { db, groupId } = await setup()
+    await enroll(db, groupId, { name: 'Ana', pin: '1111', wishlist: 'chocolate' })
+    await enroll(db, groupId, { name: 'Bia', pin: '2222' })
+    await handleAction(db, { action: 'draw', groupId }, OWNER)
 
     await handleAction(db, { action: 'setupPin', groupId, name: 'João', pin: '1234', wishlist: 'tarde demais' })
     const result = (await handleAction(db, { action: 'reveal', groupId, name: 'João', pin: '1234' })) as {
@@ -102,12 +102,12 @@ describe('entrar antes do primeiro acesso', () => {
 
 describe('resetPin (organizador)', () => {
   it('zera o PIN, as tentativas e o bloqueio; a pessoa cria um novo', async () => {
-    const { db, groupId, adminToken } = await setup()
+    const { db, groupId } = await setup()
     await handleAction(db, { action: 'setupPin', groupId, name: 'João', pin: '1234' })
     for (let i = 0; i < 5; i++) await errorOf(handleAction(db, { action: 'reveal', groupId, name: 'João', pin: '0000' }))
     expect((await db.listParticipants(groupId))[0].lockedUntil).not.toBeNull()
 
-    await handleAction(db, { action: 'resetPin', groupId, adminToken, name: 'JOÃO' })
+    await handleAction(db, { action: 'resetPin', groupId, name: 'JOÃO' }, OWNER)
     const [joao] = await db.listParticipants(groupId)
     expect(joao).toMatchObject({ pinHash: null, failedAttempts: 0, lockedUntil: null })
 
@@ -118,27 +118,27 @@ describe('resetPin (organizador)', () => {
   })
 
   it('funciona depois do sorteio e mantém o par', async () => {
-    const { db, groupId, adminToken } = await setup()
-    await enroll(db, groupId, adminToken, { name: 'Ana', pin: '1111' })
-    await enroll(db, groupId, adminToken, { name: 'Bia', pin: '2222' })
-    await handleAction(db, { action: 'draw', groupId, adminToken })
+    const { db, groupId } = await setup()
+    await enroll(db, groupId, { name: 'Ana', pin: '1111' })
+    await enroll(db, groupId, { name: 'Bia', pin: '2222' })
+    await handleAction(db, { action: 'draw', groupId }, OWNER)
     const before = (await db.listParticipants(groupId)).find((p) => p.name === 'Ana')!.assignedToId
 
-    await handleAction(db, { action: 'resetPin', groupId, adminToken, name: 'Ana' })
+    await handleAction(db, { action: 'resetPin', groupId, name: 'Ana' }, OWNER)
     const after = (await db.listParticipants(groupId)).find((p) => p.name === 'Ana')!
     expect(after.pinHash).toBeNull()
     expect(after.assignedToId).toBe(before)
   })
 
-  it('exige o token do organizador e um nome da lista', async () => {
-    const { db, groupId, adminToken } = await setup()
-    for (const token of [undefined, '', 'errado']) {
+  it('exige a conta do organizador e um nome da lista', async () => {
+    const { db, groupId } = await setup()
+    for (const caller of [undefined, STRANGER]) {
       expect(
-        (await errorOf(handleAction(db, { action: 'resetPin', groupId, adminToken: token, name: 'João' })))?.code,
+        (await errorOf(handleAction(db, { action: 'resetPin', groupId, name: 'João' }, caller)))?.code,
       ).toBe('FORBIDDEN')
     }
     expect(
-      (await errorOf(handleAction(db, { action: 'resetPin', groupId, adminToken, name: 'Ninguém' })))?.code,
+      (await errorOf(handleAction(db, { action: 'resetPin', groupId, name: 'Ninguém' }, OWNER)))?.code,
     ).toBe('INVALID_INPUT')
   })
 })

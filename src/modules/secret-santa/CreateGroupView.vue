@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ArrowLeft, ChevronRight, Gift } from '@lucide/vue'
-import { computed, onMounted, ref } from 'vue'
+import { ArrowLeft, ChevronRight, Gift, LogOut } from '@lucide/vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
@@ -8,15 +8,22 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import TagInput from '@/components/TagInput.vue'
+import { loadUser, logout, useAuth } from '@/core/services/auth'
+import AuthForm from './components/AuthForm.vue'
 import { parseMoney } from '@/lib/money'
+import { isUsableSlug, slugifyInput, trimSlug } from './lib/slug'
 import { createGroup, listMyGroups, SantaApiError, type MyGroup } from './lib/api'
 import { adminPath } from './lib/links'
-import { saveAdminToken, saveCredentials } from './lib/session'
+import { saveCredentials } from './lib/session'
 
 const router = useRouter()
+const { user, ready } = useAuth()
 
 const step = ref(1)
 const name = ref('')
+const slug = ref('')
+/** Enquanto a pessoa não mexe no texto do link, ele acompanha o nome do grupo. */
+const slugTouched = ref(false)
 const budget = ref('')
 const eventDate = ref('')
 const participates = ref(true)
@@ -27,14 +34,46 @@ const myGroups = ref<MyGroup[]>([])
 const loading = ref(false)
 const error = ref('')
 
-// Grupos que esta sessão já criou: quem organiza mais de um amigo secreto escolhe qual abrir.
-onMounted(async () => {
+function onNameInput(event: Event) {
+  // Lê do campo, porque o v-model do Input atualiza `name` só depois deste evento.
+  if (!slugTouched.value) slug.value = trimSlug(slugifyInput((event.target as HTMLInputElement).value))
+}
+
+function onSlugInput(event: Event) {
+  const input = event.target as HTMLInputElement
+  slugTouched.value = true
+  slug.value = slugifyInput(input.value)
+  input.value = slug.value
+}
+
+// O nome da conta já vem preenchido como o nome de quem participa (dá para trocar).
+watch(
+  user,
+  (current) => {
+    if (current && !myName.value) myName.value = current.name
+  },
+  { immediate: true },
+)
+
+// Grupos da conta: quem organiza mais de um amigo secreto escolhe qual abrir.
+async function loadMyGroups() {
   try {
     myGroups.value = (await listMyGroups()).groups
   } catch {
-    // Sem sessão ou sem rede: só não mostra a lista.
+    // Sem rede: só não mostra a lista.
   }
+}
+
+onMounted(async () => {
+  await loadUser()
+  if (user.value) await loadMyGroups()
 })
+
+async function onLogout() {
+  await logout()
+  myGroups.value = []
+  step.value = 1
+}
 
 const stepTitles = ['Como vai se chamar o grupo?', 'Valor e data (opcionais)', 'Você também participa?']
 const canContinue = computed(() => {
@@ -47,18 +86,17 @@ async function onSubmit() {
   error.value = ''
   loading.value = true
   try {
-    const { groupId, adminToken } = await createGroup({
+    const { groupId } = await createGroup({
       name: name.value,
+      ...(isUsableSlug(trimSlug(slug.value)) ? { slug: trimSlug(slug.value) } : {}),
       budget: parseMoney(budget.value),
       eventDate: eventDate.value,
       ...(participates.value
         ? { organizer: { name: myName.value, pin: myPin.value, wishlist: myWishlist.value } }
         : {}),
     })
-    saveAdminToken(groupId, adminToken)
     if (participates.value) saveCredentials(groupId, { name: myName.value, pin: myPin.value })
-    // O token vai no fragmento: não é enviado ao servidor.
-    await router.push({ path: adminPath(groupId), hash: `#t=${adminToken}` })
+    await router.push(adminPath(groupId))
   } catch (e) {
     error.value = e instanceof SantaApiError ? e.message : 'Não foi possível criar o grupo.'
     toast.error(error.value)
@@ -81,12 +119,25 @@ function onNext() {
       <p class="text-muted-foreground">Crie o grupo, cadastre as pessoas e sorteie. Cada uma vê só quem tirou.</p>
     </header>
 
+    <p v-if="!ready" class="py-8 text-center text-muted-foreground">Carregando...</p>
+
+    <AuthForm v-else-if="!user" @done="loadMyGroups" />
+
+    <template v-else>
+    <div class="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+      <span class="min-w-0 truncate">Conectado como {{ user.email }}</span>
+      <Button variant="ghost" size="sm" @click="onLogout">
+        <LogOut class="size-4" aria-hidden="true" />
+        Sair
+      </Button>
+    </div>
+
     <div v-if="myGroups.length > 0" class="space-y-3">
       <h2 class="font-display text-xl">Seus amigos secretos</h2>
       <ul class="divide-y rounded-lg border bg-card">
         <li v-for="group in myGroups" :key="group.id">
           <RouterLink
-            :to="adminPath(group.slug ?? group.id)"
+            :to="adminPath(group.id)"
             class="flex min-h-14 items-center justify-between gap-3 px-4 py-2 hover:bg-accent"
           >
             <span class="min-w-0">
@@ -108,7 +159,19 @@ function onNext() {
 
       <div v-if="step === 1" class="space-y-2">
         <Label for="group-name">Nome do grupo</Label>
-        <Input class="h-11" id="group-name" v-model="name" maxlength="80" autocomplete="off" placeholder="Família Silva" />
+        <Input class="h-11" id="group-name" v-model="name" maxlength="80" autocomplete="off" placeholder="Família Silva" @input="onNameInput" />
+        <Label for="group-slug" class="pt-2">Texto do link (opcional)</Label>
+        <Input
+          id="group-slug"
+          :value="slug"
+          class="h-11"
+          maxlength="40"
+          autocomplete="off"
+          placeholder="familia-silva"
+          @input="onSlugInput"
+          @blur="slug = trimSlug(slug)"
+        />
+        <p class="text-sm text-muted-foreground">Vem do nome do grupo; pode trocar. Ex.: .../g/k7x2m9/{{ trimSlug(slug) || 'familia-silva' }}</p>
       </div>
 
       <div v-else-if="step === 2" class="space-y-4">
@@ -130,11 +193,11 @@ function onNext() {
         <template v-if="participates">
           <div class="space-y-2">
             <Label for="my-name">Seu nome</Label>
-            <Input class="h-11" id="my-name" v-model="myName" maxlength="60" autocomplete="off" />
+            <Input class="h-11" id="my-name" v-model="myName" maxlength="60" autocomplete="off" data-1p-ignore data-lpignore="true" />
           </div>
           <div class="space-y-2">
             <Label for="my-pin">PIN (4 a 6 números)</Label>
-            <Input id="my-pin" v-model="myPin" v-maska data-maska="######" class="h-11" type="password" inputmode="numeric" autocomplete="off" />
+            <Input id="my-pin" v-model="myPin" v-maska data-maska="######" class="h-11 [-webkit-text-security:disc]" type="text" inputmode="numeric" autocomplete="off" data-1p-ignore data-lpignore="true" />
             <p class="text-sm text-muted-foreground">Você usa o PIN para ver quem tirou. Anote, não dá para recuperar.</p>
           </div>
           <div class="space-y-2">
@@ -159,5 +222,6 @@ function onNext() {
         </Button>
       </div>
     </form>
+    </template>
   </section>
 </template>

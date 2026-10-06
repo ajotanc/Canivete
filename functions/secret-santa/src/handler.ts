@@ -1,16 +1,15 @@
 import dayjs from 'dayjs'
+import { newGroupCode, MAX_CODE_ATTEMPTS } from './lib/code.js'
 import { assignSecretFriends } from './lib/draw.js'
 import { SantaError } from './lib/errors.js'
 import { hashPin, verifyPin } from './lib/pin.js'
 import type { RandomInt } from './lib/random.js'
-import { generateToken, hashToken, tokenMatches } from './lib/tokens.js'
 import {
   MAX_ANSWER,
   MAX_PARTICIPANTS,
   MAX_POST,
   MAX_QUESTION,
   MAX_QUESTIONS_PER_PERSON,
-  MAX_SLUG,
   parseBudget,
   parseEventDate,
   parseGroupId,
@@ -19,6 +18,7 @@ import {
   parsePersonName,
   parsePin,
   parseSlug,
+  toSlug,
   parseWishlist,
   toNameKey,
 } from './lib/validate.js'
@@ -62,6 +62,8 @@ export async function handleAction(db: SantaDb, body: unknown, deps: HandlerDeps
       return reveal(db, input, now)
     case 'draw':
       return draw(db, input, deps)
+    case 'deleteGroup':
+      return deleteGroup(db, input, deps)
     case 'listMyGroups':
       return listMyGroups(db, deps)
     case 'setSlug':
@@ -81,18 +83,15 @@ export async function handleAction(db: SantaDb, body: unknown, deps: HandlerDeps
   }
 }
 
-/** Aceita o id do grupo ou o endereço amigável (slug). */
 async function requireGroup(db: SantaDb, rawId: unknown): Promise<GroupRow> {
-  const id = parseGroupId(rawId)
-  const group = (await db.getGroupBySlug(id)) ?? (await db.getGroup(id))
+  const group = await db.getGroup(parseGroupId(rawId))
   if (!group) throw new SantaError('GROUP_NOT_FOUND', 'Grupo não encontrado.')
   return group
 }
 
-/** O organizador entra com o token de administração ou, se a sessão for a do dono, sem ele. */
-function requireOrganizer(group: GroupRow, token: unknown, deps: HandlerDeps = {}): void {
-  const isOwner = Boolean(deps.userId) && group.ownerId === deps.userId
-  if (!isOwner && !tokenMatches(token, group.organizerTokenHash)) {
+/** Só o dono do grupo (a conta logada que o criou) administra. */
+function requireOrganizer(group: GroupRow, deps: HandlerDeps = {}): void {
+  if (!deps.userId || group.ownerId !== deps.userId) {
     throw new SantaError('FORBIDDEN', 'Você não tem permissão para fazer isso neste grupo.')
   }
 }
@@ -104,9 +103,12 @@ function requireOpen(group: GroupRow): void {
 }
 
 async function createGroup(db: SantaDb, input: Input, deps: HandlerDeps) {
+  if (!deps.userId) throw new SantaError('FORBIDDEN', 'Entre na sua conta para criar um grupo.')
   const name = parseGroupName(input.name)
   const budget = parseBudget(input.budget)
   const eventDate = parseEventDate(input.eventDate)
+  // O texto do link é opcional: vazio vira null.
+  const slug = toSlug(input.slug) === '' ? null : parseSlug(input.slug)
 
   const organizer = input.organizer
   const organizerData =
@@ -118,16 +120,14 @@ async function createGroup(db: SantaDb, input: Input, deps: HandlerDeps) {
         }
       : null
 
-  const adminToken = generateToken()
-  const groupId = await db.createGroup({
-    name,
-    budget,
-    eventDate,
-    organizerTokenHash: hashToken(adminToken),
-    status: 'open',
-    ownerId: deps.userId || null,
-    slug: null,
-  })
+  // O id é um código curto aleatório; sorteia de novo se por azar já existir.
+  let groupId = ''
+  for (let attempt = 0; attempt < MAX_CODE_ATTEMPTS && !groupId; attempt++) {
+    const code = newGroupCode(deps.randomInt)
+    if ((await db.getGroup(code)) === null) groupId = code
+  }
+  if (!groupId) throw new SantaError('INTERNAL', 'Não foi possível criar o grupo. Tente de novo.')
+  await db.createGroup(groupId, { name, budget, eventDate, status: 'open', ownerId: deps.userId, slug })
 
   if (organizerData) {
     await db.createParticipant({
@@ -143,7 +143,7 @@ async function createGroup(db: SantaDb, input: Input, deps: HandlerDeps) {
     })
   }
 
-  return { groupId, adminToken }
+  return { groupId }
 }
 
 async function getGroup(db: SantaDb, input: Input) {
@@ -165,7 +165,7 @@ async function getGroup(db: SantaDb, input: Input) {
 /** O organizador cadastra uma pessoa pelo nome; ela cria o PIN no primeiro acesso. */
 async function addParticipant(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
-  requireOrganizer(group, input.adminToken, deps)
+  requireOrganizer(group, deps)
   requireOpen(group)
 
   const name = parsePersonName(input.name)
@@ -234,7 +234,7 @@ async function setupPin(db: SantaDb, input: Input) {
 
 async function listParticipants(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
-  requireOrganizer(group, input.adminToken, deps)
+  requireOrganizer(group, deps)
   const participants = await db.listParticipants(group.id)
   return {
     status: group.status,
@@ -248,7 +248,7 @@ async function listParticipants(db: SantaDb, input: Input, deps: HandlerDeps) {
 
 async function removeParticipant(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
-  requireOrganizer(group, input.adminToken, deps)
+  requireOrganizer(group, deps)
   requireOpen(group)
 
   const key = toNameKey(typeof input.name === 'string' ? input.name : '')
@@ -261,7 +261,7 @@ async function removeParticipant(db: SantaDb, input: Input, deps: HandlerDeps) {
 /** O organizador zera o PIN de alguém (nome errado no primeiro acesso ou PIN esquecido). */
 async function resetPin(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
-  requireOrganizer(group, input.adminToken, deps)
+  requireOrganizer(group, deps)
 
   const key = toNameKey(typeof input.name === 'string' ? input.name : '')
   const target = (await db.listParticipants(group.id)).find((p) => p.nameKey === key)
@@ -361,7 +361,7 @@ async function reveal(db: SantaDb, input: Input, now: () => Date) {
  */
 async function draw(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
-  requireOrganizer(group, input.adminToken, deps)
+  requireOrganizer(group, deps)
   requireOpen(group)
 
   const participants = await db.listParticipants(group.id)
@@ -384,45 +384,27 @@ async function draw(db: SantaDb, input: Input, deps: HandlerDeps) {
   return {}
 }
 
-/** Grupos criados pela sessão atual (vazio sem sessão). */
+/** O dono apaga o grupo a qualquer momento, com participantes, perguntas e recados. Não dá para desfazer. */
+async function deleteGroup(db: SantaDb, input: Input, deps: HandlerDeps) {
+  const group = await requireGroup(db, input.groupId)
+  requireOrganizer(group, deps)
+  await db.deleteGroup(group.id)
+  return {}
+}
+
+/** Grupos da conta logada (vazio sem sessão). */
 async function listMyGroups(db: SantaDb, deps: HandlerDeps) {
   if (!deps.userId) return { groups: [] }
   const groups = await db.listGroupsByOwner(deps.userId)
   return { groups: groups.map((g) => ({ id: g.id, slug: g.slug, name: g.name, status: g.status })) }
 }
 
-/** Sugestões livres de endereço parecidas com o pedido (`slug-2`, `slug-3`...). */
-async function suggestSlugs(db: SantaDb, slug: string): Promise<string[]> {
-  const suggestions: string[] = []
-  for (let n = 2; suggestions.length < 3 && n < 20; n++) {
-    const candidate = `${slug.slice(0, MAX_SLUG - String(n).length - 1)}-${n}`
-    if (!(await db.getGroupBySlug(candidate)) && !(await db.getGroup(candidate))) suggestions.push(candidate)
-  }
-  return suggestions
-}
-
-/** Define o endereço amigável do grupo. Se já existir, responde com sugestões. */
+/** Define o texto bonito do link do grupo. Não precisa ser único: quem identifica o grupo é o id. */
 async function setSlug(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
-  requireOrganizer(group, input.adminToken, deps)
+  requireOrganizer(group, deps)
   const slug = parseSlug(input.slug)
-  if (slug === group.slug) return { slug }
-
-  const conflict = async () => {
-    const suggestions = await suggestSlugs(db, slug)
-    return new SantaError(
-      'SLUG_TAKEN',
-      `O endereço "${slug}" já está em uso. Tente ${suggestions.join(', ')}.`,
-      { suggestions },
-    )
-  }
-  if ((await db.getGroupBySlug(slug)) !== null || (await db.getGroup(slug)) !== null) throw await conflict()
-  try {
-    await db.setGroupSlug(group.id, slug)
-  } catch (error) {
-    if (error instanceof SantaError && error.code === 'SLUG_TAKEN') throw await conflict()
-    throw error
-  }
+  if (slug !== group.slug) await db.setGroupSlug(group.id, slug)
   return { slug }
 }
 

@@ -11,7 +11,7 @@ const manifest: ToolManifest = {
   usesBackend: true,
   routes: [
     { path: '/secret-santa', name: 'secret-santa', component: () => import('./CreateGroupView.vue') },
-    { path: '/secret-santa/g/:id', name: 'secret-santa-group', component: () => import('./GroupView.vue') },
+    { path: '/secret-santa/g/:id/:slug?', name: 'secret-santa-group', component: () => import('./GroupView.vue') },
     { path: '/secret-santa/g/:id/me', name: 'secret-santa-me', component: () => import('./MeView.vue') },
     { path: '/secret-santa/g/:id/admin', name: 'secret-santa-admin', component: () => import('./AdminView.vue') },
   ],

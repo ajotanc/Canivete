@@ -3,7 +3,6 @@ import { AppwriteConfigError } from '@/core/services/appwrite'
 import {
   askQuestion,
   postMessage,
-  setSlug,
   callSanta,
   createGroup,
   revealMatch,
@@ -61,7 +60,7 @@ describe('funções tipadas', () => {
     let sent: Record<string, unknown> = {}
     const execute: Execute = async (body) => {
       sent = JSON.parse(body)
-      return { responseStatusCode: 200, responseBody: JSON.stringify({ ok: true, data: { groupId: 'g', adminToken: 't' } }) }
+      return { responseStatusCode: 200, responseBody: JSON.stringify({ ok: true, data: { groupId: 'g' } }) }
     }
     await createGroup({ name: 'Turma', budget: null, eventDate: '' }, execute)
     expect(sent.organizer).toBeUndefined()
@@ -92,17 +91,6 @@ describe('funções tipadas', () => {
     const execute = respond({ ok: false, error: { code: 'PIN_ALREADY_SET', message: 'Já criou.' } }, 409)
     await expect(setupPin({ groupId: 'g', name: 'Ana', pin: '1234' }, execute)).rejects.toMatchObject({
       code: 'PIN_ALREADY_SET',
-    })
-  })
-
-  it('setSlug entrega as sugestões do servidor no erro', async () => {
-    const execute = respond(
-      { ok: false, error: { code: 'SLUG_TAKEN', message: 'Em uso.', details: { suggestions: ['turma-2'] } } },
-      409,
-    )
-    await expect(setSlug({ groupId: 'g', slug: 'turma' }, execute)).rejects.toMatchObject({
-      code: 'SLUG_TAKEN',
-      details: { suggestions: ['turma-2'] },
     })
   })
 

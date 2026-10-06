@@ -7,10 +7,9 @@ export interface GroupRow {
   budget: number | null
   /** AAAA-MM-DD; vazio quando não informado. */
   eventDate: string
-  organizerTokenHash: string
   status: GroupStatus
-  /** Id do usuário (sessão do Appwrite) que criou o grupo; null para grupos sem sessão. */
-  ownerId: string | null
+  /** Id da conta (Appwrite Auth) do organizador que criou o grupo. */
+  ownerId: string
   /** Endereço amigável opcional, único entre os grupos (ex.: familia-da-bagunca). */
   slug: string | null
 }
@@ -53,13 +52,14 @@ export interface PostRow {
 
 /** Acesso ao banco. A implementação real usa o Appwrite; os testes usam um banco em memória. */
 export interface SantaDb {
-  createGroup(group: Omit<GroupRow, 'id'>): Promise<string>
+  createGroup(id: string, group: Omit<GroupRow, 'id'>): Promise<void>
   getGroup(id: string): Promise<GroupRow | null>
-  getGroupBySlug(slug: string): Promise<GroupRow | null>
   listGroupsByOwner(ownerId: string): Promise<GroupRow[]>
   setGroupStatus(id: string, status: GroupStatus): Promise<void>
-  /** Troca o endereço amigável; lança SLUG_TAKEN se outro grupo já usa. */
+  /** Troca o texto do link (não é único). */
   setGroupSlug(id: string, slug: string): Promise<void>
+  /** Apaga o grupo e tudo dele: participantes, perguntas e recados. */
+  deleteGroup(id: string): Promise<void>
   createParticipant(participant: Omit<ParticipantRow, 'id'>): Promise<string>
   listParticipants(groupId: string): Promise<ParticipantRow[]>
   updateParticipant(id: string, patch: Partial<Omit<ParticipantRow, 'id'>>): Promise<void>

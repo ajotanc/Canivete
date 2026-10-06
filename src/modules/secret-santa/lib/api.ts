@@ -1,12 +1,11 @@
 import { ExecutionMethod } from 'appwrite'
-import { AppwriteConfigError, ensureSession, getAppwrite, getSantaFunctionId } from '@/core/services/appwrite'
+import { AppwriteConfigError, getAppwrite, getSantaFunctionId } from '@/core/services/appwrite'
 
 export type SantaApiErrorCode =
   | 'INVALID_INPUT'
   | 'GROUP_NOT_FOUND'
   | 'GROUP_CLOSED'
   | 'NAME_TAKEN'
-  | 'SLUG_TAKEN'
   | 'PIN_NOT_SET'
   | 'PIN_ALREADY_SET'
   | 'BAD_CREDENTIALS'
@@ -32,7 +31,6 @@ export type Execute = (body: string) => Promise<{ responseStatusCode: number; re
 
 /** Execução real: chama a Function do amigo secreto pelo SDK web do Appwrite. */
 const executeOnAppwrite: Execute = async (body) => {
-  await ensureSession()
   const { functions } = getAppwrite()
   const execution = await functions.createExecution({
     functionId: getSantaFunctionId(),
@@ -125,13 +123,15 @@ export interface BoardPost {
 export function createGroup(
   input: {
     name: string
+    /** Texto do link; vazio ou ausente deixa só o id. */
+    slug?: string
     budget?: number | null
     eventDate?: string
     organizer?: { name: string; pin: string; wishlist?: string[] }
   },
   execute?: Execute,
 ) {
-  return callSanta<{ groupId: string; adminToken: string }>('createGroup', { ...input }, execute)
+  return callSanta<{ groupId: string }>('createGroup', { ...input }, execute)
 }
 
 export function getGroup(groupId: string, execute?: Execute) {
@@ -147,7 +147,7 @@ export function updateWishlist(input: Credentials & { wishlist: string[] }, exec
   return callSanta<Record<string, never>>('updateWishlist', { ...input }, execute)
 }
 
-export function listParticipants(input: { groupId: string; adminToken?: string }, execute?: Execute) {
+export function listParticipants(input: { groupId: string }, execute?: Execute) {
   return callSanta<{ status: GroupInfo['status']; participants: ParticipantSummary[] }>(
     'listParticipants',
     { ...input },
@@ -155,19 +155,23 @@ export function listParticipants(input: { groupId: string; adminToken?: string }
   )
 }
 
-export function addParticipant(input: { groupId: string; adminToken?: string; name: string }, execute?: Execute) {
+export function addParticipant(input: { groupId: string; name: string }, execute?: Execute) {
   return callSanta<Record<string, never>>('addParticipant', { ...input }, execute)
 }
 
-export function resetPin(input: { groupId: string; adminToken?: string; name: string }, execute?: Execute) {
+export function resetPin(input: { groupId: string; name: string }, execute?: Execute) {
   return callSanta<Record<string, never>>('resetPin', { ...input }, execute)
 }
 
-export function removeParticipant(input: { groupId: string; adminToken?: string; name: string }, execute?: Execute) {
+export function removeParticipant(input: { groupId: string; name: string }, execute?: Execute) {
   return callSanta<Record<string, never>>('removeParticipant', { ...input }, execute)
 }
 
-export function drawGroup(input: { groupId: string; adminToken?: string }, execute?: Execute) {
+export function deleteGroup(input: { groupId: string }, execute?: Execute) {
+  return callSanta<Record<string, never>>('deleteGroup', { ...input }, execute)
+}
+
+export function drawGroup(input: { groupId: string }, execute?: Execute) {
   return callSanta<Record<string, never>>('draw', { ...input }, execute)
 }
 
@@ -175,13 +179,12 @@ export function revealMatch(input: Credentials, execute?: Execute) {
   return callSanta<RevealResult>('reveal', { ...input }, execute)
 }
 
-/** Grupos criados por esta sessão (precisa da sessão anônima do Appwrite). */
+/** Grupos da conta logada. */
 export function listMyGroups(execute?: Execute) {
   return callSanta<{ groups: MyGroup[] }>('listMyGroups', {}, execute)
 }
 
-/** `adminToken` é opcional: o dono do grupo entra pela sessão. */
-export function setSlug(input: { groupId: string; adminToken?: string; slug: string }, execute?: Execute) {
+export function setSlug(input: { groupId: string; slug: string }, execute?: Execute) {
   return callSanta<{ slug: string }>('setSlug', { ...input }, execute)
 }
 

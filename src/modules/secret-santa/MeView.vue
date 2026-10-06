@@ -12,7 +12,7 @@ import QuestionsPanel from './components/QuestionsPanel.vue'
 import { useReveal } from './composables/useReveal'
 import { listMyGroups, revealMatch, SantaApiError, updateWishlist, type RevealResult } from './lib/api'
 import { adminPath, invitePath } from './lib/links'
-import { clearCredentials, loadAdminToken, loadCredentials } from './lib/session'
+import { clearCredentials, loadCredentials } from './lib/session'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,8 +23,8 @@ const state = ref<State>('loading')
 const errorMessage = ref('')
 const result = ref<RevealResult | null>(null)
 const wishlist = ref<string[]>([])
-/** O organizador (com token neste aparelho ou dono pela sessão) vê o botão de voltar ao painel. */
-const isOrganizer = ref(loadAdminToken(groupId) !== null)
+/** O dono do grupo (conta logada) vê o botão de voltar ao painel. */
+const isOrganizer = ref(false)
 const saving = ref(false)
 const { revealed, reveal, hide } = useReveal()
 
@@ -40,13 +40,11 @@ onMounted(async () => {
     result.value = await revealMatch({ groupId, ...credentials })
     wishlist.value = result.value.wishlist
     state.value = 'ready'
-    if (!isOrganizer.value) {
-      listMyGroups()
-        .then(({ groups }) => {
-          isOrganizer.value = groups.some((g) => g.id === groupId || g.slug === groupId)
-        })
-        .catch(() => {})
-    }
+    listMyGroups()
+      .then(({ groups }) => {
+        isOrganizer.value = groups.some((g) => g.id === groupId)
+      })
+      .catch(() => {})
   } catch (e) {
     if (e instanceof SantaApiError && (e.code === 'BAD_CREDENTIALS' || e.code === 'LOCKED' || e.code === 'PIN_NOT_SET')) {
       clearCredentials(groupId)

@@ -39,9 +39,8 @@ export function createAppwriteDb(env: Env): SantaDb {
     name: row.name,
     budget: typeof row.budget === 'number' ? row.budget : null,
     eventDate: row.eventDate ?? '',
-    organizerTokenHash: row.organizerTokenHash,
     status: row.status as GroupStatus,
-    ownerId: row.ownerId ?? null,
+    ownerId: row.ownerId,
     slug: row.slug ?? null,
   })
 
@@ -79,14 +78,13 @@ export function createAppwriteDb(env: Env): SantaDb {
   })
 
   return {
-    async createGroup(group) {
-      const row = await tables.createRow({
+    async createGroup(id, group) {
+      await tables.createRow({
         databaseId,
         tableId: groupsTableId,
-        rowId: ID.unique(),
+        rowId: id,
         data: { ...group, createdAt: dayjs().toISOString() },
       })
-      return row.$id
     },
     async getGroup(id) {
       try {
@@ -95,14 +93,6 @@ export function createAppwriteDb(env: Env): SantaDb {
         if ((error as { code?: number }).code === 404) return null
         throw error
       }
-    },
-    async getGroupBySlug(slug) {
-      const result = await tables.listRows({
-        databaseId,
-        tableId: groupsTableId,
-        queries: [Query.equal('slug', [slug]), Query.limit(1)],
-      })
-      return result.rows[0] ? toGroup(result.rows[0]) : null
     },
     async listGroupsByOwner(ownerId) {
       const result = await tables.listRows({
@@ -116,15 +106,7 @@ export function createAppwriteDb(env: Env): SantaDb {
       await tables.updateRow({ databaseId, tableId: groupsTableId, rowId: id, data: { status } })
     },
     async setGroupSlug(id, slug) {
-      try {
-        await tables.updateRow({ databaseId, tableId: groupsTableId, rowId: id, data: { slug } })
-      } catch (error) {
-        // O índice único em `slug` responde 409 quando dois grupos disputam o mesmo endereço.
-        if ((error as { code?: number }).code === 409) {
-          throw new SantaError('SLUG_TAKEN', 'Esse endereço já está em uso.')
-        }
-        throw error
-      }
+      await tables.updateRow({ databaseId, tableId: groupsTableId, rowId: id, data: { slug } })
     },
     async createParticipant(participant) {
       try {
@@ -153,6 +135,20 @@ export function createAppwriteDb(env: Env): SantaDb {
     },
     async updateParticipant(id, patch) {
       await tables.updateRow({ databaseId, tableId: participantsTableId, rowId: id, data: patch })
+    },
+    async deleteGroup(id) {
+      // Apaga em lotes até não sobrar nada; o grupo vai por último, assim dá para tentar de novo se algo falhar.
+      for (const tableId of [questionsTableId, postsTableId, participantsTableId]) {
+        for (let batch = 0; batch < 100; batch++) {
+          const result = await tables.deleteRows({
+            databaseId,
+            tableId,
+            queries: [Query.equal('groupId', [id]), Query.limit(100)],
+          })
+          if (result.total === 0) break
+        }
+      }
+      await tables.deleteRow({ databaseId, tableId: groupsTableId, rowId: id })
     },
     async deleteParticipant(id) {
       await tables.deleteRow({ databaseId, tableId: participantsTableId, rowId: id })

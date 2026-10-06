@@ -22,14 +22,17 @@ describe('entrypoint', () => {
   const run = createEntrypoint(() => createFakeDb())
 
   it('responde ok com os dados da ação', async () => {
-    const { context, calls } = makeContext({ bodyJson: { action: 'createGroup', name: 'Turma' } })
+    const { context, calls } = makeContext({ bodyJson: { action: 'createGroup', name: 'Turma' }, headers: { 'x-appwrite-user-id': 'owner-1' } })
     await run(context)
     expect(calls[0].status).toBeUndefined()
-    expect(calls[0].body).toMatchObject({ ok: true, data: { groupId: expect.any(String), adminToken: expect.any(String) } })
+    expect(calls[0].body).toMatchObject({ ok: true, data: { groupId: expect.any(String) } })
   })
 
   it('lê o corpo de bodyText quando bodyJson não vem', async () => {
-    const { context, calls } = makeContext({ bodyText: JSON.stringify({ action: 'createGroup', name: 'Turma' }) })
+    const { context, calls } = makeContext({
+      bodyText: JSON.stringify({ action: 'createGroup', name: 'Turma' }),
+      headers: { 'x-appwrite-user-id': 'owner-1' },
+    })
     await run(context)
     expect(calls[0].body).toMatchObject({ ok: true })
   })

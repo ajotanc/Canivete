@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { handleAction } from '../../../functions/secret-santa/src/handler'
 import { enroll } from './enroll'
 import { createFakeDb } from './fakeDb'
+import { OWNER, STRANGER } from './owner'
 
 async function errorCode(promise: Promise<unknown>) {
   try {
@@ -14,34 +15,34 @@ async function errorCode(promise: Promise<unknown>) {
 
 async function groupWith(names: string[], organizerName?: string) {
   const db = createFakeDb()
-  const { groupId, adminToken } = (await handleAction(db, {
+  const { groupId } = (await handleAction(db, {
     action: 'createGroup',
     name: 'Turma',
     ...(organizerName ? { organizer: { name: organizerName, pin: '9999' } } : {}),
-  })) as { groupId: string; adminToken: string }
+  }, OWNER)) as { groupId: string }
   for (const [i, name] of names.entries()) {
-    await enroll(db, groupId, adminToken, { name, pin: `${1000 + i}` })
+    await enroll(db, groupId, { name, pin: `${1000 + i}` })
   }
-  return { db, groupId, adminToken }
+  return { db, groupId }
 }
 
 describe('draw', () => {
-  it('exige o token do organizador', async () => {
+  it('exige a conta do organizador', async () => {
     const { db, groupId } = await groupWith(['A', 'B', 'C'])
-    expect(await errorCode(handleAction(db, { action: 'draw', groupId, adminToken: 'errado' }))).toBe('FORBIDDEN')
+    expect(await errorCode(handleAction(db, { action: 'draw', groupId }, STRANGER))).toBe('FORBIDDEN')
     expect(db.groups.get(groupId)!.status).toBe('open')
   })
 
   it('exige 3 ou mais participantes, também depois de remoções', async () => {
-    const { db, groupId, adminToken } = await groupWith(['A', 'B', 'C'])
-    await handleAction(db, { action: 'removeParticipant', groupId, adminToken, name: 'C' })
-    expect(await errorCode(handleAction(db, { action: 'draw', groupId, adminToken }))).toBe('NOT_ENOUGH_PARTICIPANTS')
+    const { db, groupId } = await groupWith(['A', 'B', 'C'])
+    await handleAction(db, { action: 'removeParticipant', groupId, name: 'C' }, OWNER)
+    expect(await errorCode(handleAction(db, { action: 'draw', groupId }, OWNER))).toBe('NOT_ENOUGH_PARTICIPANTS')
     expect(db.groups.get(groupId)!.status).toBe('open')
   })
 
   it('com exatamente 3 pessoas, sorteia sem ninguém tirar a si mesmo e fecha o grupo', async () => {
-    const { db, groupId, adminToken } = await groupWith(['A', 'B', 'C'])
-    await handleAction(db, { action: 'draw', groupId, adminToken })
+    const { db, groupId } = await groupWith(['A', 'B', 'C'])
+    await handleAction(db, { action: 'draw', groupId }, OWNER)
     expect(db.groups.get(groupId)!.status).toBe('drawn')
     const rows = await db.listParticipants(groupId)
     for (const row of rows) {
@@ -52,8 +53,8 @@ describe('draw', () => {
   })
 
   it('cada pessoa vê só o próprio par, e o organizador que participa também', async () => {
-    const { db, groupId, adminToken } = await groupWith(['Ana', 'Bia'], 'Lia')
-    await handleAction(db, { action: 'draw', groupId, adminToken })
+    const { db, groupId } = await groupWith(['Ana', 'Bia'], 'Lia')
+    await handleAction(db, { action: 'draw', groupId }, OWNER)
     const names = ['Ana', 'Bia', 'Lia']
     const pins: Record<string, string> = { Ana: '1000', Bia: '1001', Lia: '9999' }
     const received: string[] = []
@@ -71,31 +72,31 @@ describe('draw', () => {
   })
 
   it('não pode ser feito duas vezes nem aceitar entradas depois', async () => {
-    const { db, groupId, adminToken } = await groupWith(['A', 'B', 'C'])
-    await handleAction(db, { action: 'draw', groupId, adminToken })
-    expect(await errorCode(handleAction(db, { action: 'draw', groupId, adminToken }))).toBe('GROUP_CLOSED')
-    expect(await errorCode(handleAction(db, { action: 'addParticipant', groupId, adminToken, name: 'D' }))).toBe(
+    const { db, groupId } = await groupWith(['A', 'B', 'C'])
+    await handleAction(db, { action: 'draw', groupId }, OWNER)
+    expect(await errorCode(handleAction(db, { action: 'draw', groupId }, OWNER))).toBe('GROUP_CLOSED')
+    expect(await errorCode(handleAction(db, { action: 'addParticipant', groupId, name: 'D' }, OWNER))).toBe(
       'GROUP_CLOSED',
     )
   })
 
   it('se falhar no meio da gravação, volta para open e permite tentar de novo', async () => {
-    const { db, groupId, adminToken } = await groupWith(['A', 'B', 'C'])
+    const { db, groupId } = await groupWith(['A', 'B', 'C'])
     db.failUpdateParticipantAfter(1)
-    expect(await errorCode(handleAction(db, { action: 'draw', groupId, adminToken }))).toBe('INTERNAL')
+    expect(await errorCode(handleAction(db, { action: 'draw', groupId }, OWNER))).toBe('INTERNAL')
     expect(db.groups.get(groupId)!.status).toBe('open')
 
     db.failUpdateParticipantAfter(1000)
-    await handleAction(db, { action: 'draw', groupId, adminToken })
+    await handleAction(db, { action: 'draw', groupId }, OWNER)
     expect(db.groups.get(groupId)!.status).toBe('drawn')
     const rows = await db.listParticipants(groupId)
     expect(rows.every((r) => r.assignedToId !== null && r.assignedToId !== r.id)).toBe(true)
   })
 
   it('uma tentativa que falhou não deixa pares incompletos visíveis em reveal', async () => {
-    const { db, groupId, adminToken } = await groupWith(['A', 'B', 'C'])
+    const { db, groupId } = await groupWith(['A', 'B', 'C'])
     db.failUpdateParticipantAfter(1)
-    await errorCode(handleAction(db, { action: 'draw', groupId, adminToken }))
+    await errorCode(handleAction(db, { action: 'draw', groupId }, OWNER))
     const result = await handleAction(db, { action: 'reveal', groupId, name: 'A', pin: '1000' })
     expect(result).toEqual({ status: 'open', wishlist: [] })
   })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Copy, Dices, Gift, KeyRound, Link2, MessageCircle, Trash2, TriangleAlert, UserPlus } from '@lucide/vue'
+import { Copy, Dices, Gift, KeyRound, Link2, LogOut, MessageCircle, Trash2, UserPlus } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -13,8 +13,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { loadUser, logout, useAuth } from '@/core/services/auth'
+import AuthForm from './components/AuthForm.vue'
 import {
   addParticipant,
+  deleteGroup,
   drawGroup,
   getGroup,
   listParticipants,
@@ -24,24 +27,24 @@ import {
   setSlug,
   type ParticipantSummary,
 } from './lib/api'
-import { adminPath, adminUrl, inviteUrl, mePath, whatsappUrl } from './lib/links'
-import { loadAdminToken, loadCredentials, saveAdminToken, saveCredentials } from './lib/session'
+import { slugifyInput, trimSlug } from './lib/slug'
+import { adminPath, inviteUrl, mePath, whatsappUrl } from './lib/links'
+import { loadCredentials, saveCredentials } from './lib/session'
 
 const route = useRoute()
 const router = useRouter()
+const { user } = useAuth()
 /** Id ou endereço amigável, como veio da URL. */
 const groupId = ref(String(route.params.id))
 
-type State = 'loading' | 'ready' | 'no-token' | 'forbidden' | 'not-found' | 'error'
+type State = 'loading' | 'ready' | 'login' | 'forbidden' | 'not-found' | 'error'
 const state = ref<State>('loading')
 const errorMessage = ref('')
 const status = ref<'open' | 'drawing' | 'drawn'>('open')
 const participants = ref<ParticipantSummary[]>([])
-const adminToken = ref('')
 const groupName = ref('')
 const slug = ref<string | null>(null)
 const slugDraft = ref('')
-const slugSuggestions = ref<string[]>([])
 const savingSlug = ref(false)
 const confirmOpen = ref(false)
 const drawing = ref(false)
@@ -51,28 +54,19 @@ const newNameInput = ref<InstanceType<typeof Input> | null>(null)
 /** Pessoa cujo PIN o organizador quer zerar (abre a confirmação). */
 const resetTarget = ref<string | null>(null)
 const resetting = ref(false)
+const deleteOpen = ref(false)
+const deleting = ref(false)
 
-const invite = computed(() => inviteUrl(window.location.origin, slug.value ?? groupId.value))
+const origin = window.location.origin
+const invite = computed(() => inviteUrl(window.location.origin, groupId.value, slug.value))
 const hasMyself = computed(() => participants.value.some((p) => p.isOrganizer))
-const adminLink = computed(() => adminUrl(window.location.origin, slug.value ?? groupId.value, adminToken.value))
 const canDraw = computed(() => status.value === 'open' && participants.value.length >= 3)
 const pendingCount = computed(() => participants.value.filter((p) => !p.hasPin).length)
-
-/** Lê o token do fragmento (#t=...) e o guarda; depois tira o token da barra de endereço. */
-function readToken(): string | null {
-  const match = window.location.hash.match(/[#&]t=([^&]+)/)
-  if (match) {
-    saveAdminToken(groupId.value, match[1])
-    window.history.replaceState(null, '', window.location.pathname)
-    return match[1]
-  }
-  return loadAdminToken(groupId.value)
-}
 
 async function refresh() {
   try {
     const [result, group] = await Promise.all([
-      listParticipants({ groupId: groupId.value, adminToken: adminToken.value }),
+      listParticipants({ groupId: groupId.value }),
       getGroup(groupId.value),
     ])
     groupId.value = group.id
@@ -93,10 +87,23 @@ async function refresh() {
 }
 
 onMounted(async () => {
-  // Sem token neste aparelho, tenta mesmo assim: quem criou o grupo nesta sessão é reconhecido como dono.
-  adminToken.value = readToken() ?? ''
+  await loadUser()
+  if (!user.value) {
+    state.value = 'login'
+    return
+  }
   await refresh()
 })
+
+async function onLoggedIn() {
+  state.value = 'loading'
+  await refresh()
+}
+
+async function onLogout() {
+  await logout()
+  await router.push('/secret-santa')
+}
 
 async function copy(text: string, label: string) {
   try {
@@ -112,7 +119,7 @@ async function onAdd() {
   if (!name) return
   adding.value = true
   try {
-    await addParticipant({ groupId: groupId.value, adminToken: adminToken.value, name })
+    await addParticipant({ groupId: groupId.value, name })
     newName.value = ''
     toast.success(`${name} foi adicionado.`)
     await refresh()
@@ -125,24 +132,22 @@ async function onAdd() {
   }
 }
 
+function onSlugInput(event: Event) {
+  const input = event.target as HTMLInputElement
+  slugDraft.value = slugifyInput(input.value)
+  input.value = slugDraft.value
+}
+
 async function onSaveSlug() {
+  slugDraft.value = trimSlug(slugDraft.value)
   savingSlug.value = true
-  slugSuggestions.value = []
   try {
-    const result = await setSlug({ groupId: groupId.value, adminToken: adminToken.value, slug: slugDraft.value })
+    const result = await setSlug({ groupId: groupId.value, slug: slugDraft.value })
     slug.value = result.slug
     slugDraft.value = result.slug
-    toast.success('Endereço salvo. O convite agora usa ele.')
-    // A URL do painel muda com o endereço; leva o token junto para a nova chave.
-    if (adminToken.value) saveAdminToken(result.slug, adminToken.value)
-    const credentials = loadCredentials(String(route.params.id)) ?? loadCredentials(groupId.value)
-    if (credentials) saveCredentials(result.slug, credentials)
-    await router.replace(adminPath(result.slug))
+    toast.success('Link atualizado. O convite agora usa esse texto.')
   } catch (e) {
-    if (e instanceof SantaApiError && e.code === 'SLUG_TAKEN') {
-      slugSuggestions.value = Array.isArray(e.details?.suggestions) ? (e.details.suggestions as string[]) : []
-    }
-    toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível salvar o endereço.')
+    toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível salvar o texto do link.')
   } finally {
     savingSlug.value = false
   }
@@ -153,7 +158,7 @@ async function onReset() {
   if (!name) return
   resetting.value = true
   try {
-    await resetPin({ groupId: groupId.value, adminToken: adminToken.value, name })
+    await resetPin({ groupId: groupId.value, name })
     toast.success(`PIN de ${name} zerado. A pessoa cria um novo no próximo acesso.`)
     resetTarget.value = null
     await refresh()
@@ -164,9 +169,23 @@ async function onReset() {
   }
 }
 
+async function onDeleteGroup() {
+  deleting.value = true
+  try {
+    await deleteGroup({ groupId: groupId.value })
+    toast.success('Grupo excluído.')
+    deleteOpen.value = false
+    await router.push('/secret-santa')
+  } catch (e) {
+    toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível excluir o grupo.')
+  } finally {
+    deleting.value = false
+  }
+}
+
 async function onRemove(name: string) {
   try {
-    await removeParticipant({ groupId: groupId.value, adminToken: adminToken.value, name })
+    await removeParticipant({ groupId: groupId.value, name })
     toast.success(`${name} saiu do grupo.`)
     await refresh()
   } catch (e) {
@@ -177,7 +196,7 @@ async function onRemove(name: string) {
 async function onDraw() {
   drawing.value = true
   try {
-    await drawGroup({ groupId: groupId.value, adminToken: adminToken.value })
+    await drawGroup({ groupId: groupId.value })
     confirmOpen.value = false
     toast.success('Sorteio feito. Avise o grupo para ver quem tirou.')
     await refresh()
@@ -193,12 +212,19 @@ async function onDraw() {
   <section class="mx-auto w-full max-w-md space-y-8">
     <p v-if="state === 'loading'" class="py-12 text-center text-muted-foreground">Abrindo o painel...</p>
 
-    <div v-else-if="state === 'no-token' || state === 'forbidden'" class="space-y-4 py-12">
-      <h1 class="font-display text-3xl leading-tight">Link de administração necessário</h1>
+    <div v-else-if="state === 'login'" class="space-y-6 py-8">
+      <AuthForm @done="onLoggedIn" />
+    </div>
+
+    <div v-else-if="state === 'forbidden'" class="space-y-4 py-12">
+      <h1 class="font-display text-3xl leading-tight">Este grupo é de outra conta</h1>
       <p class="text-muted-foreground">
-        Abra o link de administração que apareceu quando você criou o grupo. Sem ele, não dá para sortear nem remover pessoas.
+        Só quem criou o grupo administra. Você está como {{ user?.email }}. Entre com a conta certa para abrir o painel.
       </p>
-      <Button class="h-11" as-child size="lg"><RouterLink :to="`/secret-santa/g/${groupId}`">Ir para o convite</RouterLink></Button>
+      <div class="flex flex-wrap gap-3">
+        <Button class="h-11" size="lg" @click="onLogout">Trocar de conta</Button>
+        <Button class="h-11" as-child size="lg" variant="outline"><RouterLink :to="`/secret-santa/g/${groupId}`">Ir para o convite</RouterLink></Button>
+      </div>
     </div>
 
     <div v-else-if="state === 'not-found'" class="space-y-4 py-12">
@@ -214,7 +240,16 @@ async function onDraw() {
 
     <template v-else>
       <header class="space-y-1">
-        <p class="text-sm text-muted-foreground">Painel do organizador</p>
+        <div class="flex items-center justify-between gap-3">
+          <p class="text-sm text-muted-foreground">Painel do organizador</p>
+          <div class="flex items-center gap-1">
+            <Button as-child variant="ghost" size="sm"><RouterLink to="/secret-santa">Meus grupos</RouterLink></Button>
+            <Button variant="ghost" size="sm" @click="onLogout">
+              <LogOut class="size-4" aria-hidden="true" />
+              Sair
+            </Button>
+          </div>
+        </div>
         <h1 class="font-display text-3xl leading-tight">{{ groupName }}</h1>
         <p class="text-muted-foreground">
           {{
@@ -252,26 +287,14 @@ async function onDraw() {
       </div>
 
       <form class="space-y-2" @submit.prevent="onSaveSlug">
-        <h2 class="flex items-center gap-2 font-display text-xl"><Link2 class="size-5" aria-hidden="true" />Endereço do grupo</h2>
-        <p class="text-sm text-muted-foreground">Opcional. Troque o código do link por um nome fácil, como <span class="font-medium">familia-da-bagunca</span>.</p>
+        <h2 class="flex items-center gap-2 font-display text-xl"><Link2 class="size-5" aria-hidden="true" />Texto do link</h2>
+        <p class="text-sm text-muted-foreground">Opcional. Deixa o link mais bonito, como <span class="font-medium">familia-da-bagunca</span>. Pode repetir o de outros grupos.</p>
         <div class="flex gap-2">
-          <Input v-model="slugDraft" class="h-11" maxlength="40" autocomplete="off" placeholder="familia-da-bagunca" aria-label="Endereço do grupo" />
+          <Input :value="slugDraft" class="h-11" maxlength="40" autocomplete="off" placeholder="familia-da-bagunca" aria-label="Texto do link" @input="onSlugInput" @blur="slugDraft = trimSlug(slugDraft)" />
           <Button type="submit" class="h-11 shrink-0" :disabled="savingSlug || slugDraft.trim().length < 3">Salvar</Button>
         </div>
-        <div v-if="slugSuggestions.length > 0" class="flex flex-wrap items-center gap-2 text-sm">
-          <span class="text-muted-foreground">Sugestões:</span>
-          <Button v-for="item in slugSuggestions" :key="item" type="button" size="sm" variant="outline" @click="slugDraft = item">{{ item }}</Button>
-        </div>
+        <p class="break-all text-sm text-muted-foreground">{{ inviteUrl(origin, groupId, slugDraft ? trimSlug(slugDraft) : null) }}</p>
       </form>
-
-      <div class="space-y-2 rounded-lg border border-warning/50 bg-warning/10 p-4">
-        <p class="flex items-center gap-2 font-semibold"><TriangleAlert class="size-4" aria-hidden="true" />Guarde o link de administração</p>
-        <p class="text-sm text-muted-foreground">É o único jeito de voltar a este painel em outro aparelho. Não envie para o grupo.</p>
-        <Button class="h-11" variant="outline" size="sm" @click="copy(adminLink, 'Link de administração')">
-          <Copy class="size-4" aria-hidden="true" />
-          Copiar link de administração
-        </Button>
-      </div>
 
       <div class="space-y-3">
         <h2 class="font-display text-xl">Pessoas ({{ participants.length }})</h2>
@@ -344,6 +367,34 @@ async function onDraw() {
           sortear assim mesmo: quem não criou cria depois e vê quem tirou.
         </p>
       </div>
+
+      <div class="space-y-2 rounded-lg border border-destructive/40 p-4">
+        <h2 class="font-display text-xl">Excluir grupo</h2>
+        <p class="text-sm text-muted-foreground">
+          Apaga o grupo, as pessoas, as perguntas e o mural. Não dá para desfazer.
+        </p>
+        <Button class="h-11" variant="destructive" @click="deleteOpen = true">
+          <Trash2 class="size-4" aria-hidden="true" />
+          Excluir grupo
+        </Button>
+      </div>
+
+      <Dialog v-model:open="deleteOpen">
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir "{{ groupName }}"?</DialogTitle>
+            <DialogDescription>
+              Todas as pessoas cadastradas, o sorteio, as perguntas anônimas e os recados do mural serão apagados para sempre.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button class="h-11" variant="outline" @click="deleteOpen = false">Cancelar</Button>
+            <Button class="h-11" variant="destructive" :disabled="deleting" @click="onDeleteGroup">
+              {{ deleting ? 'Excluindo...' : 'Excluir tudo' }}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog v-model:open="confirmOpen">
         <DialogContent>

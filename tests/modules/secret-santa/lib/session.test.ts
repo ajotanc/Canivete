@@ -2,9 +2,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   clearCredentials,
-  loadAdminToken,
   loadCredentials,
-  saveAdminToken,
   saveCredentials,
 } from '@/modules/secret-santa/lib/session'
 
@@ -23,7 +21,6 @@ describe('credenciais da sessão', () => {
 
   it('o PIN nunca vai para o localStorage', () => {
     saveCredentials('g1', { name: 'Ana', pin: '1234' })
-    saveAdminToken('g1', 'tok')
     expect(JSON.stringify({ ...localStorage })).not.toContain('1234')
   })
 
@@ -36,13 +33,5 @@ describe('credenciais da sessão', () => {
   it('ignora valor corrompido', () => {
     sessionStorage.setItem('santa:cred:g1', '{ quebrado')
     expect(loadCredentials('g1')).toBeNull()
-  })
-})
-
-describe('token do organizador', () => {
-  it('guarda e lê em localStorage', () => {
-    saveAdminToken('g1', 'tok')
-    expect(loadAdminToken('g1')).toBe('tok')
-    expect(loadAdminToken('g2')).toBeNull()
   })
 })

@@ -13,15 +13,14 @@ As duas ficam no mesmo banco do sorteador. Nenhuma tem permissões (nem para `an
 | `name` | string | 80 | sim |
 | `budget` | float | | não (padrão `null`) |
 | `eventDate` | string | 10 | não |
-| `organizerTokenHash` | string | 64 | sim |
 | `status` | string | 10 | sim |
-| `ownerId` | string | 36 | não (padrão `null`) |
+| `ownerId` | string | 36 | sim |
 | `slug` | string | 40 | não (padrão `null`) |
 | `createdAt` | datetime | | não |
 
-Índices: `idx_owner` (key) em `ownerId`; `uniq_slug` (unique) em `slug`.
+Índice: `idx_owner` (key) em `ownerId`. O `slug` não tem índice único: vários grupos podem repetir o texto do link.
 
-`ownerId` é o id do usuário da sessão do Appwrite (o site cria uma sessão anônima) que criou o grupo. Ele permite listar "meus grupos" e administrar sem o token. `slug` é o endereço amigável opcional (`/secret-santa/g/familia-da-bagunca`).
+`ownerId` é o id da conta (Appwrite Auth, e-mail e senha) do organizador que criou o grupo. Só ele administra o grupo e a lista "meus grupos" vem dele; a Function lê o id no cabeçalho `x-appwrite-user-id`. O id do grupo é um código curto aleatório (6 caracteres, ex.: `k7x2m9`). `slug` é o texto opcional e repetível do link (`/secret-santa/g/k7x2m9/familia-da-bagunca`); quem identifica o grupo é o id. `deleteGroup` apaga o grupo com participantes, perguntas e recados.
 
 ### `santa_participants`
 
@@ -70,7 +69,7 @@ As colunas de texto são `string`, porque o servidor (1.8.1) não tem a rota de 
 ## Function
 
 - Id `secret-santa`, runtime `node-22`, timeout de 15 segundos.
-- Permissão de execução: `any`. Para o dono do grupo ser reconhecido, o site abre uma sessão anônima: ative *Auth → Anonymous* no console do Appwrite e cadastre o domínio do site como plataforma Web.
+- Permissão de execução: `any` (os participantes entram sem conta, só com nome e PIN). O organizador usa conta e senha do *Auth* do Appwrite (e-mail/senha ativado); cadastre o domínio do site como plataforma Web. A Function só aceita `createGroup` e as ações de administração com o cabeçalho `x-appwrite-user-id` do dono.
 - Entrypoint `dist/main.js`, com os comandos de build `npm install && npm run build`.
 - Escopos da chave gerada por execução: `databases.read`, `databases.write`, `tables.read`, `tables.write`, `rows.read`, `rows.write`.
 

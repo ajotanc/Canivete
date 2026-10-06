@@ -1,15 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { adminUrl, inviteUrl, whatsappUrl } from '@/modules/secret-santa/lib/links'
+import { inviteUrl, whatsappUrl } from '@/modules/secret-santa/lib/links'
 
 describe('links', () => {
   it('monta o link de convite', () => {
     expect(inviteUrl('https://x.com', 'abc')).toBe('https://x.com/secret-santa/g/abc')
   })
 
-  it('põe o token do organizador no fragmento, nunca na query', () => {
-    const url = adminUrl('https://x.com', 'abc', 'tok-1')
-    expect(url).toBe('https://x.com/secret-santa/g/abc/admin#t=tok-1')
-    expect(url).not.toContain('?')
+  it('põe o texto bonito depois do id', () => {
+    expect(inviteUrl('https://x.com', 'k7x2m9', 'familia-buscape')).toBe('https://x.com/secret-santa/g/k7x2m9/familia-buscape')
   })
 
   it('monta o link do WhatsApp com texto codificado', () => {

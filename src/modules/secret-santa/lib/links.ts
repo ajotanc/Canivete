@@ -1,14 +1,11 @@
-export const invitePath = (groupId: string) => `/secret-santa/g/${groupId}`
+/** O texto depois do id só deixa o link bonito: quem identifica o grupo é o id. */
+export const invitePath = (groupId: string, slug?: string | null) =>
+  `/secret-santa/g/${groupId}${slug ? `/${slug}` : ''}`
 export const mePath = (groupId: string) => `/secret-santa/g/${groupId}/me`
 export const adminPath = (groupId: string) => `/secret-santa/g/${groupId}/admin`
 
-export function inviteUrl(origin: string, groupId: string): string {
-  return `${origin}${invitePath(groupId)}`
-}
-
-/** O token vai no fragmento (#), que o navegador não envia ao servidor. */
-export function adminUrl(origin: string, groupId: string, token: string): string {
-  return `${origin}${adminPath(groupId)}#t=${token}`
+export function inviteUrl(origin: string, groupId: string, slug?: string | null): string {
+  return `${origin}${invitePath(groupId, slug)}`
 }
 
 export function whatsappUrl(groupName: string, inviteLink: string): string {
