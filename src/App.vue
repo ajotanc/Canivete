@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { Wrench } from '@lucide/vue'
-import { Button } from '@/components/ui/button'
+import { onMounted } from 'vue'
+import { Toaster } from '@/components/ui/sonner'
+import AppLayout from '@/core/layout/AppLayout.vue'
+import { useTheme } from '@/core/theme/useTheme'
+
+const { init } = useTheme()
+onMounted(init)
 </script>
 
 <template>
-  <main class="flex min-h-screen items-center justify-center gap-3 bg-background text-foreground">
-    <Wrench class="size-6" />
-    <Button>Canivete</Button>
-  </main>
+  <AppLayout />
+  <Toaster />
 </template>
