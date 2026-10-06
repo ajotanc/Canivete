@@ -12,8 +12,15 @@
     "noEmit": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client", "vite-plugin-pwa/client", "node"],
-    "baseUrl": ".",
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["src/**/*.ts", "src/**/*.vue", "tests/**/*.ts", "vite.config.ts", "pwa-assets.config.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.vue",
+    "tests/**/*.ts",
+    "vite.config.ts",
+    "pwa-assets.config.ts",
+    "functions/secret-santa/src/**/*.ts"
+  ],
+  "exclude": ["functions/secret-santa/src/appwriteDb.ts", "functions/secret-santa/src/main.ts"]
 }
