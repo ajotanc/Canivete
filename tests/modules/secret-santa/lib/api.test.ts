@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { AppwriteConfigError } from '@/core/services/appwrite'
 import {
+  askQuestion,
+  postMessage,
+  setSlug,
   callSanta,
   createGroup,
   revealMatch,
@@ -60,19 +63,19 @@ describe('funções tipadas', () => {
       sent = JSON.parse(body)
       return { responseStatusCode: 200, responseBody: JSON.stringify({ ok: true, data: { groupId: 'g', adminToken: 't' } }) }
     }
-    await createGroup({ name: 'Turma', budget: '', eventDate: '' }, execute)
+    await createGroup({ name: 'Turma', budget: null, eventDate: '' }, execute)
     expect(sent.organizer).toBeUndefined()
-    await createGroup({ name: 'Turma', organizer: { name: 'Lia', pin: '1234', wishlist: '' } }, execute)
-    expect(sent.organizer).toEqual({ name: 'Lia', pin: '1234', wishlist: '' })
+    await createGroup({ name: 'Turma', organizer: { name: 'Lia', pin: '1234', wishlist: [] } }, execute)
+    expect(sent.organizer).toEqual({ name: 'Lia', pin: '1234', wishlist: [] })
   })
 
   it('revealMatch devolve o par quando sorteado', async () => {
     const execute = respond({
       ok: true,
-      data: { status: 'drawn', wishlist: 'x', receiver: { name: 'Ana', wishlist: 'y' } },
+      data: { status: 'drawn', wishlist: ['x'], receiver: { name: 'Ana', wishlist: ['y'] } },
     })
     const result = await revealMatch({ groupId: 'g', name: 'João', pin: '1234' }, execute)
-    expect(result).toEqual({ status: 'drawn', wishlist: 'x', receiver: { name: 'Ana', wishlist: 'y' } })
+    expect(result).toEqual({ status: 'drawn', wishlist: ['x'], receiver: { name: 'Ana', wishlist: ['y'] } })
   })
 
   it('setupPin envia nome, PIN e lista de desejos na ação de primeiro acesso', async () => {
@@ -81,8 +84,8 @@ describe('funções tipadas', () => {
       sent = JSON.parse(body)
       return { responseStatusCode: 200, responseBody: JSON.stringify({ ok: true, data: {} }) }
     }
-    await setupPin({ groupId: 'g', name: 'Ana', pin: '1234', wishlist: 'chá' }, execute)
-    expect(sent).toEqual({ action: 'setupPin', groupId: 'g', name: 'Ana', pin: '1234', wishlist: 'chá' })
+    await setupPin({ groupId: 'g', name: 'Ana', pin: '1234', wishlist: ['chá'] }, execute)
+    expect(sent).toEqual({ action: 'setupPin', groupId: 'g', name: 'Ana', pin: '1234', wishlist: ['chá'] })
   })
 
   it('PIN_ALREADY_SET chega como código próprio', async () => {
@@ -90,5 +93,31 @@ describe('funções tipadas', () => {
     await expect(setupPin({ groupId: 'g', name: 'Ana', pin: '1234' }, execute)).rejects.toMatchObject({
       code: 'PIN_ALREADY_SET',
     })
+  })
+
+  it('setSlug entrega as sugestões do servidor no erro', async () => {
+    const execute = respond(
+      { ok: false, error: { code: 'SLUG_TAKEN', message: 'Em uso.', details: { suggestions: ['turma-2'] } } },
+      409,
+    )
+    await expect(setSlug({ groupId: 'g', slug: 'turma' }, execute)).rejects.toMatchObject({
+      code: 'SLUG_TAKEN',
+      details: { suggestions: ['turma-2'] },
+    })
+  })
+
+  it('askQuestion e postMessage mandam as credenciais junto', async () => {
+    const sent: Record<string, unknown>[] = []
+    const execute: Execute = async (body) => {
+      sent.push(JSON.parse(body))
+      return { responseStatusCode: 200, responseBody: JSON.stringify({ ok: true, data: {} }) }
+    }
+    const credentials = { groupId: 'g', name: 'Ana', pin: '1234' }
+    await askQuestion({ ...credentials, question: 'Chocolate ou vinho?' }, execute)
+    await postMessage({ ...credentials, text: 'Oi' }, execute)
+    expect(sent).toEqual([
+      { action: 'askQuestion', ...credentials, question: 'Chocolate ou vinho?' },
+      { action: 'postMessage', ...credentials, text: 'Oi' },
+    ])
   })
 })

@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { Eye, EyeOff } from '@lucide/vue'
+import { Eye, EyeOff, LayoutDashboard } from '@lucide/vue'
 import { onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import TagInput from '@/components/TagInput.vue'
+import BoardPanel from './components/BoardPanel.vue'
 import GiftTag from './components/GiftTag.vue'
+import QuestionsPanel from './components/QuestionsPanel.vue'
 import { useReveal } from './composables/useReveal'
-import { revealMatch, SantaApiError, updateWishlist, type RevealResult } from './lib/api'
-import { invitePath } from './lib/links'
-import { clearCredentials, loadCredentials } from './lib/session'
+import { listMyGroups, revealMatch, SantaApiError, updateWishlist, type RevealResult } from './lib/api'
+import { adminPath, invitePath } from './lib/links'
+import { clearCredentials, loadAdminToken, loadCredentials } from './lib/session'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,7 +22,9 @@ type State = 'loading' | 'ready' | 'error'
 const state = ref<State>('loading')
 const errorMessage = ref('')
 const result = ref<RevealResult | null>(null)
-const wishlist = ref('')
+const wishlist = ref<string[]>([])
+/** O organizador (com token neste aparelho ou dono pela sessão) vê o botão de voltar ao painel. */
+const isOrganizer = ref(loadAdminToken(groupId) !== null)
 const saving = ref(false)
 const { revealed, reveal, hide } = useReveal()
 
@@ -36,6 +40,13 @@ onMounted(async () => {
     result.value = await revealMatch({ groupId, ...credentials })
     wishlist.value = result.value.wishlist
     state.value = 'ready'
+    if (!isOrganizer.value) {
+      listMyGroups()
+        .then(({ groups }) => {
+          isOrganizer.value = groups.some((g) => g.id === groupId || g.slug === groupId)
+        })
+        .catch(() => {})
+    }
   } catch (e) {
     if (e instanceof SantaApiError && (e.code === 'BAD_CREDENTIALS' || e.code === 'LOCKED' || e.code === 'PIN_NOT_SET')) {
       clearCredentials(groupId)
@@ -90,10 +101,14 @@ async function onSave() {
         </div>
         <div v-if="revealed" class="space-y-2">
           <h2 class="font-display text-xl">O que {{ result.receiver.name }} gostaria de ganhar</h2>
-          <p class="whitespace-pre-line rounded-lg bg-card p-4">
-            {{ result.receiver.wishlist || 'Ainda não escreveu nada.' }}
-          </p>
+          <ul v-if="result.receiver.wishlist.length > 0" class="flex flex-wrap gap-2">
+            <li v-for="item in result.receiver.wishlist" :key="item" class="rounded-full bg-secondary/20 px-3 py-1 text-sm">
+              {{ item }}
+            </li>
+          </ul>
+          <p v-else class="rounded-lg bg-card p-4 text-muted-foreground">Ainda não escreveu nada.</p>
         </div>
+        <QuestionsPanel v-if="credentials" :credentials="{ groupId, ...credentials }" :receiver-name="result.receiver.name" />
       </template>
 
       <template v-else>
@@ -103,11 +118,20 @@ async function onSave() {
         </header>
         <form class="space-y-3" @submit.prevent="onSave">
           <Label for="my-wishlist">O que você gostaria de ganhar</Label>
-          <Textarea id="my-wishlist" v-model="wishlist" maxlength="500" rows="4" />
+          <TagInput id="my-wishlist" v-model="wishlist" placeholder="Digite um item e aperte Enter" />
           <Button type="submit" size="lg" class="w-full h-11" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar lista' }}</Button>
         </form>
         <Button class="h-11" as-child variant="ghost"><RouterLink :to="invitePath(groupId)">Voltar ao grupo</RouterLink></Button>
       </template>
+
+      <BoardPanel v-if="credentials" :credentials="{ groupId, ...credentials }" />
+
+      <Button v-if="isOrganizer" class="h-11 w-full" as-child variant="outline" size="lg">
+        <RouterLink :to="adminPath(groupId)">
+          <LayoutDashboard class="size-4" aria-hidden="true" />
+          Voltar ao painel do organizador
+        </RouterLink>
+      </Button>
     </template>
   </section>
 </template>

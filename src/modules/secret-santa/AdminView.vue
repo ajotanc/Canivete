@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Copy, Dices, KeyRound, MessageCircle, Trash2, TriangleAlert, UserPlus } from '@lucide/vue'
+import { Copy, Dices, Gift, KeyRound, Link2, MessageCircle, Trash2, TriangleAlert, UserPlus } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,13 +21,16 @@ import {
   removeParticipant,
   resetPin,
   SantaApiError,
+  setSlug,
   type ParticipantSummary,
 } from './lib/api'
-import { adminUrl, inviteUrl, whatsappUrl } from './lib/links'
-import { loadAdminToken, saveAdminToken } from './lib/session'
+import { adminPath, adminUrl, inviteUrl, mePath, whatsappUrl } from './lib/links'
+import { loadAdminToken, loadCredentials, saveAdminToken, saveCredentials } from './lib/session'
 
 const route = useRoute()
-const groupId = String(route.params.id)
+const router = useRouter()
+/** Id ou endereço amigável, como veio da URL. */
+const groupId = ref(String(route.params.id))
 
 type State = 'loading' | 'ready' | 'no-token' | 'forbidden' | 'not-found' | 'error'
 const state = ref<State>('loading')
@@ -36,6 +39,10 @@ const status = ref<'open' | 'drawing' | 'drawn'>('open')
 const participants = ref<ParticipantSummary[]>([])
 const adminToken = ref('')
 const groupName = ref('')
+const slug = ref<string | null>(null)
+const slugDraft = ref('')
+const slugSuggestions = ref<string[]>([])
+const savingSlug = ref(false)
 const confirmOpen = ref(false)
 const drawing = ref(false)
 const newName = ref('')
@@ -45,8 +52,9 @@ const newNameInput = ref<InstanceType<typeof Input> | null>(null)
 const resetTarget = ref<string | null>(null)
 const resetting = ref(false)
 
-const invite = computed(() => inviteUrl(window.location.origin, groupId))
-const adminLink = computed(() => adminUrl(window.location.origin, groupId, adminToken.value))
+const invite = computed(() => inviteUrl(window.location.origin, slug.value ?? groupId.value))
+const hasMyself = computed(() => participants.value.some((p) => p.isOrganizer))
+const adminLink = computed(() => adminUrl(window.location.origin, slug.value ?? groupId.value, adminToken.value))
 const canDraw = computed(() => status.value === 'open' && participants.value.length >= 3)
 const pendingCount = computed(() => participants.value.filter((p) => !p.hasPin).length)
 
@@ -54,20 +62,23 @@ const pendingCount = computed(() => participants.value.filter((p) => !p.hasPin).
 function readToken(): string | null {
   const match = window.location.hash.match(/[#&]t=([^&]+)/)
   if (match) {
-    saveAdminToken(groupId, match[1])
+    saveAdminToken(groupId.value, match[1])
     window.history.replaceState(null, '', window.location.pathname)
     return match[1]
   }
-  return loadAdminToken(groupId)
+  return loadAdminToken(groupId.value)
 }
 
 async function refresh() {
   try {
     const [result, group] = await Promise.all([
-      listParticipants({ groupId, adminToken: adminToken.value }),
-      getGroup(groupId),
+      listParticipants({ groupId: groupId.value, adminToken: adminToken.value }),
+      getGroup(groupId.value),
     ])
+    groupId.value = group.id
     groupName.value = group.name
+    slug.value = group.slug
+    slugDraft.value ||= group.slug ?? ''
     status.value = result.status
     participants.value = result.participants
     state.value = 'ready'
@@ -82,12 +93,8 @@ async function refresh() {
 }
 
 onMounted(async () => {
-  const token = readToken()
-  if (!token) {
-    state.value = 'no-token'
-    return
-  }
-  adminToken.value = token
+  // Sem token neste aparelho, tenta mesmo assim: quem criou o grupo nesta sessão é reconhecido como dono.
+  adminToken.value = readToken() ?? ''
   await refresh()
 })
 
@@ -105,7 +112,7 @@ async function onAdd() {
   if (!name) return
   adding.value = true
   try {
-    await addParticipant({ groupId, adminToken: adminToken.value, name })
+    await addParticipant({ groupId: groupId.value, adminToken: adminToken.value, name })
     newName.value = ''
     toast.success(`${name} foi adicionado.`)
     await refresh()
@@ -118,12 +125,35 @@ async function onAdd() {
   }
 }
 
+async function onSaveSlug() {
+  savingSlug.value = true
+  slugSuggestions.value = []
+  try {
+    const result = await setSlug({ groupId: groupId.value, adminToken: adminToken.value, slug: slugDraft.value })
+    slug.value = result.slug
+    slugDraft.value = result.slug
+    toast.success('Endereço salvo. O convite agora usa ele.')
+    // A URL do painel muda com o endereço; leva o token junto para a nova chave.
+    if (adminToken.value) saveAdminToken(result.slug, adminToken.value)
+    const credentials = loadCredentials(String(route.params.id)) ?? loadCredentials(groupId.value)
+    if (credentials) saveCredentials(result.slug, credentials)
+    await router.replace(adminPath(result.slug))
+  } catch (e) {
+    if (e instanceof SantaApiError && e.code === 'SLUG_TAKEN') {
+      slugSuggestions.value = Array.isArray(e.details?.suggestions) ? (e.details.suggestions as string[]) : []
+    }
+    toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível salvar o endereço.')
+  } finally {
+    savingSlug.value = false
+  }
+}
+
 async function onReset() {
   const name = resetTarget.value
   if (!name) return
   resetting.value = true
   try {
-    await resetPin({ groupId, adminToken: adminToken.value, name })
+    await resetPin({ groupId: groupId.value, adminToken: adminToken.value, name })
     toast.success(`PIN de ${name} zerado. A pessoa cria um novo no próximo acesso.`)
     resetTarget.value = null
     await refresh()
@@ -136,7 +166,7 @@ async function onReset() {
 
 async function onRemove(name: string) {
   try {
-    await removeParticipant({ groupId, adminToken: adminToken.value, name })
+    await removeParticipant({ groupId: groupId.value, adminToken: adminToken.value, name })
     toast.success(`${name} saiu do grupo.`)
     await refresh()
   } catch (e) {
@@ -147,7 +177,7 @@ async function onRemove(name: string) {
 async function onDraw() {
   drawing.value = true
   try {
-    await drawGroup({ groupId, adminToken: adminToken.value })
+    await drawGroup({ groupId: groupId.value, adminToken: adminToken.value })
     confirmOpen.value = false
     toast.success('Sorteio feito. Avise o grupo para ver quem tirou.')
     await refresh()
@@ -210,6 +240,29 @@ async function onDraw() {
           </a>
         </Button>
       </div>
+
+      <div v-if="status === 'drawn' && hasMyself" class="rounded-lg border border-secondary/60 bg-secondary/10 p-4">
+        <p class="mb-3 font-semibold">O sorteio foi feito!</p>
+        <Button as-child size="lg" class="h-11 w-full" variant="secondary">
+          <RouterLink :to="mePath(String(route.params.id))">
+            <Gift class="size-4" aria-hidden="true" />
+            Ver meu amigo
+          </RouterLink>
+        </Button>
+      </div>
+
+      <form class="space-y-2" @submit.prevent="onSaveSlug">
+        <h2 class="flex items-center gap-2 font-display text-xl"><Link2 class="size-5" aria-hidden="true" />Endereço do grupo</h2>
+        <p class="text-sm text-muted-foreground">Opcional. Troque o código do link por um nome fácil, como <span class="font-medium">familia-da-bagunca</span>.</p>
+        <div class="flex gap-2">
+          <Input v-model="slugDraft" class="h-11" maxlength="40" autocomplete="off" placeholder="familia-da-bagunca" aria-label="Endereço do grupo" />
+          <Button type="submit" class="h-11 shrink-0" :disabled="savingSlug || slugDraft.trim().length < 3">Salvar</Button>
+        </div>
+        <div v-if="slugSuggestions.length > 0" class="flex flex-wrap items-center gap-2 text-sm">
+          <span class="text-muted-foreground">Sugestões:</span>
+          <Button v-for="item in slugSuggestions" :key="item" type="button" size="sm" variant="outline" @click="slugDraft = item">{{ item }}</Button>
+        </div>
+      </form>
 
       <div class="space-y-2 rounded-lg border border-warning/50 bg-warning/10 p-4">
         <p class="flex items-center gap-2 font-semibold"><TriangleAlert class="size-4" aria-hidden="true" />Guarde o link de administração</p>

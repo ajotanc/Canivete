@@ -8,7 +8,8 @@ import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import TagInput from '@/components/TagInput.vue'
+import { formatMoney } from '@/lib/money'
 import { getGroup, revealMatch, SantaApiError, setupPin, type GroupInfo } from './lib/api'
 import { mePath } from './lib/links'
 import { saveCredentials } from './lib/session'
@@ -26,7 +27,7 @@ const errorMessage = ref('')
 const selected = ref<string | null>(null)
 const pin = ref('')
 const pinConfirm = ref('')
-const wishlist = ref('')
+const wishlist = ref<string[]>([])
 const submitting = ref(false)
 const formError = ref('')
 
@@ -118,7 +119,7 @@ async function onSubmit() {
         <h1 class="font-display text-3xl leading-tight">{{ group.name }}</h1>
         <ul class="space-y-1 text-muted-foreground">
           <li class="flex items-center gap-2"><Users class="size-4" aria-hidden="true" />{{ group.participantCount }} {{ group.participantCount === 1 ? 'pessoa' : 'pessoas' }}</li>
-          <li v-if="group.budget" class="flex items-center gap-2"><Coins class="size-4" aria-hidden="true" />{{ group.budget }}</li>
+          <li v-if="group.budget !== null" class="flex items-center gap-2"><Coins class="size-4" aria-hidden="true" />{{ formatMoney(group.budget) }}</li>
           <li v-if="group.eventDate" class="flex items-center gap-2"><CalendarDays class="size-4" aria-hidden="true" />{{ formatDate(group.eventDate) }}</li>
         </ul>
         <p v-if="group.status !== 'open'" class="rounded-lg bg-primary/10 p-3 text-sm">
@@ -157,22 +158,22 @@ async function onSubmit() {
           </p>
           <div class="space-y-2">
             <Label for="pin">Crie um PIN</Label>
-            <Input id="pin" v-model="pin" class="h-11" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" />
+            <Input id="pin" v-model="pin" v-maska data-maska="######" class="h-11" type="password" inputmode="numeric" autocomplete="new-password" />
           </div>
           <div class="space-y-2">
             <Label for="pin-confirm">Repita o PIN</Label>
-            <Input id="pin-confirm" v-model="pinConfirm" class="h-11" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" />
+            <Input id="pin-confirm" v-model="pinConfirm" v-maska data-maska="######" class="h-11" type="password" inputmode="numeric" autocomplete="new-password" />
             <p v-if="pinConfirm && PIN_PATTERN.test(pin) && pin !== pinConfirm" class="text-sm text-destructive">Os PINs não são iguais.</p>
           </div>
           <div v-if="group.status === 'open'" class="space-y-2">
             <Label for="wishlist">O que você gostaria de ganhar</Label>
-            <Textarea id="wishlist" v-model="wishlist" maxlength="500" rows="3" />
+            <TagInput id="wishlist" v-model="wishlist" placeholder="Digite um item e aperte Enter" />
           </div>
         </template>
 
         <div v-else class="space-y-2">
           <Label for="pin">Seu PIN</Label>
-          <Input id="pin" v-model="pin" class="h-11" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" />
+          <Input id="pin" v-model="pin" v-maska data-maska="######" class="h-11" type="password" inputmode="numeric" autocomplete="current-password" />
         </div>
 
         <p v-if="formError" class="text-sm text-destructive" role="alert">{{ formError }}</p>

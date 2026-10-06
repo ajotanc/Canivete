@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { ArrowLeft, Gift } from '@lucide/vue'
-import { computed, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { ArrowLeft, ChevronRight, Gift } from '@lucide/vue'
+import { computed, onMounted, ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { Textarea } from '@/components/ui/textarea'
-import { createGroup, SantaApiError } from './lib/api'
+import TagInput from '@/components/TagInput.vue'
+import { parseMoney } from '@/lib/money'
+import { createGroup, listMyGroups, SantaApiError, type MyGroup } from './lib/api'
 import { adminPath } from './lib/links'
 import { saveAdminToken, saveCredentials } from './lib/session'
 
@@ -21,9 +22,19 @@ const eventDate = ref('')
 const participates = ref(true)
 const myName = ref('')
 const myPin = ref('')
-const myWishlist = ref('')
+const myWishlist = ref<string[]>([])
+const myGroups = ref<MyGroup[]>([])
 const loading = ref(false)
 const error = ref('')
+
+// Grupos que esta sessão já criou: quem organiza mais de um amigo secreto escolhe qual abrir.
+onMounted(async () => {
+  try {
+    myGroups.value = (await listMyGroups()).groups
+  } catch {
+    // Sem sessão ou sem rede: só não mostra a lista.
+  }
+})
 
 const stepTitles = ['Como vai se chamar o grupo?', 'Valor e data (opcionais)', 'Você também participa?']
 const canContinue = computed(() => {
@@ -38,7 +49,7 @@ async function onSubmit() {
   try {
     const { groupId, adminToken } = await createGroup({
       name: name.value,
-      budget: budget.value,
+      budget: parseMoney(budget.value),
       eventDate: eventDate.value,
       ...(participates.value
         ? { organizer: { name: myName.value, pin: myPin.value, wishlist: myWishlist.value } }
@@ -70,6 +81,25 @@ function onNext() {
       <p class="text-muted-foreground">Crie o grupo, cadastre as pessoas e sorteie. Cada uma vê só quem tirou.</p>
     </header>
 
+    <div v-if="myGroups.length > 0" class="space-y-3">
+      <h2 class="font-display text-xl">Seus amigos secretos</h2>
+      <ul class="divide-y rounded-lg border bg-card">
+        <li v-for="group in myGroups" :key="group.id">
+          <RouterLink
+            :to="adminPath(group.slug ?? group.id)"
+            class="flex min-h-14 items-center justify-between gap-3 px-4 py-2 hover:bg-accent"
+          >
+            <span class="min-w-0">
+              <span class="block truncate font-medium">{{ group.name }}</span>
+              <span class="block text-sm text-muted-foreground">{{ group.status === 'drawn' ? 'Já sorteado' : 'Aberto' }}</span>
+            </span>
+            <ChevronRight class="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          </RouterLink>
+        </li>
+      </ul>
+      <p class="text-sm text-muted-foreground">Ou crie um novo grupo abaixo.</p>
+    </div>
+
     <form class="space-y-6" @submit.prevent="onNext">
       <div class="space-y-1">
         <p class="text-sm text-muted-foreground">Passo {{ step }} de 3</p>
@@ -84,7 +114,7 @@ function onNext() {
       <div v-else-if="step === 2" class="space-y-4">
         <div class="space-y-2">
           <Label for="budget">Valor sugerido</Label>
-          <Input class="h-11" id="budget" v-model="budget" maxlength="40" placeholder="R$ 50" />
+          <Input id="budget" v-model="budget" v-money class="h-11" maxlength="20" placeholder="R$ 50,00" />
         </div>
         <div class="space-y-2">
           <Label for="event-date">Data da troca</Label>
@@ -104,12 +134,12 @@ function onNext() {
           </div>
           <div class="space-y-2">
             <Label for="my-pin">PIN (4 a 6 números)</Label>
-            <Input class="h-11" id="my-pin" v-model="myPin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" />
+            <Input id="my-pin" v-model="myPin" v-maska data-maska="######" class="h-11" type="password" inputmode="numeric" autocomplete="off" />
             <p class="text-sm text-muted-foreground">Você usa o PIN para ver quem tirou. Anote, não dá para recuperar.</p>
           </div>
           <div class="space-y-2">
             <Label for="my-wishlist">O que você gostaria de ganhar</Label>
-            <Textarea id="my-wishlist" v-model="myWishlist" maxlength="500" rows="3" />
+            <TagInput id="my-wishlist" v-model="myWishlist" placeholder="Digite um item e aperte Enter" />
           </div>
         </template>
         <p v-else class="text-sm text-muted-foreground">
