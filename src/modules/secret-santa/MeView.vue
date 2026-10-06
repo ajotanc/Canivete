@@ -37,7 +37,7 @@ onMounted(async () => {
     wishlist.value = result.value.wishlist
     state.value = 'ready'
   } catch (e) {
-    if (e instanceof SantaApiError && (e.code === 'BAD_CREDENTIALS' || e.code === 'LOCKED')) {
+    if (e instanceof SantaApiError && (e.code === 'BAD_CREDENTIALS' || e.code === 'LOCKED' || e.code === 'PIN_NOT_SET')) {
       clearCredentials(groupId)
       await router.replace(invitePath(groupId))
       return

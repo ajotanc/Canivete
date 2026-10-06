@@ -12,6 +12,6 @@ export function adminUrl(origin: string, groupId: string, token: string): string
 }
 
 export function whatsappUrl(groupName: string, inviteLink: string): string {
-  const text = `Você recebeu um convite para o amigo secreto "${groupName}". Entre aqui: ${inviteLink}`
+  const text = `Amigo secreto "${groupName}": entre, escolha seu nome e crie seu PIN: ${inviteLink}`
   return `https://wa.me/?text=${encodeURIComponent(text)}`
 }

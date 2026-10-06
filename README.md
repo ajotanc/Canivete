@@ -52,6 +52,7 @@ O projeto usa o serviço `TablesDB` do SDK do Appwrite (`createRow` / `getRow`).
 
 O módulo `secret-santa` guarda segredos (PINs e pares do sorteio), então o navegador nunca lê as tabelas. Toda leitura e escrita passa por uma Appwrite Function (`functions/secret-santa/`), que valida os dados, confere nome e PIN, sorteia e devolve a cada pessoa só o próprio par. As tabelas `santa_groups` e `santa_participants` não têm permissão para ninguém.
 
+- O organizador cadastra as pessoas pelo nome no painel e manda um único link para o grupo. Cada pessoa escolhe o próprio nome e, no primeiro acesso, cria o PIN. Se alguém escolher o nome errado ou esquecer o PIN, o organizador zera o PIN no painel.
 - No front, defina `VITE_APPWRITE_SANTA_FUNCTION_ID` (normalmente `secret-santa`) além de `VITE_APPWRITE_ENDPOINT` e `VITE_APPWRITE_PROJECT_ID`.
 - Tabelas, variáveis e publicação da Function estão em [`functions/secret-santa/README.md`](functions/secret-santa/README.md).
 - O PIN serve só para a pessoa ver o próprio par e editar a lista de desejos. Ele é guardado como hash `scrypt`, nunca vai para a URL e só fica no `sessionStorage` da aba enquanto ela está aberta.

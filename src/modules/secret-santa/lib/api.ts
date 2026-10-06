@@ -6,6 +6,8 @@ export type SantaApiErrorCode =
   | 'GROUP_NOT_FOUND'
   | 'GROUP_CLOSED'
   | 'NAME_TAKEN'
+  | 'PIN_NOT_SET'
+  | 'PIN_ALREADY_SET'
   | 'BAD_CREDENTIALS'
   | 'LOCKED'
   | 'NOT_ENOUGH_PARTICIPANTS'
@@ -79,6 +81,14 @@ export interface GroupInfo {
   eventDate: string
   status: 'open' | 'drawing' | 'drawn'
   participantCount: number
+  /** Nomes do grupo e se cada pessoa já criou o PIN (primeiro acesso). */
+  members: { name: string; hasPin: boolean }[]
+}
+
+export interface ParticipantSummary {
+  name: string
+  isOrganizer: boolean
+  hasPin: boolean
 }
 
 export type RevealResult =
@@ -101,8 +111,9 @@ export function getGroup(groupId: string, execute?: Execute) {
   return callSanta<GroupInfo>('getGroup', { groupId }, execute)
 }
 
-export function joinGroup(input: Credentials & { wishlist?: string }, execute?: Execute) {
-  return callSanta<Record<string, never>>('join', { ...input }, execute)
+/** Primeiro acesso: a pessoa escolhe o próprio nome e cria o PIN. */
+export function setupPin(input: Credentials & { wishlist?: string }, execute?: Execute) {
+  return callSanta<Record<string, never>>('setupPin', { ...input }, execute)
 }
 
 export function updateWishlist(input: Credentials & { wishlist: string }, execute?: Execute) {
@@ -110,11 +121,19 @@ export function updateWishlist(input: Credentials & { wishlist: string }, execut
 }
 
 export function listParticipants(input: { groupId: string; adminToken: string }, execute?: Execute) {
-  return callSanta<{ status: GroupInfo['status']; participants: { name: string; isOrganizer: boolean }[] }>(
+  return callSanta<{ status: GroupInfo['status']; participants: ParticipantSummary[] }>(
     'listParticipants',
     { ...input },
     execute,
   )
+}
+
+export function addParticipant(input: { groupId: string; adminToken: string; name: string }, execute?: Execute) {
+  return callSanta<Record<string, never>>('addParticipant', { ...input }, execute)
+}
+
+export function resetPin(input: { groupId: string; adminToken: string; name: string }, execute?: Execute) {
+  return callSanta<Record<string, never>>('resetPin', { ...input }, execute)
 }
 
 export function removeParticipant(input: { groupId: string; adminToken: string; name: string }, execute?: Execute) {

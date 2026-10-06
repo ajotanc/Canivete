@@ -5,6 +5,7 @@ import {
   createGroup,
   revealMatch,
   SantaApiError,
+  setupPin,
   type Execute,
 } from '@/modules/secret-santa/lib/api'
 
@@ -72,5 +73,22 @@ describe('funções tipadas', () => {
     })
     const result = await revealMatch({ groupId: 'g', name: 'João', pin: '1234' }, execute)
     expect(result).toEqual({ status: 'drawn', wishlist: 'x', receiver: { name: 'Ana', wishlist: 'y' } })
+  })
+
+  it('setupPin envia nome, PIN e lista de desejos na ação de primeiro acesso', async () => {
+    let sent: Record<string, unknown> = {}
+    const execute: Execute = async (body) => {
+      sent = JSON.parse(body)
+      return { responseStatusCode: 200, responseBody: JSON.stringify({ ok: true, data: {} }) }
+    }
+    await setupPin({ groupId: 'g', name: 'Ana', pin: '1234', wishlist: 'chá' }, execute)
+    expect(sent).toEqual({ action: 'setupPin', groupId: 'g', name: 'Ana', pin: '1234', wishlist: 'chá' })
+  })
+
+  it('PIN_ALREADY_SET chega como código próprio', async () => {
+    const execute = respond({ ok: false, error: { code: 'PIN_ALREADY_SET', message: 'Já criou.' } }, 409)
+    await expect(setupPin({ groupId: 'g', name: 'Ana', pin: '1234' }, execute)).rejects.toMatchObject({
+      code: 'PIN_ALREADY_SET',
+    })
   })
 })

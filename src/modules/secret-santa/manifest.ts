@@ -4,7 +4,7 @@ import type { ToolManifest } from '@/core/modules/types'
 const manifest: ToolManifest = {
   id: 'secret-santa',
   title: 'Amigo secreto',
-  description: 'Crie um grupo, convide as pessoas e sorteie. Cada uma vê só quem tirou.',
+  description: 'Crie um grupo, cadastre as pessoas e sorteie. Cada uma vê só quem tirou.',
   icon: Gift,
   category: 'Sorteios',
   usesBackend: true,

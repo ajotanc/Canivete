@@ -67,7 +67,7 @@ function onNext() {
     <header class="space-y-2">
       <Gift class="size-8 text-primary" aria-hidden="true" />
       <h1 class="font-display text-3xl leading-tight">Amigo secreto</h1>
-      <p class="text-muted-foreground">Crie o grupo, convide as pessoas e sorteie. Cada uma vê só quem tirou.</p>
+      <p class="text-muted-foreground">Crie o grupo, cadastre as pessoas e sorteie. Cada uma vê só quem tirou.</p>
     </header>
 
     <form class="space-y-6" @submit.prevent="onNext">

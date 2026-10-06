@@ -2,14 +2,14 @@
 import { CalendarDays, Coins, Users } from '@lucide/vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/pt-br'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { getGroup, joinGroup, revealMatch, SantaApiError, type GroupInfo } from './lib/api'
+import { getGroup, revealMatch, SantaApiError, setupPin, type GroupInfo } from './lib/api'
 import { mePath } from './lib/links'
 import { saveCredentials } from './lib/session'
 
@@ -22,18 +22,28 @@ const state = ref<State>('loading')
 const group = ref<GroupInfo | null>(null)
 const errorMessage = ref('')
 
-const mode = ref<'join' | 'return'>('join')
-const name = ref('')
+/** Nome escolhido na lista; null enquanto a pessoa não escolheu. */
+const selected = ref<string | null>(null)
 const pin = ref('')
+const pinConfirm = ref('')
 const wishlist = ref('')
 const submitting = ref(false)
 const formError = ref('')
 
-onMounted(async () => {
+const PIN_PATTERN = /^\d{4,6}$/
+
+const member = computed(() => group.value?.members.find((m) => m.name === selected.value) ?? null)
+/** Primeiro acesso: a pessoa ainda não criou o PIN. */
+const isFirstAccess = computed(() => member.value !== null && !member.value.hasPin)
+const canSubmit = computed(() => {
+  if (submitting.value || !PIN_PATTERN.test(pin.value)) return false
+  return !isFirstAccess.value || pin.value === pinConfirm.value
+})
+
+async function load() {
   try {
     group.value = await getGroup(groupId)
     state.value = 'ready'
-    if (group.value.status !== 'open') mode.value = 'return'
   } catch (e) {
     if (e instanceof SantaApiError && e.code === 'GROUP_NOT_FOUND') {
       state.value = 'not-found'
@@ -42,28 +52,45 @@ onMounted(async () => {
       state.value = 'error'
     }
   }
-})
+}
+
+onMounted(load)
 
 /** "2026-12-24" vira "24 de dezembro de 2026". */
 function formatDate(iso: string): string {
   return dayjs(iso).locale('pt-br').format('D [de] MMMM [de] YYYY')
 }
 
+function choose(name: string | null) {
+  selected.value = name
+  pin.value = ''
+  pinConfirm.value = ''
+  formError.value = ''
+}
+
 async function onSubmit() {
+  if (!selected.value) return
   formError.value = ''
   submitting.value = true
+  const credentials = { groupId, name: selected.value, pin: pin.value }
   try {
-    if (mode.value === 'join') {
-      await joinGroup({ groupId, name: name.value, pin: pin.value, wishlist: wishlist.value })
-      toast.success('Você entrou no grupo!')
+    if (isFirstAccess.value) {
+      await setupPin({ ...credentials, wishlist: wishlist.value })
+      toast.success('PIN criado. Guarde bem, ele é seu acesso.')
     } else {
       // Confere nome e PIN antes de seguir para o painel.
-      await revealMatch({ groupId, name: name.value, pin: pin.value })
+      await revealMatch(credentials)
     }
-    saveCredentials(groupId, { name: name.value, pin: pin.value })
+    saveCredentials(groupId, { name: credentials.name, pin: credentials.pin })
     await router.push(mePath(groupId))
   } catch (e) {
     formError.value = e instanceof SantaApiError ? e.message : 'Não foi possível continuar.'
+    // A situação do PIN mudou (alguém criou ou o organizador zerou): recarrega a lista.
+    if (e instanceof SantaApiError && (e.code === 'PIN_ALREADY_SET' || e.code === 'PIN_NOT_SET')) {
+      const name = selected.value
+      await load()
+      selected.value = name
+    }
   } finally {
     submitting.value = false
   }
@@ -95,32 +122,61 @@ async function onSubmit() {
           <li v-if="group.eventDate" class="flex items-center gap-2"><CalendarDays class="size-4" aria-hidden="true" />{{ formatDate(group.eventDate) }}</li>
         </ul>
         <p v-if="group.status !== 'open'" class="rounded-lg bg-primary/10 p-3 text-sm">
-          Este grupo já foi sorteado. Entre com seu nome e PIN para ver quem você tirou.
+          O sorteio já foi feito. Escolha seu nome e entre para ver quem você tirou.
         </p>
       </header>
 
-      <div v-if="group.status === 'open'" class="flex gap-2" role="tablist">
-        <Button class="h-11" :variant="mode === 'join' ? 'default' : 'outline'" role="tab" :aria-selected="mode === 'join'" @click="mode = 'join'">Entrar no grupo</Button>
-        <Button class="h-11" :variant="mode === 'return' ? 'default' : 'outline'" role="tab" :aria-selected="mode === 'return'" @click="mode = 'return'">Já entrei</Button>
+      <!-- Passo 1: quem é você -->
+      <div v-if="!selected" class="space-y-3">
+        <h2 class="font-display text-2xl leading-tight">Quem é você?</h2>
+        <p v-if="group.members.length === 0" class="text-muted-foreground">
+          O organizador ainda não adicionou ninguém. Volte mais tarde.
+        </p>
+        <ul v-else class="grid grid-cols-2 gap-2">
+          <li v-for="person in group.members" :key="person.name">
+            <Button variant="outline" class="h-11 w-full justify-start truncate" @click="choose(person.name)">
+              {{ person.name }}
+            </Button>
+          </li>
+        </ul>
       </div>
 
-      <form class="space-y-4" @submit.prevent="onSubmit">
-        <div class="space-y-2">
-          <Label for="name">Seu nome</Label>
-          <Input class="h-11" id="name" v-model="name" maxlength="60" autocomplete="off" />
+      <!-- Passo 2: criar o PIN (primeiro acesso) ou entrar com ele -->
+      <form v-else class="space-y-4" @submit.prevent="onSubmit">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="font-display text-2xl leading-tight">
+            {{ isFirstAccess ? `Olá, ${selected}! Crie seu PIN` : `Olá, ${selected}!` }}
+          </h2>
+          <Button type="button" variant="ghost" class="h-11 shrink-0" @click="choose(null)">Não sou eu</Button>
         </div>
-        <div class="space-y-2">
-          <Label for="pin">{{ mode === 'join' ? 'Crie um PIN (4 a 6 números)' : 'Seu PIN' }}</Label>
-          <Input class="h-11" id="pin" v-model="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" />
-          <p v-if="mode === 'join'" class="text-sm text-muted-foreground">Você vai usar o PIN para ver quem tirou. Anote, não dá para recuperar.</p>
+
+        <template v-if="isFirstAccess">
+          <p class="text-sm text-muted-foreground">
+            É seu primeiro acesso. O PIN tem de 4 a 6 números e serve para ver quem você tirou. Se esquecer, peça ao organizador para zerar.
+          </p>
+          <div class="space-y-2">
+            <Label for="pin">Crie um PIN</Label>
+            <Input id="pin" v-model="pin" class="h-11" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" />
+          </div>
+          <div class="space-y-2">
+            <Label for="pin-confirm">Repita o PIN</Label>
+            <Input id="pin-confirm" v-model="pinConfirm" class="h-11" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" />
+            <p v-if="pinConfirm && PIN_PATTERN.test(pin) && pin !== pinConfirm" class="text-sm text-destructive">Os PINs não são iguais.</p>
+          </div>
+          <div v-if="group.status === 'open'" class="space-y-2">
+            <Label for="wishlist">O que você gostaria de ganhar</Label>
+            <Textarea id="wishlist" v-model="wishlist" maxlength="500" rows="3" />
+          </div>
+        </template>
+
+        <div v-else class="space-y-2">
+          <Label for="pin">Seu PIN</Label>
+          <Input id="pin" v-model="pin" class="h-11" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" />
         </div>
-        <div v-if="mode === 'join'" class="space-y-2">
-          <Label for="wishlist">O que você gostaria de ganhar</Label>
-          <Textarea id="wishlist" v-model="wishlist" maxlength="500" rows="3" />
-        </div>
+
         <p v-if="formError" class="text-sm text-destructive" role="alert">{{ formError }}</p>
-        <Button type="submit" size="lg" class="w-full h-11" :disabled="submitting || !name.trim() || !/^\d{4,6}$/.test(pin)">
-          {{ submitting ? 'Aguarde...' : mode === 'join' ? 'Entrar no grupo' : 'Ver meu painel' }}
+        <Button type="submit" size="lg" class="h-11 w-full" :disabled="!canSubmit">
+          {{ submitting ? 'Aguarde...' : isFirstAccess ? 'Criar PIN e entrar' : 'Entrar' }}
         </Button>
       </form>
     </template>
