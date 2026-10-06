@@ -1,4 +1,5 @@
 import dayjs from 'dayjs'
+import { assignSecretFriends } from './lib/draw.js'
 import { SantaError } from './lib/errors.js'
 import { hashPin, verifyPin } from './lib/pin.js'
 import type { RandomInt } from './lib/random.js'
@@ -46,6 +47,8 @@ export async function handleAction(db: SantaDb, body: unknown, deps: HandlerDeps
       return updateWishlist(db, input, now)
     case 'reveal':
       return reveal(db, input, now)
+    case 'draw':
+      return draw(db, input, deps)
     default:
       throw new SantaError('INVALID_INPUT', 'Ação desconhecida.')
   }
@@ -253,4 +256,33 @@ async function reveal(db: SantaDb, input: Input, now: () => Date) {
     wishlist: participant.wishlist,
     receiver: { name: receiver.name, wishlist: receiver.wishlist },
   }
+}
+
+/**
+ * Sorteia o grupo. Passa por `drawing` (que bloqueia novas entradas) e termina em `drawn`.
+ * Se algo falhar na gravação, volta para `open` e o organizador pode tentar de novo.
+ */
+async function draw(db: SantaDb, input: Input, deps: HandlerDeps) {
+  const group = await requireGroup(db, input.groupId)
+  requireOrganizer(group, input.adminToken)
+  requireOpen(group)
+
+  const participants = await db.listParticipants(group.id)
+  const assignments = assignSecretFriends(
+    participants.map((p) => p.id),
+    deps.randomInt,
+  )
+
+  await db.setGroupStatus(group.id, 'drawing')
+  try {
+    for (const [giverId, receiverId] of assignments) {
+      await db.updateParticipant(giverId, { assignedToId: receiverId })
+    }
+    await db.setGroupStatus(group.id, 'drawn')
+  } catch {
+    // Desfaz o estado intermediário: `reveal` só revela com o grupo em `drawn`.
+    await db.setGroupStatus(group.id, 'open')
+    throw new SantaError('INTERNAL', 'Não foi possível concluir o sorteio. Tente de novo.')
+  }
+  return {}
 }
