@@ -9,8 +9,8 @@ export default defineConfig({
     vue(),
     tailwindcss(),
     VitePWA({
-      // O service worker se atualiza sozinho quando há uma versão nova do site.
-      registerType: 'autoUpdate',
+      // Versão nova: o app avisa e a pessoa escolhe quando recarregar (recarregar sozinho apagaria a lista digitada).
+      registerType: 'prompt',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'icon.svg'],
       manifest: {
         name: 'Canivete',
