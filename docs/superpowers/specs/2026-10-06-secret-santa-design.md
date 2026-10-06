@@ -35,9 +35,9 @@ Execução: a Function tem permissão de execução para `any`. Runtime Node. Co
 
 ## 4. Dados (tabelas fechadas)
 
-`groups`: `name` (string 80), `budget` (string 40, opcional), `eventDate` (string, ISO `YYYY-MM-DD`, opcional), `organizerTokenHash` (string 64), `status` (`open` | `drawing` | `drawn`), `createdAt` (datetime).
+`santa_groups`: `name` (string 80), `budget` (string 40, opcional), `eventDate` (string, ISO `YYYY-MM-DD`, opcional), `organizerTokenHash` (string 64), `status` (`open` | `drawing` | `drawn`), `createdAt` (datetime).
 
-`participants`: `groupId` (string 36), `name` (string 60), `nameKey` (string 60, nome normalizado: NFC, `trim`, minúsculas pt-BR, único dentro do grupo), `wishlist` (string 500), `pinHash` (string 200, scrypt com sal por linha), `failedAttempts` (integer), `lockedUntil` (datetime, opcional), `assignedToId` (string 36, opcional), `isOrganizer` (boolean).
+`santa_participants`: `groupId` (string 36), `name` (string 60), `nameKey` (string 60, nome normalizado: NFC, `trim`, minúsculas pt-BR, único dentro do grupo), `wishlist` (string 500), `pinHash` (string 200, scrypt com sal por linha), `failedAttempts` (integer), `lockedUntil` (datetime, opcional), `assignedToId` (string 36, opcional), `isOrganizer` (boolean).
 
 `drawnAt` e outros datetimes são gravados em ISO com `Z`; a leitura normaliza com `new Date(x).toISOString()` (o Appwrite devolve `+00:00`).
 
@@ -140,7 +140,7 @@ Cada erro da Function vira uma mensagem em português perto do campo ou em toast
 
 ## 12. Publicação
 
-A Function é criada e publicada no projeto Appwrite existente (pelo MCP do Appwrite ou pela CLI), com as tabelas `groups` e `participants` criadas antes. Variáveis da Function: endpoint, projeto, chave de servidor com escopo mínimo, ids do banco e das tabelas. Variáveis do front: `VITE_APPWRITE_SANTA_FUNCTION_ID`. O README documenta a configuração.
+A Function é criada e publicada no projeto Appwrite existente (pelo MCP do Appwrite ou pela CLI), com as tabelas `santa_groups` e `santa_participants` criadas antes. Variáveis da Function: endpoint, projeto, chave de servidor com escopo mínimo, ids do banco e das tabelas. Variáveis do front: `VITE_APPWRITE_SANTA_FUNCTION_ID`. O README documenta a configuração.
 
 ## 13. Decisão pendente
 
