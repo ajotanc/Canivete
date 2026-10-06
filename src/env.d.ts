@@ -5,3 +5,10 @@ declare module '*.vue' {
   const component: DefineComponent<object, object, unknown>
   export default component
 }
+
+interface ImportMetaEnv {
+  readonly VITE_APPWRITE_ENDPOINT: string
+  readonly VITE_APPWRITE_PROJECT_ID: string
+  readonly VITE_APPWRITE_DATABASE_ID: string
+  readonly VITE_APPWRITE_RAFFLES_TABLE_ID: string
+}
