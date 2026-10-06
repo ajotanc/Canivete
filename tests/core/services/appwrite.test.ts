@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { AppwriteConfigError, getAppwrite, getAppwriteIds, resetAppwriteForTests } from '@/core/services/appwrite'
+import {
+  AppwriteConfigError,
+  getAppwrite,
+  getAppwriteIds,
+  getSantaFunctionId,
+  resetAppwriteForTests,
+} from '@/core/services/appwrite'
 
 afterEach(() => {
   vi.unstubAllEnvs()
@@ -38,5 +44,25 @@ describe('getAppwriteIds', () => {
     vi.stubEnv('VITE_APPWRITE_DATABASE_ID', 'db')
     vi.stubEnv('VITE_APPWRITE_RAFFLES_TABLE_ID', '')
     expect(getAppwriteIds()).toEqual({ databaseId: 'db', rafflesTableId: 'raffles' })
+  })
+})
+
+describe('getAppwrite (functions)', () => {
+  it('expõe o serviço Functions', () => {
+    vi.stubEnv('VITE_APPWRITE_ENDPOINT', 'https://example.test/v1')
+    vi.stubEnv('VITE_APPWRITE_PROJECT_ID', 'proj')
+    expect(typeof getAppwrite().functions.createExecution).toBe('function')
+  })
+})
+
+describe('getSantaFunctionId', () => {
+  it('lança AppwriteConfigError quando faltar a variável', () => {
+    vi.stubEnv('VITE_APPWRITE_SANTA_FUNCTION_ID', '')
+    expect(() => getSantaFunctionId()).toThrow(AppwriteConfigError)
+  })
+
+  it('devolve o id configurado', () => {
+    vi.stubEnv('VITE_APPWRITE_SANTA_FUNCTION_ID', 'secret-santa')
+    expect(getSantaFunctionId()).toBe('secret-santa')
   })
 })

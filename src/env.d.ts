@@ -11,4 +11,5 @@ interface ImportMetaEnv {
   readonly VITE_APPWRITE_PROJECT_ID: string
   readonly VITE_APPWRITE_DATABASE_ID: string
   readonly VITE_APPWRITE_RAFFLES_TABLE_ID: string
+  readonly VITE_APPWRITE_SANTA_FUNCTION_ID: string
 }
