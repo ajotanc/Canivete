@@ -41,6 +41,20 @@ describe('entrypoint', () => {
     expect(calls[0].body).toEqual({ ok: false, error: { code: 'GROUP_NOT_FOUND', message: 'Grupo não encontrado.' } })
   })
 
+  it('passa o contexto (com os cabeçalhos) para a fábrica do banco', async () => {
+    let seenKey: string | undefined
+    const withHeaders = createEntrypoint(({ req }) => {
+      seenKey = req.headers?.['x-appwrite-key']
+      return createFakeDb()
+    })
+    const { context } = makeContext({
+      headers: { 'x-appwrite-key': 'chave-da-execucao' },
+      bodyJson: { action: 'createGroup', name: 'Turma' },
+    })
+    await withHeaders(context)
+    expect(seenKey).toBe('chave-da-execucao')
+  })
+
   it('recusa métodos diferentes de POST', async () => {
     const { context, calls } = makeContext({ method: 'GET' })
     await run(context)

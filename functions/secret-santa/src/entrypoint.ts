@@ -4,14 +4,15 @@ import type { SantaDb } from './types.js'
 
 /** Parte do contexto da Appwrite Function que usamos. */
 export interface FunctionContext {
-  req: { method: string; bodyJson?: unknown; bodyText?: string }
+  req: { method: string; headers?: Record<string, string | undefined>; bodyJson?: unknown; bodyText?: string }
   res: { json(body: unknown, status?: number): unknown }
   error(message: string): void
 }
 
 /** Monta a função exportada pela Appwrite, recebendo uma fábrica do banco (injetável nos testes). */
-export function createEntrypoint(getDb: () => SantaDb) {
-  return async ({ req, res, error }: FunctionContext): Promise<unknown> => {
+export function createEntrypoint(getDb: (context: FunctionContext) => SantaDb) {
+  return async (context: FunctionContext): Promise<unknown> => {
+    const { req, res, error } = context
     if (req.method !== 'POST') {
       return res.json({ ok: false, error: { code: 'INVALID_INPUT', message: 'Use o método POST.' } }, 405)
     }
@@ -26,7 +27,7 @@ export function createEntrypoint(getDb: () => SantaDb) {
     }
 
     try {
-      const data = await handleAction(getDb(), body)
+      const data = await handleAction(getDb(context), body)
       return res.json({ ok: true, data })
     } catch (caught) {
       if (caught instanceof SantaError) {
