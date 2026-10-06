@@ -143,10 +143,11 @@ async function onSubmit() {
 
       <!-- Passo 2: criar o PIN (primeiro acesso) ou entrar com ele -->
       <form v-else class="space-y-4" @submit.prevent="onSubmit">
-        <div class="flex items-center justify-between gap-3">
-          <h2 class="font-display text-2xl leading-tight">
-            {{ isFirstAccess ? `Olá, ${selected}! Crie seu PIN` : `Olá, ${selected}!` }}
-          </h2>
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0 space-y-1">
+            <h2 class="truncate font-display text-2xl leading-tight">Olá, {{ selected }}!</h2>
+            <p class="text-muted-foreground">{{ isFirstAccess ? 'Crie seu PIN para entrar.' : 'Digite seu PIN para entrar.' }}</p>
+          </div>
           <Button type="button" variant="ghost" class="h-11 shrink-0" @click="choose(null)">Não sou eu</Button>
         </div>
 
