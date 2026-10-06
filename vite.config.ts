@@ -45,6 +45,9 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
   },
   server: {
-    host: true
+    host: true,
+    allowedHosts: [
+      'dev.ajotanc.com.br'
+    ]
   }
 })
