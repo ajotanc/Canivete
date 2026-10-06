@@ -6,3 +6,4 @@ dist
 .superpowers
 functions/*/dist
 functions/*/node_modules
+.env
