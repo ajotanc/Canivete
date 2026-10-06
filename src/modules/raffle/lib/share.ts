@@ -23,6 +23,46 @@ export class ShareError extends Error {
   }
 }
 
+/** Formato de uma linha da tabela como o Appwrite a devolve. */
+export interface RaffleRow {
+  $id: string
+  participants: string[]
+  winners: string[]
+  drawnAt: string
+  hash: string
+}
+
+/**
+ * Converte a linha do Appwrite em StoredRaffle.
+ * Colunas datetime voltam como "...000+00:00"; normalizamos para o ISO com "Z" usado no hash.
+ */
+export function rowToStored(row: RaffleRow): StoredRaffle {
+  const date = new Date(row.drawnAt)
+  return {
+    id: row.$id,
+    participants: row.participants,
+    winners: row.winners,
+    drawnAt: Number.isNaN(date.getTime()) ? row.drawnAt : date.toISOString(),
+    hash: row.hash,
+  }
+}
+
+/** Ids de linha aceitos pelo Appwrite: até 36 caracteres, sem caractere especial no início. */
+const ROW_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,35}$/
+
+/**
+ * Trata um erro de getRow: devolve null só quando a linha não existe.
+ * Tabela ou banco inexistente é problema de configuração, não de link.
+ */
+export function handleGetRowError(error: unknown): null {
+  const { code, type } = error as { code?: number; type?: string }
+  if (code === 404 && type === 'row_not_found') return null
+  if (code === 404) {
+    throw new AppwriteConfigError('A tabela ou o banco de dados do Appwrite não foi encontrado.')
+  }
+  throw error
+}
+
 /** Traduz qualquer falha do armazenamento para um ShareError com mensagem em português. */
 function toShareError(error: unknown): ShareError {
   if (error instanceof ShareError) return error
@@ -54,20 +94,14 @@ export async function createAppwriteStore(): Promise<RaffleStore> {
     },
     async get(id) {
       try {
-        const row = await tablesDB.getRow<
-          RaffleRecord & { hash: string } & Models.Row
-        >({ databaseId, tableId: rafflesTableId, rowId: id })
-        return {
-          id: row.$id,
-          participants: row.participants,
-          winners: row.winners,
-          drawnAt: row.drawnAt,
-          hash: row.hash,
-        }
+        const row = await tablesDB.getRow<RaffleRow & Models.Row>({
+          databaseId,
+          tableId: rafflesTableId,
+          rowId: id,
+        })
+        return rowToStored(row)
       } catch (error) {
-        // O Appwrite responde com code 404 quando a linha não existe.
-        if ((error as { code?: number }).code === 404) return null
-        throw error
+        return handleGetRowError(error)
       }
     },
   }
@@ -89,6 +123,8 @@ export async function loadShare(
   id: string,
   store?: RaffleStore,
 ): Promise<{ raffle: StoredRaffle; verified: boolean }> {
+  // Ids fora do formato do Appwrite nunca existem: nem consulta o servidor.
+  if (!ROW_ID_PATTERN.test(id)) throw new ShareError('NOT_FOUND', 'Sorteio não encontrado.')
   try {
     const source = store ?? (await createAppwriteStore())
     const raffle = await source.get(id)

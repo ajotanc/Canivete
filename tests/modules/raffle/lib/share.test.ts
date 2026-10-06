@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import { AppwriteConfigError } from '@/core/services/appwrite'
-import { createShare, loadShare, ShareError, type RaffleStore, type StoredRaffle } from '@/modules/raffle/lib/share'
+import {
+  createShare,
+  handleGetRowError,
+  loadShare,
+  rowToStored,
+  ShareError,
+  type RaffleStore,
+  type StoredRaffle,
+} from '@/modules/raffle/lib/share'
 import { computeHash } from '@/modules/raffle/lib/verify'
 
 const record = {
@@ -82,5 +90,62 @@ describe('loadShare', () => {
       },
     }
     await expect(loadShare('x', store)).rejects.toMatchObject({ code: 'NETWORK' })
+  })
+})
+
+describe('rowToStored (formato devolvido pelo Appwrite)', () => {
+  it('normaliza drawnAt de "+00:00" para ISO com "Z", e o registro continua verificando', async () => {
+    // O Appwrite devolve colunas datetime como "2026-10-05T12:00:00.000+00:00".
+    const hash = await computeHash(record)
+    const row = {
+      $id: 'abc',
+      participants: record.participants,
+      winners: record.winners,
+      drawnAt: '2026-10-05T12:00:00.000+00:00',
+      hash,
+    }
+    const store: RaffleStore = { create: async () => 'abc', get: async () => rowToStored(row) }
+    const result = await loadShare('abc', store)
+    expect(result.raffle.drawnAt).toBe(record.drawnAt)
+    expect(result.verified).toBe(true)
+  })
+
+  it('mantém o texto original quando drawnAt não é uma data válida', () => {
+    const stored = rowToStored({ $id: 'x', participants: [], winners: [], drawnAt: 'lixo', hash: 'h' })
+    expect(stored.drawnAt).toBe('lixo')
+  })
+})
+
+describe('loadShare com id inválido', () => {
+  it.each(['', 'a/b', 'x'.repeat(37), '-comeca-com-hifen', 'com espaço'])(
+    'devolve NOT_FOUND sem consultar o servidor para o id %j',
+    async (id) => {
+      let calls = 0
+      const store: RaffleStore = {
+        create: async () => 'x',
+        get: async () => {
+          calls += 1
+          return null
+        },
+      }
+      await expect(loadShare(id, store)).rejects.toMatchObject({ code: 'NOT_FOUND' })
+      expect(calls).toBe(0)
+    },
+  )
+})
+
+describe('handleGetRowError', () => {
+  it('devolve null só quando a linha não existe (row_not_found)', () => {
+    expect(handleGetRowError({ code: 404, type: 'row_not_found' })).toBeNull()
+  })
+
+  it('trata tabela ou banco inexistente como erro de configuração', () => {
+    expect(() => handleGetRowError({ code: 404, type: 'table_not_found' })).toThrow(AppwriteConfigError)
+    expect(() => handleGetRowError({ code: 404, type: 'database_not_found' })).toThrow(AppwriteConfigError)
+  })
+
+  it('repassa qualquer outro erro sem alterá-lo', () => {
+    const original = Object.assign(new Error('boom'), { code: 500 })
+    expect(() => handleGetRowError(original)).toThrow(original)
   })
 })
