@@ -190,6 +190,8 @@ async function authenticate(
   const participants = await db.listParticipants(group.id)
   const participant = participants.find((p) => p.nameKey === key)
   if (!participant) {
+    // Confere contra um hash falso para que nome inexistente demore o mesmo que PIN errado.
+    await verifyPin(pin, await dummyPinHash())
     throw new SantaError('BAD_CREDENTIALS', 'Nome ou PIN incorretos.')
   }
 
@@ -212,6 +214,14 @@ async function authenticate(
     await db.updateParticipant(participant.id, { failedAttempts: 0, lockedUntil: null })
   }
   return { group, participant, participants }
+}
+
+let dummyHash: Promise<string> | null = null
+
+/** Hash de um PIN qualquer, gerado uma vez por instância da Function. */
+function dummyPinHash(): Promise<string> {
+  dummyHash ??= hashPin('0000')
+  return dummyHash
 }
 
 function lockedError(until: string, current: Date): SantaError {
