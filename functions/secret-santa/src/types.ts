@@ -17,7 +17,8 @@ export interface ParticipantRow {
   name: string
   nameKey: string
   wishlist: string
-  pinHash: string
+  /** Hash scrypt do PIN; null enquanto a pessoa não fez o primeiro acesso. */
+  pinHash: string | null
   failedAttempts: number
   /** ISO com Z, ou null quando não está bloqueado. */
   lockedUntil: string | null

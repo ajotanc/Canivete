@@ -37,12 +37,16 @@ export async function handleAction(db: SantaDb, body: unknown, deps: HandlerDeps
       return createGroup(db, input)
     case 'getGroup':
       return getGroup(db, input)
-    case 'join':
-      return join(db, input)
+    case 'addParticipant':
+      return addParticipant(db, input)
+    case 'setupPin':
+      return setupPin(db, input)
     case 'listParticipants':
       return listParticipants(db, input)
     case 'removeParticipant':
       return removeParticipant(db, input)
+    case 'resetPin':
+      return resetPin(db, input)
     case 'updateWishlist':
       return updateWishlist(db, input, now)
     case 'reveal':
@@ -122,16 +126,18 @@ async function getGroup(db: SantaDb, input: Input) {
     eventDate: group.eventDate,
     status: group.status,
     participantCount: participants.length,
+    // Os nomes não são segredo: a pessoa escolhe o próprio nome para entrar ou criar o PIN.
+    members: participants.map((p) => ({ name: p.name, hasPin: p.pinHash !== null })),
   }
 }
 
-async function join(db: SantaDb, input: Input) {
+/** O organizador cadastra uma pessoa pelo nome; ela cria o PIN no primeiro acesso. */
+async function addParticipant(db: SantaDb, input: Input) {
   const group = await requireGroup(db, input.groupId)
+  requireOrganizer(group, input.adminToken)
   requireOpen(group)
 
   const name = parsePersonName(input.name)
-  const pin = parsePin(input.pin)
-  const wishlist = parseWishlist(input.wishlist)
   const nameKey = toNameKey(name)
 
   const participants = await db.listParticipants(group.id)
@@ -146,13 +152,52 @@ async function join(db: SantaDb, input: Input) {
     groupId: group.id,
     name,
     nameKey,
-    wishlist,
-    pinHash: await hashPin(pin),
+    wishlist: '',
+    pinHash: null,
     failedAttempts: 0,
     lockedUntil: null,
     assignedToId: null,
     isOrganizer: false,
   })
+  return {}
+}
+
+/**
+ * Primeiro acesso: a pessoa escolhe o próprio nome e cria o PIN. Vale antes e depois do sorteio;
+ * a lista de desejos só é gravada enquanto o grupo está aberto.
+ */
+async function setupPin(db: SantaDb, input: Input) {
+  const pin = parsePin(input.pin)
+  const wishlist = parseWishlist(input.wishlist)
+  const group = await requireGroup(db, input.groupId)
+  const key = toNameKey(typeof input.name === 'string' ? input.name : '')
+  const participant = (await db.listParticipants(group.id)).find((p) => p.nameKey === key)
+  if (!participant) {
+    throw new SantaError('INVALID_INPUT', 'Esse nome não está na lista do grupo. Fale com o organizador.')
+  }
+  if (participant.pinHash !== null) {
+    throw new SantaError(
+      'PIN_ALREADY_SET',
+      'Essa pessoa já criou o PIN. Entre com ele ou peça ao organizador para zerar.',
+    )
+  }
+
+  const pinHash = await hashPin(pin)
+  await db.updateParticipant(participant.id, {
+    pinHash,
+    failedAttempts: 0,
+    lockedUntil: null,
+    ...(group.status === 'open' && wishlist !== '' ? { wishlist } : {}),
+  })
+
+  // Duas pessoas criando o PIN do mesmo nome ao mesmo tempo: só quem gravou por último fica.
+  const saved = (await db.listParticipants(group.id)).find((p) => p.id === participant.id)
+  if (saved?.pinHash !== pinHash) {
+    throw new SantaError(
+      'PIN_ALREADY_SET',
+      'Essa pessoa já criou o PIN. Entre com ele ou peça ao organizador para zerar.',
+    )
+  }
   return {}
 }
 
@@ -162,7 +207,11 @@ async function listParticipants(db: SantaDb, input: Input) {
   const participants = await db.listParticipants(group.id)
   return {
     status: group.status,
-    participants: participants.map((p) => ({ name: p.name, isOrganizer: p.isOrganizer })),
+    participants: participants.map((p) => ({
+      name: p.name,
+      isOrganizer: p.isOrganizer,
+      hasPin: p.pinHash !== null,
+    })),
   }
 }
 
@@ -178,8 +227,21 @@ async function removeParticipant(db: SantaDb, input: Input) {
   return {}
 }
 
+/** O organizador zera o PIN de alguém (nome errado no primeiro acesso ou PIN esquecido). */
+async function resetPin(db: SantaDb, input: Input) {
+  const group = await requireGroup(db, input.groupId)
+  requireOrganizer(group, input.adminToken)
+
+  const key = toNameKey(typeof input.name === 'string' ? input.name : '')
+  const target = (await db.listParticipants(group.id)).find((p) => p.nameKey === key)
+  if (!target) throw new SantaError('INVALID_INPUT', 'Participante não encontrado.')
+  await db.updateParticipant(target.id, { pinHash: null, failedAttempts: 0, lockedUntil: null })
+  return {}
+}
+
 /**
  * Confere nome e PIN. Nome inexistente e PIN errado respondem igual (BAD_CREDENTIALS);
+ * quem ainda não criou o PIN recebe PIN_NOT_SET;
  * a 5ª falha seguida bloqueia o participante por 15 minutos.
  */
 async function authenticate(
@@ -196,6 +258,10 @@ async function authenticate(
     // Confere contra um hash falso para que nome inexistente demore o mesmo que PIN errado.
     await verifyPin(pin, await dummyPinHash())
     throw new SantaError('BAD_CREDENTIALS', 'Nome ou PIN incorretos.')
+  }
+
+  if (participant.pinHash === null) {
+    throw new SantaError('PIN_NOT_SET', 'Você ainda não criou seu PIN. Faça o primeiro acesso.')
   }
 
   if (participant.lockedUntil && dayjs(participant.lockedUntil).isAfter(now())) {

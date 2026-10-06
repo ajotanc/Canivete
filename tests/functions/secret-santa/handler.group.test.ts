@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { handleAction } from '../../../functions/secret-santa/src/handler'
 import { hashToken } from '../../../functions/secret-santa/src/lib/tokens'
+import { enroll } from './enroll'
 import { createFakeDb } from './fakeDb'
 
 async function errorCode(promise: Promise<unknown>): Promise<string | undefined> {
@@ -52,11 +53,23 @@ describe('createGroup', () => {
   })
 })
 
+
 describe('getGroup', () => {
-  it('devolve só dados públicos e a contagem', async () => {
-    const { db, groupId } = await newGroup(createFakeDb(), { organizer: { name: 'Lia', pin: '4321' } })
+  it('devolve dados públicos, a contagem e os nomes com quem já criou PIN', async () => {
+    const { db, groupId, adminToken } = await newGroup(createFakeDb(), { organizer: { name: 'Lia', pin: '4321' } })
+    await handleAction(db, { action: 'addParticipant', groupId, adminToken, name: 'Ana' })
     const info = (await handleAction(db, { action: 'getGroup', groupId })) as Record<string, unknown>
-    expect(info).toEqual({ name: 'Família', budget: '', eventDate: '', status: 'open', participantCount: 1 })
+    expect(info).toEqual({
+      name: 'Família',
+      budget: '',
+      eventDate: '',
+      status: 'open',
+      participantCount: 2,
+      members: [
+        { name: 'Lia', hasPin: true },
+        { name: 'Ana', hasPin: false },
+      ],
+    })
   })
 
   it('devolve GROUP_NOT_FOUND para id inexistente ou malformado', async () => {
@@ -67,52 +80,72 @@ describe('getGroup', () => {
   })
 })
 
-describe('join', () => {
-  it('adiciona o participante com o PIN em hash', async () => {
-    const { db, groupId } = await newGroup()
-    await handleAction(db, { action: 'join', groupId, name: ' Ana ', pin: '1234', wishlist: 'meias' })
+describe('addParticipant (organizador)', () => {
+  it('cadastra a pessoa sem PIN', async () => {
+    const { db, groupId, adminToken } = await newGroup()
+    await handleAction(db, { action: 'addParticipant', groupId, adminToken, name: ' Ana ' })
     const [ana] = await db.listParticipants(groupId)
-    expect(ana).toMatchObject({ name: 'Ana', nameKey: 'ana', isOrganizer: false, failedAttempts: 0 })
-    expect(ana.pinHash).toMatch(/^scrypt\$/)
+    expect(ana).toMatchObject({ name: 'Ana', nameKey: 'ana', isOrganizer: false, failedAttempts: 0, pinHash: null })
+  })
+
+  it('exige o token do organizador', async () => {
+    const { db, groupId } = await newGroup()
+    for (const adminToken of [undefined, '', 'errado']) {
+      expect(await errorCode(handleAction(db, { action: 'addParticipant', groupId, adminToken, name: 'Ana' }))).toBe(
+        'FORBIDDEN',
+      )
+    }
+    expect((await db.listParticipants(groupId)).length).toBe(0)
   })
 
   it('recusa nome repetido com acento, caixa ou espaços diferentes', async () => {
-    const { db, groupId } = await newGroup()
-    await handleAction(db, { action: 'join', groupId, name: 'João', pin: '1234' })
+    const { db, groupId, adminToken } = await newGroup()
+    await handleAction(db, { action: 'addParticipant', groupId, adminToken, name: 'João' })
     for (const name of ['joão', '  JOÃO  ', 'João']) {
-      expect(await errorCode(handleAction(db, { action: 'join', groupId, name, pin: '1234' }))).toBe('NAME_TAKEN')
+      expect(await errorCode(handleAction(db, { action: 'addParticipant', groupId, adminToken, name }))).toBe(
+        'NAME_TAKEN',
+      )
     }
     // Sem acento é outro nome.
-    await handleAction(db, { action: 'join', groupId, name: 'Joao', pin: '1234' })
+    await handleAction(db, { action: 'addParticipant', groupId, adminToken, name: 'Joao' })
     expect((await db.listParticipants(groupId)).length).toBe(2)
   })
 
-  it('recusa PIN inválido', async () => {
-    const { db, groupId } = await newGroup()
-    for (const pin of ['123', '1234567', '12a4', 1234, undefined]) {
-      expect(await errorCode(handleAction(db, { action: 'join', groupId, name: 'Ana', pin }))).toBe('INVALID_INPUT')
+  it('recusa nome vazio ou longo demais', async () => {
+    const { db, groupId, adminToken } = await newGroup()
+    for (const name of ['', '   ', 'x'.repeat(61), 42]) {
+      expect(await errorCode(handleAction(db, { action: 'addParticipant', groupId, adminToken, name }))).toBe(
+        'INVALID_INPUT',
+      )
     }
   })
 
-  it('recusa entrada quando o grupo não está aberto', async () => {
-    const { db, groupId } = await newGroup()
+  it('recusa cadastro quando o grupo não está aberto', async () => {
+    const { db, groupId, adminToken } = await newGroup()
     for (const status of ['drawing', 'drawn'] as const) {
       await db.setGroupStatus(groupId, status)
-      expect(await errorCode(handleAction(db, { action: 'join', groupId, name: 'Ana', pin: '1234' }))).toBe(
+      expect(await errorCode(handleAction(db, { action: 'addParticipant', groupId, adminToken, name: 'Ana' }))).toBe(
         'GROUP_CLOSED',
       )
     }
   })
 
   it('recusa o 101º participante', async () => {
-    const { db, groupId } = await newGroup()
+    const { db, groupId, adminToken } = await newGroup()
     for (let i = 0; i < 100; i++) {
       await db.createParticipant({
-        groupId, name: `P${i}`, nameKey: `p${i}`, wishlist: '', pinHash: 'x',
+        groupId, name: `P${i}`, nameKey: `p${i}`, wishlist: '', pinHash: null,
         failedAttempts: 0, lockedUntil: null, assignedToId: null, isOrganizer: false,
       })
     }
-    expect(await errorCode(handleAction(db, { action: 'join', groupId, name: 'Extra', pin: '1234' }))).toBe(
+    expect(await errorCode(handleAction(db, { action: 'addParticipant', groupId, adminToken, name: 'Extra' }))).toBe(
+      'INVALID_INPUT',
+    )
+  })
+
+  it('a ação join não existe mais', async () => {
+    const { db, groupId } = await newGroup()
+    expect(await errorCode(handleAction(db, { action: 'join', groupId, name: 'Ana', pin: '1234' }))).toBe(
       'INVALID_INPUT',
     )
   })
@@ -129,24 +162,27 @@ describe('listParticipants e removeParticipant (organizador)', () => {
     }
   })
 
-  it('lista só nomes e se participa, sem PIN, desejos nem pares', async () => {
+  it('lista nomes, quem organiza e quem já criou PIN, sem PIN, desejos nem pares', async () => {
     const { db, groupId, adminToken } = await newGroup(createFakeDb(), { organizer: { name: 'Lia', pin: '4321' } })
-    await handleAction(db, { action: 'join', groupId, name: 'Ana', pin: '1234', wishlist: 'segredo' })
+    await enroll(db, groupId, adminToken, { name: 'Ana', pin: '1234', wishlist: 'segredo' })
+    await handleAction(db, { action: 'addParticipant', groupId, adminToken, name: 'Bia' })
     const result = (await handleAction(db, { action: 'listParticipants', groupId, adminToken })) as {
       status: string
       participants: Record<string, unknown>[]
     }
     expect(result.status).toBe('open')
     expect(result.participants).toEqual([
-      { name: 'Lia', isOrganizer: true },
-      { name: 'Ana', isOrganizer: false },
+      { name: 'Lia', isOrganizer: true, hasPin: true },
+      { name: 'Ana', isOrganizer: false, hasPin: true },
+      { name: 'Bia', isOrganizer: false, hasPin: false },
     ])
     expect(JSON.stringify(result)).not.toContain('segredo')
+    expect(JSON.stringify(result)).not.toContain('scrypt')
   })
 
   it('remove um participante antes do sorteio (nome com variações) e recusa depois', async () => {
     const { db, groupId, adminToken } = await newGroup()
-    await handleAction(db, { action: 'join', groupId, name: 'Ana', pin: '1234' })
+    await handleAction(db, { action: 'addParticipant', groupId, adminToken, name: 'Ana' })
     await handleAction(db, { action: 'removeParticipant', groupId, adminToken, name: ' ANA ' })
     expect((await db.listParticipants(groupId)).length).toBe(0)
 

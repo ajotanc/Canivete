@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { handleAction } from '../../../functions/secret-santa/src/handler'
+import { enroll } from './enroll'
 import { createFakeDb } from './fakeDb'
 
 async function errorCode(promise: Promise<unknown>) {
@@ -19,7 +20,7 @@ async function groupWith(names: string[], organizerName?: string) {
     ...(organizerName ? { organizer: { name: organizerName, pin: '9999' } } : {}),
   })) as { groupId: string; adminToken: string }
   for (const [i, name] of names.entries()) {
-    await handleAction(db, { action: 'join', groupId, name, pin: `${1000 + i}` })
+    await enroll(db, groupId, adminToken, { name, pin: `${1000 + i}` })
   }
   return { db, groupId, adminToken }
 }
@@ -73,7 +74,9 @@ describe('draw', () => {
     const { db, groupId, adminToken } = await groupWith(['A', 'B', 'C'])
     await handleAction(db, { action: 'draw', groupId, adminToken })
     expect(await errorCode(handleAction(db, { action: 'draw', groupId, adminToken }))).toBe('GROUP_CLOSED')
-    expect(await errorCode(handleAction(db, { action: 'join', groupId, name: 'D', pin: '5555' }))).toBe('GROUP_CLOSED')
+    expect(await errorCode(handleAction(db, { action: 'addParticipant', groupId, adminToken, name: 'D' }))).toBe(
+      'GROUP_CLOSED',
+    )
   })
 
   it('se falhar no meio da gravação, volta para open e permite tentar de novo', async () => {

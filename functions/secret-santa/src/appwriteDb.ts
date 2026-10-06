@@ -46,7 +46,7 @@ export function createAppwriteDb(env: Env): SantaDb {
     name: row.name,
     nameKey: row.nameKey,
     wishlist: row.wishlist ?? '',
-    pinHash: row.pinHash,
+    pinHash: row.pinHash ?? null,
     failedAttempts: row.failedAttempts ?? 0,
     // O Appwrite devolve "+00:00"; normaliza para ISO com Z.
     lockedUntil: row.lockedUntil ? dayjs(row.lockedUntil).toISOString() : null,
