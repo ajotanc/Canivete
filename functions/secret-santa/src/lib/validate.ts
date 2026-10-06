@@ -1,4 +1,8 @@
+import dayjs from 'dayjs'
+import customParseFormat from 'dayjs/plugin/customParseFormat.js'
 import { SantaError } from './errors.js'
+
+dayjs.extend(customParseFormat)
 
 export const MAX_GROUP_NAME = 80
 export const MAX_BUDGET = 40
@@ -37,10 +41,8 @@ export function parseBudget(value: unknown): string {
 export function parseEventDate(value: unknown): string {
   const date = cleanLine(value)
   if (date === '') return ''
-  const parsed = new Date(`${date}T00:00:00Z`)
-  // Datas impossíveis como 2026-13-01 viram Invalid Date; 2026-02-30 "rola" para março e não bate.
-  const isReal =
-    /^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date
+  // Modo estrito: datas impossíveis como 2026-13-01 ou 2026-02-30 são inválidas.
+  const isReal = /^\d{4}-\d{2}-\d{2}$/.test(date) && dayjs(date, 'YYYY-MM-DD', true).isValid()
   if (!isReal) {
     throw new SantaError('INVALID_INPUT', 'Informe a data no formato AAAA-MM-DD, por exemplo 2026-12-24.')
   }

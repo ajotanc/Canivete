@@ -8,6 +8,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "dayjs": "^1.11.23",
     "node-appwrite": "^29.0.0"
   },
   "devDependencies": {
