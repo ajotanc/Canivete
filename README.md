@@ -48,6 +48,15 @@ O projeto usa o serviço `TablesDB` do SDK do Appwrite (`createRow` / `getRow`).
 4. Permissões da tabela: **Read** e **Create** para `Any`. **Não** conceda Update nem Delete.
 5. Preencha `.env.local` com `VITE_APPWRITE_ENDPOINT`, `VITE_APPWRITE_PROJECT_ID`, `VITE_APPWRITE_DATABASE_ID` e `VITE_APPWRITE_RAFFLES_TABLE_ID`.
 
+## Amigo secreto
+
+O módulo `secret-santa` guarda segredos (PINs e pares do sorteio), então o navegador nunca lê as tabelas. Toda leitura e escrita passa por uma Appwrite Function (`functions/secret-santa/`), que valida os dados, confere nome e PIN, sorteia e devolve a cada pessoa só o próprio par. As tabelas `santa_groups` e `santa_participants` não têm permissão para ninguém.
+
+- No front, defina `VITE_APPWRITE_SANTA_FUNCTION_ID` (normalmente `secret-santa`) além de `VITE_APPWRITE_ENDPOINT` e `VITE_APPWRITE_PROJECT_ID`.
+- Tabelas, variáveis e publicação da Function estão em [`functions/secret-santa/README.md`](functions/secret-santa/README.md).
+- O PIN serve só para a pessoa ver o próprio par e editar a lista de desejos. Ele é guardado como hash `scrypt`, nunca vai para a URL e só fica no `sessionStorage` da aba enquanto ela está aberta.
+- O link de administração leva o token do organizador depois do `#`, parte que o navegador não envia ao servidor. No banco fica só o hash SHA-256 do token.
+
 ## Hospedagem
 
 O site usa rotas por histórico (`/raffle/r/abc`). A hospedagem precisa devolver `index.html` para qualquer rota desconhecida (fallback de SPA). Em HTTPS, o service worker do PWA também faz esse fallback no navegador.
