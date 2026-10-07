@@ -36,14 +36,7 @@ watchEffect(() => {
           to="/"
           class="flex items-center gap-2.5 rounded-md text-lg font-semibold tracking-tight outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
-          <svg viewBox="0 0 32 32" class="size-7" aria-hidden="true">
-            <rect width="32" height="32" rx="7" class="fill-foreground" />
-            <g class="fill-background">
-              <rect x="6" y="20" width="15" height="6" rx="3" transform="rotate(-12 9 23)" opacity="0.55" />
-              <rect x="6" y="20" width="20" height="6" rx="3" transform="rotate(-50 9 23)" />
-            </g>
-            <circle cx="9" cy="23" r="2.4" class="fill-pivot" />
-          </svg>
+          <img src="/icon.svg" alt="" width="32" height="32" class="size-8 rounded-lg" />
           Canivete
         </RouterLink>
 

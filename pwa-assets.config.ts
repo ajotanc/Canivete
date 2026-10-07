@@ -4,9 +4,9 @@ import { defineConfig, minimal2023Preset } from '@vite-pwa/assets-generator/conf
 export default defineConfig({
   preset: {
     ...minimal2023Preset,
-    // Ícones "maskable" e do iOS ganham margem e fundo na cor primária, para o recorte do sistema.
-    maskable: { sizes: [512], padding: 0.2, resizeOptions: { background: '#0E1420', fit: 'contain' } },
-    apple: { sizes: [180], padding: 0.15, resizeOptions: { background: '#0E1420', fit: 'contain' } },
+    // Ícones "maskable" e do iOS ganham margem e fundo na cor de fundo da logo (#212733), para o recorte do sistema.
+    maskable: { sizes: [512], padding: 0.2, resizeOptions: { background: '#212733', fit: 'contain' } },
+    apple: { sizes: [180], padding: 0.15, resizeOptions: { background: '#212733', fit: 'contain' } },
   },
   images: ['public/icon.svg'],
 })
