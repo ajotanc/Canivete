@@ -2,6 +2,7 @@
 import { Check, Copy, IdCard, RefreshCw, ShieldCheck, Sparkles, Zap } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { toast } from 'vue-sonner'
+import CopyField from '@/components/CopyField.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
@@ -22,11 +23,11 @@ const summary = computed(() =>
   items.value.length === 1 ? `${typeLabel.value} gerado` : `${items.value.length} ${selected.value?.plural ?? ''} gerados`,
 )
 
-/** Qual botão acabou de copiar: o índice do número, "all" para todos, ou nenhum. */
-const copied = ref<number | 'all' | null>(null)
+/** Se o botão "Copiar todos" acabou de copiar. */
+const copied = ref<'all' | null>(null)
 let copiedTimer: ReturnType<typeof setTimeout> | undefined
 
-async function copy(text: string, which: number | 'all', message: string) {
+async function copy(text: string, which: 'all', message: string) {
   try {
     await navigator.clipboard.writeText(text)
     copied.value = which
@@ -124,12 +125,8 @@ onBeforeUnmount(() => clearTimeout(copiedTimer))
         <CardContent>
           <p class="sr-only" role="status">{{ items.length }} {{ items.length === 1 ? 'número gerado' : 'números gerados' }}.</p>
           <ul class="space-y-2">
-            <li v-for="(item, index) in items" :key="`${index}-${item}`" class="flex items-center gap-3 rounded-xl border bg-card p-3">
-              <span class="min-w-0 flex-1 whitespace-nowrap font-mono font-semibold tabular-nums" :class="items.length === 1 ? 'text-base min-[400px]:text-xl sm:text-3xl' : 'text-base sm:text-xl'">{{ item }}</span>
-              <Button variant="ghost" size="icon" :aria-label="`Copiar ${item}`" @click="copy(item, index, `${typeLabel} copiado.`)">
-                <Check v-if="copied === index" aria-hidden="true" />
-                <Copy v-else aria-hidden="true" />
-              </Button>
+            <li v-for="(item, index) in items" :key="`${index}-${item}`">
+              <CopyField :value="item" :label="typeLabel" :message="`${typeLabel} copiado.`" :input-class="items.length === 1 ? 'text-base min-[400px]:text-xl sm:text-2xl' : 'text-base sm:text-lg'" class="font-semibold tabular-nums" />
             </li>
           </ul>
           <p class="mt-4 text-sm text-muted-foreground">Os números passam na conta dos dígitos verificadores, mas não pertencem a ninguém. Use só para testes.</p>

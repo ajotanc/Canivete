@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Check, Copy, ExternalLink, Link2, QrCode, Zap } from '@lucide/vue'
-import { computed, onBeforeUnmount, ref } from 'vue'
-import { toast } from 'vue-sonner'
+import { ExternalLink, Link2, QrCode, Zap } from '@lucide/vue'
+import { computed, ref } from 'vue'
+import CopyField from '@/components/CopyField.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
@@ -15,8 +15,6 @@ import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupTextarea } from '@/components/ui/input-group'
 import { buildWhatsappLink, MESSAGE_LIMIT, parsePhone } from './lib/whatsapp'
 
-const COPIED_FEEDBACK_MS = 1_600
-
 const phoneText = ref('')
 const message = ref('')
 
@@ -24,22 +22,6 @@ const phone = computed(() => parsePhone(phoneText.value))
 const link = computed(() => buildWhatsappLink(phone.value, message.value))
 const tooLong = computed(() => message.value.length > MESSAGE_LIMIT)
 
-const copied = ref(false)
-let copiedTimer: ReturnType<typeof setTimeout> | undefined
-
-async function copyLink() {
-  try {
-    await navigator.clipboard.writeText(link.value)
-    copied.value = true
-    clearTimeout(copiedTimer)
-    copiedTimer = setTimeout(() => (copied.value = false), COPIED_FEEDBACK_MS)
-    toast.success('Link copiado.')
-  } catch {
-    toast.error('Não foi possível copiar. Selecione o link e copie manualmente.')
-  }
-}
-
-onBeforeUnmount(() => clearTimeout(copiedTimer))
 </script>
 
 <template>
@@ -90,13 +72,7 @@ onBeforeUnmount(() => clearTimeout(copiedTimer))
         <CardContent class="space-y-6">
           <div class="space-y-2">
             <p class="text-sm font-medium">Link</p>
-            <div class="flex items-center gap-2 rounded-xl border bg-card p-3">
-              <p class="min-w-0 flex-1 break-all font-mono text-sm" :class="link ? '' : 'text-muted-foreground'" role="status">{{ link || 'https://wa.me/…' }}</p>
-              <Button variant="ghost" size="icon" aria-label="Copiar link" :disabled="!link" @click="copyLink">
-                <Check v-if="copied" aria-hidden="true" />
-                <Copy v-else aria-hidden="true" />
-              </Button>
-            </div>
+            <CopyField :value="link" label="Link" message="Link copiado." placeholder="https://wa.me/…" />
             <Button as-child class="w-full" :disabled="!link">
               <a v-if="link" :href="link" target="_blank" rel="noopener noreferrer">
                 <ExternalLink aria-hidden="true" />
