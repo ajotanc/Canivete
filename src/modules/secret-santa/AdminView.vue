@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ArrowLeft, CalendarDays, Check, Clock, Copy, Dices, EllipsisVertical, Gift, KeyRound, Link2, Lock, LogOut, Palette, Pencil, RotateCcw, RefreshCw, SearchX, Trash2, TriangleAlert, UserPlus, Users } from '@lucide/vue'
+import { getLocalTimeZone, today, type DateValue } from '@internationalized/date'
+import { ArrowLeft, CalendarDays, CalendarIcon, Check, Clock, Copy, Dices, EllipsisVertical, Gift, KeyRound, Link2, Lock, LogOut, Palette, Pencil, RotateCcw, RefreshCw, SearchX, Trash2, TriangleAlert, UserPlus, Users } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -21,6 +22,7 @@ import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
@@ -28,6 +30,7 @@ import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui
 import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -46,14 +49,17 @@ import {
   renameParticipant,
   resetDraw,
   resetPin,
-  GROUP_COLORS,
   SantaApiError,
   setColor,
   setSlug,
   updateGroup,
   type ParticipantSummary,
 } from './lib/api'
+import { dateValueToIso, eventYearRange, formatDateValue, isoToDateValue } from '@/lib/date'
 import { formatMoney, parseMoney } from '@/lib/money'
+import { makeRoomBelow } from '@/lib/scroll'
+import { cn } from '@/lib/utils'
+import { GROUP_COLORS, LIMITS, MIN_PARTICIPANTS_TO_DRAW } from './constants'
 import { eventCountdown, formatEventDate } from './lib/event'
 import { slugifyInput, trimSlug } from './lib/slug'
 import { inviteUrl, mePath, whatsappDrawnUrl, whatsappPendingUrl, whatsappReminderUrl, whatsappUrl } from './lib/links'
@@ -85,6 +91,16 @@ const eventDate = ref('')
 const editName = ref('')
 const editBudget = ref('')
 const editDate = ref('')
+const editDateOpen = ref(false)
+const editYears = computed(() => eventYearRange(editDateValue.value))
+/** O Calendar usa `DateValue`; o grupo guarda a data como texto AAAA-MM-DD. */
+const editDateValue = computed<DateValue | undefined>({
+  get: () => isoToDateValue(editDate.value),
+  set: (value) => {
+    editDate.value = dateValueToIso(value)
+    editDateOpen.value = false
+  },
+})
 let editLoaded = false
 const savingGroup = ref(false)
 const renameTarget = ref<string | null>(null)
@@ -108,7 +124,7 @@ const origin = window.location.origin
 const invite = computed(() => inviteUrl(window.location.origin, groupId.value, slug.value))
 const hasMyself = computed(() => participants.value.some((p) => p.isOrganizer))
 const myName = computed(() => participants.value.find((p) => p.isOrganizer)?.name ?? '')
-const canDraw = computed(() => status.value === 'open' && participants.value.length >= 3)
+const canDraw = computed(() => status.value === 'open' && participants.value.length >= MIN_PARTICIPANTS_TO_DRAW)
 const pending = computed(() => participants.value.filter((p) => !p.hasPin))
 const pendingCount = computed(() => pending.value.length)
 const revealedCount = computed(() => participants.value.filter((p) => p.revealed).length)
@@ -496,7 +512,7 @@ async function onDraw() {
                 <InputGroupInput
                   ref="newNameInput"
                   v-model="newName"
-                  maxlength="60"
+                  :maxlength="LIMITS.personName"
                   autocomplete="off"
                   placeholder="Nome da pessoa"
                   aria-label="Nome da pessoa"
@@ -515,7 +531,7 @@ async function onDraw() {
               <EmptyHeader>
                 <EmptyMedia variant="icon"><Users aria-hidden="true" /></EmptyMedia>
                 <EmptyTitle>Ninguém foi adicionado ainda</EmptyTitle>
-                <EmptyDescription>Digite o nome da primeira pessoa acima. São necessárias pelo menos 3 para sortear.</EmptyDescription>
+                <EmptyDescription>Digite o nome da primeira pessoa acima. São necessárias pelo menos {{ MIN_PARTICIPANTS_TO_DRAW }} para sortear.</EmptyDescription>
               </EmptyHeader>
             </Empty>
             <ItemGroup v-else class="gap-2">
@@ -601,14 +617,14 @@ async function onDraw() {
                     <InputGroupInput
                       id="slug"
                       :model-value="slugDraft"
-                      maxlength="40"
+                      :maxlength="LIMITS.slugMax"
                       autocomplete="off"
                       placeholder="familia-da-bagunca"
                       @input="onSlugInput"
                       @blur="slugDraft = trimSlug(slugDraft)"
                     />
                     <InputGroupAddon align="inline-end">
-                      <InputGroupButton type="submit" variant="default" size="sm" :disabled="savingSlug || slugDraft.trim().length < 3">Salvar</InputGroupButton>
+                      <InputGroupButton type="submit" variant="default" size="sm" :disabled="savingSlug || slugDraft.trim().length < LIMITS.slugMin">Salvar</InputGroupButton>
                     </InputGroupAddon>
                   </InputGroup>
                   <FieldDescription class="break-all">{{ inviteUrl(origin, groupId, slugDraft ? trimSlug(slugDraft) : null) }}</FieldDescription>
@@ -628,7 +644,7 @@ async function onDraw() {
                 <Dices aria-hidden="true" />
                 Sortear
               </Button>
-              <p v-if="!canDraw" class="text-sm text-muted-foreground">São necessárias pelo menos 3 pessoas para sortear.</p>
+              <p v-if="!canDraw" class="text-sm text-muted-foreground">São necessárias pelo menos {{ MIN_PARTICIPANTS_TO_DRAW }} pessoas para sortear.</p>
               <p v-else-if="pendingCount > 0" class="text-sm text-muted-foreground">
                 {{ pendingCount === 1 ? '1 pessoa ainda não criou' : `${pendingCount} pessoas ainda não criaram` }} o PIN. Dá para
                 sortear assim mesmo: quem não criou cria depois e vê quem tirou.
@@ -690,7 +706,7 @@ async function onDraw() {
           </Card>
 
           <ExclusionsCard
-            v-if="status === 'open' && participants.length >= 3"
+            v-if="status === 'open' && participants.length >= MIN_PARTICIPANTS_TO_DRAW"
             :group-id="groupId"
             :names="participants.map((p) => p.name)"
             :exclusions="exclusions"
@@ -711,15 +727,28 @@ async function onDraw() {
                 <FieldGroup>
                   <Field>
                     <FieldLabel for="edit-name">Nome do grupo</FieldLabel>
-                    <Input id="edit-name" v-model="editName" maxlength="80" autocomplete="off" />
+                    <Input id="edit-name" v-model="editName" :maxlength="LIMITS.groupName" autocomplete="off" />
                   </Field>
                   <Field>
                     <FieldLabel for="edit-budget">Valor sugerido</FieldLabel>
-                    <Input id="edit-budget" v-model="editBudget" v-money maxlength="20" placeholder="R$ 50,00" inputmode="numeric" />
+                    <Input id="edit-budget" v-model="editBudget" v-money :maxlength="LIMITS.budgetInput" placeholder="R$ 50,00" inputmode="numeric" />
                   </Field>
                   <Field>
                     <FieldLabel for="edit-date">Data da troca</FieldLabel>
-                    <Input id="edit-date" v-model="editDate" type="date" />
+                    <Popover v-model:open="editDateOpen">
+                      <PopoverTrigger as-child>
+                        <Button id="edit-date" type="button" variant="outline" @click.capture="makeRoomBelow" :class="cn('w-full justify-start text-left font-normal', !editDateValue && 'text-muted-foreground')">
+                          <CalendarIcon aria-hidden="true" />
+                          {{ editDateValue ? formatDateValue(editDateValue) : 'Escolha a data' }}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent class="w-(--reka-popover-trigger-width) max-w-[22rem] p-0">
+                        <Calendar v-model="editDateValue" :default-placeholder="editDateValue" :year-range="editYears" locale="pt-BR" weekday-format="short" layout="month-and-year" initial-focus />
+                        <div class="border-t p-1">
+                          <Button type="button" variant="ghost" size="sm" class="w-full" @click="editDateValue = today(getLocalTimeZone())">Hoje</Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </Field>
                   <Button type="submit" size="lg" class="w-full" :disabled="savingGroup || !editName.trim() || !groupDataChanged">
                     <Spinner v-if="savingGroup" />
@@ -803,7 +832,7 @@ async function onDraw() {
             </DialogHeader>
             <Field>
               <FieldLabel for="rename-input">Novo nome</FieldLabel>
-              <Input id="rename-input" v-model="renameDraft" maxlength="60" autocomplete="off" />
+              <Input id="rename-input" v-model="renameDraft" :maxlength="LIMITS.personName" autocomplete="off" />
             </Field>
             <DialogFooter>
               <Button type="button" variant="outline" @click="renameTarget = null">Cancelar</Button>

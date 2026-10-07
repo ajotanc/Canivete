@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ArrowLeft, ChevronRight, Gift, KeyRound, ListChecks, Lock, LogOut } from '@lucide/vue'
-import dayjs from 'dayjs'
+import { getLocalTimeZone, today, type DateValue } from '@internationalized/date'
+import { ArrowLeft, CalendarIcon, ChevronRight, Gift, KeyRound, ListChecks, Lock, LogOut } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -9,32 +9,48 @@ import PageHeader from '@/components/PageHeader.vue'
 import PinField from '@/components/PinField.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/components/ui/input-group'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { loadUser, logout, useAuth } from '@/core/services/auth'
 import AuthForm from './components/AuthForm.vue'
+import { dateValueToIso, eventYearRange, formatDateValue, isoToDateValue } from '@/lib/date'
 import { parseMoney } from '@/lib/money'
+import { makeRoomBelow } from '@/lib/scroll'
+import { cn } from '@/lib/utils'
 import WishlistEditor from './components/WishlistEditor.vue'
 import { createGroup, listMyGroups, SantaApiError, type MyGroup, type WishItem } from './lib/api'
 import { adminPath } from './lib/links'
-import { isPin, PIN_LENGTH } from './lib/pin'
+import { CREATE_STEP_TITLES, LIMITS, PIN_LENGTH } from './constants'
+import { isPin } from './lib/pin'
 import { saveCredentials } from './lib/session'
 
 const router = useRouter()
-/** A data da troca não pode estar no passado (AAAA-MM-DD, no fuso de quem está criando). */
-const today = dayjs().format('YYYY-MM-DD')
+/** A data da troca não pode estar no passado. */
+const minDate = today(getLocalTimeZone())
 const { user, ready } = useAuth()
 
 const step = ref(1)
 const name = ref('')
 const budget = ref('')
 const eventDate = ref('')
+const eventDateOpen = ref(false)
+const eventYears = computed(() => eventYearRange(eventDateValue.value))
+/** O Calendar usa `DateValue`; o grupo guarda a data como texto AAAA-MM-DD. */
+const eventDateValue = computed<DateValue | undefined>({
+  get: () => isoToDateValue(eventDate.value),
+  set: (value) => {
+    eventDate.value = dateValueToIso(value)
+    eventDateOpen.value = false
+  },
+})
 const participates = ref(true)
 const myName = ref('')
 const myPin = ref('')
@@ -73,10 +89,11 @@ async function onLogout() {
   step.value = 1
 }
 
-const stepTitles = ['Como vai se chamar o grupo?', 'Valor e data (opcionais)', 'Você também participa?']
+const stepTitles = CREATE_STEP_TITLES
+const lastStep = stepTitles.length
 const canContinue = computed(() => {
   if (step.value === 1) return name.value.trim().length > 0
-  if (step.value === 3 && participates.value) return myName.value.trim().length > 0 && isPin(myPin.value)
+  if (step.value === lastStep && participates.value) return myName.value.trim().length > 0 && isPin(myPin.value)
   return true
 })
 
@@ -103,7 +120,7 @@ async function onSubmit() {
 }
 
 function onNext() {
-  if (step.value < 3) step.value += 1
+  if (step.value < lastStep) step.value += 1
   else onSubmit()
 }
 </script>
@@ -112,7 +129,7 @@ function onNext() {
   <section class="mx-auto w-full max-w-xl space-y-8">
     <PageHeader filled :icon="Gift" title="Amigo secreto" description="Crie o grupo, cadastre as pessoas e sorteie. Cada uma vê só quem tirou.">
       <dl class="grid grid-cols-2 gap-3 pt-2">
-        <FactTile :icon="ListChecks" label="Grupo">3 passos</FactTile>
+        <FactTile :icon="ListChecks" label="Grupo">{{ stepTitles.length }} passos</FactTile>
         <FactTile :icon="KeyRound" label="PIN">{{ PIN_LENGTH }} números</FactTile>
         <FactTile :icon="Lock" label="Privacidade" tone="paper" class="col-span-2">Só você vê o seu par</FactTile>
       </dl>
@@ -161,26 +178,39 @@ function onNext() {
         <CardContent>
           <form class="space-y-6" @submit.prevent="onNext">
             <div class="space-y-3">
-              <Progress :model-value="(step / 3) * 100" :aria-label="`Passo ${step} de 3`" class="h-1.5" />
-              <p class="text-sm font-medium text-muted-foreground">Passo {{ step }} de 3</p>
+              <Progress :model-value="(step / lastStep) * 100" :aria-label="`Passo ${step} de ${lastStep}`" class="h-1.5" />
+              <p class="text-sm font-medium text-muted-foreground">Passo {{ step }} de {{ lastStep }}</p>
               <h2 class="text-xl">{{ stepTitles[step - 1] }}</h2>
             </div>
 
             <FieldGroup v-if="step === 1">
               <Field>
                 <FieldLabel for="group-name">Nome do grupo</FieldLabel>
-                <Input id="group-name" v-model="name" maxlength="80" autocomplete="off" placeholder="Família Silva" />
+                <Input id="group-name" v-model="name" :maxlength="LIMITS.groupName" autocomplete="off" placeholder="Família Silva" />
               </Field>
             </FieldGroup>
 
             <FieldGroup v-else-if="step === 2">
               <Field>
                 <FieldLabel for="budget">Valor sugerido</FieldLabel>
-                <Input id="budget" v-model="budget" v-money maxlength="20" placeholder="R$ 50,00" inputmode="numeric" />
+                <Input id="budget" v-model="budget" v-money :maxlength="LIMITS.budgetInput" placeholder="R$ 50,00" inputmode="numeric" />
               </Field>
               <Field>
                 <FieldLabel for="event-date">Data da troca</FieldLabel>
-                <Input id="event-date" v-model="eventDate" type="date" :min="today" />
+                <Popover v-model:open="eventDateOpen">
+                  <PopoverTrigger as-child>
+                    <Button id="event-date" type="button" variant="outline" @click.capture="makeRoomBelow" :class="cn('w-full justify-start text-left font-normal', !eventDateValue && 'text-muted-foreground')">
+                      <CalendarIcon aria-hidden="true" />
+                      {{ eventDateValue ? formatDateValue(eventDateValue) : 'Escolha a data' }}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent class="w-(--reka-popover-trigger-width) max-w-[22rem] p-0">
+                    <Calendar v-model="eventDateValue" :default-placeholder="eventDateValue ?? minDate" :min-value="minDate" :year-range="eventYears" locale="pt-BR" weekday-format="short" layout="month-and-year" initial-focus />
+                    <div class="border-t p-1">
+                      <Button type="button" variant="ghost" size="sm" class="w-full" @click="eventDateValue = minDate">Hoje</Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </Field>
             </FieldGroup>
 
@@ -192,7 +222,7 @@ function onNext() {
               <template v-if="participates">
                 <Field>
                   <FieldLabel for="my-name">Seu nome</FieldLabel>
-                  <Input id="my-name" v-model="myName" maxlength="60" autocomplete="off" data-1p-ignore data-lpignore="true" />
+                  <Input id="my-name" v-model="myName" :maxlength="LIMITS.personName" autocomplete="off" data-1p-ignore data-lpignore="true" />
                 </Field>
                 <Field>
                   <FieldLabel for="my-pin">PIN de {{ PIN_LENGTH }} números</FieldLabel>
@@ -218,7 +248,7 @@ function onNext() {
               </Button>
               <Button type="submit" size="lg" class="flex-1" :disabled="!canContinue || loading">
                 <Spinner v-if="loading" />
-                {{ step < 3 ? 'Continuar' : loading ? 'Criando...' : 'Criar grupo' }}
+                {{ step < lastStep ? 'Continuar' : loading ? 'Criando...' : 'Criar grupo' }}
               </Button>
             </div>
           </form>
