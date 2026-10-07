@@ -12,7 +12,7 @@ export interface ToolManifest {
   /** Ícone de @lucide/vue exibido no card. */
   icon: Component
   /** Cor de cabo da ferramenta: vira o primário da página dela e a cor do card na home. Padrão: `cobalt`. */
-  color?: 'cobalt' | 'berry'
+  color?: 'cobalt' | 'berry' | 'pine' | 'violet' | 'amber'
   /** Miniatura do que a ferramenta faz, exibida no card da home sobre o campo colorido. */
   preview?: Component
   /** Categoria usada no filtro da home. */
