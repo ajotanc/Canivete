@@ -153,13 +153,13 @@ function onColor(next: unknown) {
         </CardHeader>
         <CardContent class="space-y-6">
           <QrCodeCard :value="value" :dark="dark" :filename="filename" label="QR Code gerado" />
-          <Field orientation="horizontal">
+          <Field>
             <FieldContent>
               <FieldLabel>Cor</FieldLabel>
               <FieldDescription>Prefira cores escuras sobre o fundo branco.</FieldDescription>
             </FieldContent>
-            <ToggleGroup type="single" variant="outline" :model-value="dark" aria-label="Cor do QR Code" class="bg-card" @update:model-value="onColor">
-              <ToggleGroupItem v-for="color in COLORS" :key="color.value" :value="color.value" :aria-label="color.label" class="size-11 min-w-11 p-0">
+            <ToggleGroup type="single" variant="outline" :model-value="dark" aria-label="Cor do QR Code" class="w-full bg-card" @update:model-value="onColor">
+              <ToggleGroupItem v-for="color in COLORS" :key="color.value" :value="color.value" :aria-label="color.label" class="h-11 flex-1 p-0">
                 <span class="size-5 rounded-full border border-black/10" :style="{ backgroundColor: color.value }" />
               </ToggleGroupItem>
             </ToggleGroup>

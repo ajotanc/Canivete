@@ -1,4 +1,4 @@
-/** Regras do link de WhatsApp: normalizar o telefone e montar o endereço wa.me. */
+/** Regras do link de WhatsApp: normalizar o telefone e montar o endereço api.whatsapp.com/send. */
 
 export const BR_DDI = '55'
 /** Tamanho a partir do qual avisamos que a mensagem pode ficar grande demais para o link. */
@@ -62,10 +62,8 @@ export function parsePhone(input: string): ParsedPhone {
   return { digits: full, valid: true, display: formatBrazilian(full), error: null }
 }
 
-/** Monta https://wa.me/<número>?text=<mensagem>. Devolve '' se o telefone for inválido. */
+/** Monta https://api.whatsapp.com/send/?phone=<número>&text=<mensagem>. Devolve '' se o telefone for inválido. */
 export function buildWhatsappLink(phone: ParsedPhone, message: string): string {
   if (!phone.valid) return ''
-  const text = message.trim()
-  const base = `https://wa.me/${phone.digits}`
-  return text ? `${base}?text=${encodeURIComponent(text)}` : base
+  return `https://api.whatsapp.com/send/?phone=${phone.digits}&text=${encodeURIComponent(message.trim())}`
 }

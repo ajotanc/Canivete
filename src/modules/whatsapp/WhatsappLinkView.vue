@@ -28,7 +28,7 @@ const tooLong = computed(() => message.value.length > MESSAGE_LIMIT)
   <section class="space-y-8">
     <PageHeader filled :icon="WhatsappIcon" title="Link de WhatsApp" description="Crie o link para abrir uma conversa sem salvar o contato, com a mensagem já escrita, e o QR Code para imprimir.">
       <FactList>
-        <FactTile :icon="Link2" label="Link">wa.me</FactTile>
+        <FactTile :icon="Link2" label="Link">WhatsApp</FactTile>
         <FactTile :icon="QrCode" label="QR Code">PNG e SVG</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
@@ -72,7 +72,7 @@ const tooLong = computed(() => message.value.length > MESSAGE_LIMIT)
         <CardContent class="space-y-6">
           <div class="space-y-2">
             <p class="text-sm font-medium">Link</p>
-            <CopyField :value="link" label="Link" message="Link copiado." placeholder="https://wa.me/…" />
+            <CopyField :value="link" label="Link" message="Link copiado." placeholder="https://api.whatsapp.com/send/…" />
             <Button as-child class="w-full" :disabled="!link">
               <a v-if="link" :href="link" target="_blank" rel="noopener noreferrer">
                 <ExternalLink aria-hidden="true" />

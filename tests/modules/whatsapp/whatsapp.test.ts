@@ -42,12 +42,12 @@ describe('buildWhatsappLink', () => {
 
   it('monta o link com a mensagem codificada', () => {
     expect(buildWhatsappLink(phone, 'Olá, tudo bem? R$ 10 & mais')).toBe(
-      'https://wa.me/5511912345678?text=Ol%C3%A1%2C%20tudo%20bem%3F%20R%24%2010%20%26%20mais',
+      'https://api.whatsapp.com/send/?phone=5511912345678&text=Ol%C3%A1%2C%20tudo%20bem%3F%20R%24%2010%20%26%20mais',
     )
   })
 
-  it('sem mensagem, devolve só o endereço', () => {
-    expect(buildWhatsappLink(phone, '  ')).toBe('https://wa.me/5511912345678')
+  it('sem mensagem, deixa o texto vazio', () => {
+    expect(buildWhatsappLink(phone, '  ')).toBe('https://api.whatsapp.com/send/?phone=5511912345678&text=')
   })
 
   it('telefone inválido não gera link', () => {
