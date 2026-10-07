@@ -23,8 +23,28 @@ const COLORS = [
   { label: 'Vinho', value: '#9f1239' },
 ] as const
 
+/** Razão de contraste mínima com o fundo branco para o QR Code continuar legível pelas câmeras. */
+const MIN_CONTRAST = 3
+
 const kind = ref<Kind>('text')
 const dark = ref<string>(COLORS[0].value)
+const customColor = ref('#7c3aed')
+const isCustom = computed(() => !COLORS.some((color) => color.value === dark.value))
+
+/** Contraste (WCAG) da cor escolhida contra o branco. */
+function contrastWithWhite(hex: string): number {
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const channel = parseInt(hex.slice(i, i + 2), 16) / 255
+    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4
+  })
+  return 1.05 / (0.2126 * r! + 0.7152 * g! + 0.0722 * b! + 0.05)
+}
+const lowContrast = computed(() => contrastWithWhite(dark.value) < MIN_CONTRAST)
+
+function onCustomColor(event: Event) {
+  customColor.value = (event.target as HTMLInputElement).value
+  dark.value = customColor.value
+}
 
 const text = ref('')
 const wifi = ref<WifiData>({ ssid: '', password: '', security: 'WPA', hidden: false })
@@ -153,8 +173,19 @@ function onSecurity(next: unknown) {
                   />
                 </span>
               </label>
+              <label class="group relative cursor-pointer" title="Escolher outra cor">
+                <input type="color" :value="customColor" aria-label="Escolher outra cor" class="absolute inset-0 size-full cursor-pointer opacity-0" @input="onCustomColor" />
+                <span class="flex size-11 items-center justify-center">
+                  <span
+                    class="size-7 rounded-full ring-offset-2 ring-offset-card transition-shadow group-has-[:focus-visible]:ring-4 group-has-[:focus-visible]:ring-ring/50 motion-reduce:transition-none"
+                    :class="isCustom && 'ring-2 ring-primary'"
+                    :style="{ background: isCustom ? customColor : 'conic-gradient(#ef4444, #eab308, #22c55e, #3b82f6, #a855f7, #ef4444)' }"
+                  />
+                </span>
+              </label>
             </div>
           </div>
+          <p v-if="lowContrast" class="mt-1 text-sm text-warning" role="status">Cor muito clara: o QR Code pode não ser lido. Prefira um tom mais escuro.</p>
         </CardContent>
       </Card>
 
