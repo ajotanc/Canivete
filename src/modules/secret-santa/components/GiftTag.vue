@@ -77,7 +77,7 @@ onBeforeUnmount(() => {
     <div class="relative h-74">
       <!-- Envelope: a aba levanta enquanto o lacre é arrastado e o envelope desce quando a carta sai -->
       <section
-        class="absolute inset-0 overflow-hidden rounded-[1.75rem] bg-primary shadow-[0_22px_42px_-24px_color-mix(in_oklab,var(--primary),transparent_25%)] transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+        class="absolute inset-0 overflow-hidden rounded-3xl bg-primary shadow-[0_22px_42px_-24px_color-mix(in_oklab,var(--primary),transparent_25%)] transition-[transform,opacity] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
         :class="[opened ? 'pointer-events-none translate-y-8 scale-[0.94] opacity-0' : '', returning ? 'motion-safe:animate-[envelope-return_800ms_cubic-bezier(0.16,1,0.3,1)]' : '']"
         :aria-hidden="opened"
       >
@@ -139,7 +139,7 @@ onBeforeUnmount(() => {
       <Transition name="letter">
         <article
           v-if="opened"
-          class="absolute inset-0 flex flex-col items-center justify-center overflow-hidden rounded-[1.75rem] border border-foreground/10 bg-card px-7 text-center shadow-[0_22px_42px_-24px_rgb(14_20_32/0.42)]"
+          class="absolute inset-0 flex flex-col items-center justify-center overflow-hidden rounded-3xl border border-foreground/10 bg-card px-7 text-center shadow-[0_22px_42px_-24px_rgb(14_20_32/0.42)]"
           aria-live="polite"
         >
           <Sparkles class="size-6 text-primary motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-700" aria-hidden="true" />

@@ -4,9 +4,9 @@ import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import ConfirmDelete from '@/components/ConfirmDelete.vue'
 import { Button } from '@/components/ui/button'
-import ComboboxField from '@/components/ComboboxField.vue'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldLabel } from '@/components/ui/field'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
 import { SantaApiError, setExclusions } from '../lib/api'
 
@@ -71,11 +71,21 @@ async function remove() {
       <form class="grid gap-3 sm:grid-cols-2" @submit.prevent="add">
         <Field>
           <FieldLabel for="excl-first">Pessoa</FieldLabel>
-          <ComboboxField id="excl-first" v-model="first" :options="names" placeholder="Escolha a pessoa" search-placeholder="Buscar pessoa" empty-text="Ninguém com esse nome." />
+          <Select v-model="first">
+            <SelectTrigger id="excl-first"><SelectValue placeholder="Escolha a pessoa" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="name in names" :key="name" :value="name">{{ name }}</SelectItem>
+            </SelectContent>
+          </Select>
         </Field>
         <Field>
           <FieldLabel for="excl-second">Não pode tirar</FieldLabel>
-          <ComboboxField id="excl-second" v-model="second" :options="names.filter((n) => n !== first)" placeholder="Escolha a pessoa" search-placeholder="Buscar pessoa" empty-text="Ninguém com esse nome." />
+          <Select v-model="second">
+            <SelectTrigger id="excl-second"><SelectValue placeholder="Escolha a pessoa" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="name in names.filter((n) => n !== first)" :key="name" :value="name">{{ name }}</SelectItem>
+            </SelectContent>
+          </Select>
         </Field>
         <Button type="submit" variant="outline" size="lg" class="sm:col-span-2" :disabled="!canAdd || saving">
           <Spinner v-if="saving" />
