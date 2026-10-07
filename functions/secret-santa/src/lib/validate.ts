@@ -6,8 +6,37 @@ dayjs.extend(customParseFormat)
 
 export const MAX_GROUP_NAME = 80
 export const MAX_PERSON_NAME = 60
-export const MAX_WISHLIST_ITEMS = 20
+export const MAX_WISHLIST_ITEMS = 10
 export const MAX_WISHLIST_ITEM = 100
+export const MAX_WISHLIST_URL = 500
+/** Cores que o organizador pode dar ao grupo; sem escolha vale `berry` (framboesa). */
+export const GROUP_COLORS = ['berry', 'cobalt', 'pine', 'violet', 'amber'] as const
+export type GroupColor = (typeof GROUP_COLORS)[number]
+export const DEFAULT_GROUP_COLOR: GroupColor = 'berry'
+
+/** Luminância relativa (WCAG) de #RRGGBB. */
+export function hexLuminance(hex: string): number {
+  const channel = (start: number) => {
+    const v = parseInt(hex.slice(start, start + 2), 16) / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  }
+  return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5)
+}
+
+/** Cor da lista ou uma cor livre #RRGGBB que dê contraste com texto branco (nem clara demais, nem escura demais). */
+export function parseGroupColor(value: unknown): string {
+  if (typeof value === 'string' && (GROUP_COLORS as readonly string[]).includes(value)) return value
+  if (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)) {
+    const hex = value.toLowerCase()
+    const luminance = hexLuminance(hex)
+    if (luminance > 0.3) throw new SantaError('INVALID_INPUT', 'Essa cor é clara demais. Escolha uma mais escura.')
+    if (luminance < 0.02) throw new SantaError('INVALID_INPUT', 'Essa cor é escura demais. Escolha uma mais clara.')
+    return hex
+  }
+  throw new SantaError('INVALID_INPUT', 'Escolha uma das cores disponíveis.')
+}
+/** Separa o texto do link dentro de um item guardado (um valor só por item na coluna). */
+const WISH_SEP = String.fromCharCode(9)
 export const MAX_QUESTION = 200
 export const MAX_ANSWER = 300
 export const MAX_POST = 300
@@ -74,24 +103,58 @@ export function parsePin(value: unknown): string {
   return value
 }
 
+export interface WishItem {
+  text: string
+  url?: string
+}
+
+/** Item guardado como texto simples ou "texto<TAB>link". */
+export function decodeWish(stored: string): WishItem {
+  const at = stored.indexOf(WISH_SEP)
+  if (at === -1) return { text: stored }
+  return { text: stored.slice(0, at), url: stored.slice(at + 1) }
+}
+
+/** Só aceita http e https; devolve o endereço normalizado. */
+function parseWishUrl(value: unknown): string | undefined {
+  const raw = cleanLine(value)
+  if (raw === '') return undefined
+  let url: URL
+  try {
+    url = new URL(/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`)
+  } catch {
+    throw new SantaError('INVALID_INPUT', 'Um dos links não é válido. Cole o endereço completo do produto.')
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new SantaError('INVALID_INPUT', 'O link precisa começar com http:// ou https://.')
+  }
+  const href = url.href
+  if (href.length > MAX_WISHLIST_URL) {
+    throw new SantaError('INVALID_INPUT', `Cada link pode ter até ${MAX_WISHLIST_URL} caracteres.`)
+  }
+  return href
+}
+
 /**
- * Lista de desejos: aceita uma lista de textos (ou um texto com um item por linha, formato antigo).
- * Remove itens vazios e repetidos; sem itens, devolve null.
+ * Lista de desejos: aceita textos, itens `{ text, url? }` ou um texto com um item por linha (formato antigo).
+ * Remove itens vazios e repetidos; devolve os itens prontos para guardar, ou null se não sobrar nenhum.
  */
 export function parseWishlist(value: unknown): string[] | null {
-  const raw = Array.isArray(value) ? value : typeof value === 'string' ? value.split(/\r?\n/) : []
+  const raw: unknown[] = Array.isArray(value) ? value : typeof value === 'string' ? value.split(/\r?\n/) : []
   const items: string[] = []
   const seen = new Set<string>()
   for (const entry of raw) {
-    const item = cleanLine(entry)
-    if (item === '') continue
-    if (item.length > MAX_WISHLIST_ITEM) {
+    const isObject = typeof entry === 'object' && entry !== null
+    const text = cleanLine(isObject ? (entry as WishItem).text : entry)
+    if (text === '') continue
+    if (text.length > MAX_WISHLIST_ITEM) {
       throw new SantaError('INVALID_INPUT', `Cada item da lista pode ter até ${MAX_WISHLIST_ITEM} caracteres.`)
     }
-    const key = item.toLocaleLowerCase('pt-BR')
+    const key = text.toLocaleLowerCase('pt-BR')
     if (seen.has(key)) continue
     seen.add(key)
-    items.push(item)
+    const url = isObject ? parseWishUrl((entry as WishItem).url) : undefined
+    items.push(url ? `${text}${WISH_SEP}${url}` : text)
   }
   if (items.length > MAX_WISHLIST_ITEMS) {
     throw new SantaError('INVALID_INPUT', `A lista pode ter até ${MAX_WISHLIST_ITEMS} itens.`)

@@ -42,6 +42,8 @@ export function createAppwriteDb(env: Env): SantaDb {
     status: row.status as GroupStatus,
     ownerId: row.ownerId,
     slug: row.slug ?? null,
+    exclusions: Array.isArray(row.exclusions) ? row.exclusions : [],
+    color: typeof row.color === 'string' && row.color !== '' ? row.color : null,
   })
 
   const toQuestion = (row: Record<string, any>): QuestionRow => ({
@@ -75,6 +77,7 @@ export function createAppwriteDb(env: Env): SantaDb {
     lockedUntil: row.lockedUntil ? dayjs(row.lockedUntil).toISOString() : null,
     assignedToId: row.assignedToId ?? null,
     isOrganizer: Boolean(row.isOrganizer),
+    revealed: Boolean(row.revealed),
   })
 
   return {
@@ -104,6 +107,12 @@ export function createAppwriteDb(env: Env): SantaDb {
     },
     async setGroupStatus(id, status) {
       await tables.updateRow({ databaseId, tableId: groupsTableId, rowId: id, data: { status } })
+    },
+    async setGroupColor(id, color) {
+      await tables.updateRow({ databaseId, tableId: groupsTableId, rowId: id, data: { color } })
+    },
+    async setGroupExclusions(id, exclusions) {
+      await tables.updateRow({ databaseId, tableId: groupsTableId, rowId: id, data: { exclusions } })
     },
     async setGroupSlug(id, slug) {
       await tables.updateRow({ databaseId, tableId: groupsTableId, rowId: id, data: { slug } })
@@ -150,6 +159,16 @@ export function createAppwriteDb(env: Env): SantaDb {
       }
       await tables.deleteRow({ databaseId, tableId: groupsTableId, rowId: id })
     },
+    async deleteQuestions(groupId) {
+      for (let batch = 0; batch < 100; batch++) {
+        const result = await tables.deleteRows({
+          databaseId,
+          tableId: questionsTableId,
+          queries: [Query.equal('groupId', [groupId]), Query.limit(100)],
+        })
+        if (result.total === 0) break
+      }
+    },
     async deleteParticipant(id) {
       await tables.deleteRow({ databaseId, tableId: participantsTableId, rowId: id })
     },
@@ -191,6 +210,17 @@ export function createAppwriteDb(env: Env): SantaDb {
         queries: [Query.equal('groupId', [groupId]), Query.orderDesc('$createdAt'), Query.limit(100)],
       })
       return result.rows.map(toPost)
+    },
+    async getPost(id) {
+      try {
+        return toPost(await tables.getRow({ databaseId, tableId: postsTableId, rowId: id }))
+      } catch (error) {
+        if (isNotFound(error)) return null
+        throw error
+      }
+    },
+    async deletePost(id) {
+      await tables.deleteRow({ databaseId, tableId: postsTableId, rowId: id })
     },
   }
 }

@@ -212,3 +212,31 @@ describe('deleteGroup', () => {
     expect(db.groups.has(groupId)).toBe(true)
   })
 })
+
+describe('apagar recado', () => {
+  type Listed = { posts: { id: string; text: string; canDelete: boolean }[] }
+
+  it('quem escreveu apaga o seu; outra pessoa não apaga o dos outros', async () => {
+    const { db, groupId, who } = await drawnGroup()
+    await handleAction(db, { action: 'postMessage', ...who('Ana'), text: 'Oi' })
+    const before = (await handleAction(db, { action: 'listPosts', ...who('Ana') })) as Listed
+    expect(before.posts[0].canDelete).toBe(true)
+    const others = (await handleAction(db, { action: 'listPosts', ...who('Bia') })) as Listed
+    expect(others.posts[0].canDelete).toBe(false)
+
+    const id = before.posts[0].id
+    expect((await errorOf(handleAction(db, { action: 'deletePost', ...who('Bia'), postId: id })))?.code).toBe('FORBIDDEN')
+    await handleAction(db, { action: 'deletePost', ...who('Ana'), postId: id })
+    expect(((await handleAction(db, { action: 'listPosts', ...who('Ana'), groupId })) as Listed).posts).toHaveLength(0)
+  })
+
+  it('o organizador apaga qualquer recado e lê o mural sem PIN', async () => {
+    const { db, groupId, who } = await drawnGroup()
+    await handleAction(db, { action: 'postMessage', ...who('Ana'), text: 'Oi' })
+    const listed = (await handleAction(db, { action: 'listPosts', groupId }, OWNER)) as Listed
+    expect(listed.posts[0].canDelete).toBe(true)
+    await handleAction(db, { action: 'deletePost', groupId, postId: listed.posts[0].id }, OWNER)
+    expect(((await handleAction(db, { action: 'listPosts', groupId }, OWNER)) as Listed).posts).toHaveLength(0)
+    expect((await errorOf(handleAction(db, { action: 'listPosts', groupId }, STRANGER)))?.code).toBeDefined()
+  })
+})

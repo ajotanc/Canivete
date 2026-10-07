@@ -8,6 +8,7 @@ import {
   parseGroupName,
   parsePersonName,
   parsePin,
+  decodeWish,
   parseWishlist,
   toNameKey,
 } from '../../../functions/secret-santa/src/lib/validate'
@@ -108,7 +109,21 @@ describe('parseWishlist', () => {
 
   it('limita o tamanho do item e a quantidade de itens', () => {
     expect(codeOf(() => parseWishlist(['x'.repeat(101)]))).toBe('INVALID_INPUT')
-    expect(codeOf(() => parseWishlist(Array.from({ length: 21 }, (_, i) => `item ${i}`)))).toBe('INVALID_INPUT')
+    expect(codeOf(() => parseWishlist(Array.from({ length: 11 }, (_, i) => `item ${i}`)))).toBe('INVALID_INPUT')
+  })
+})
+
+describe('parseWishlist com link', () => {
+  it('guarda o link normalizado e devolve texto e link separados', () => {
+    const [stored, plain] = parseWishlist([{ text: ' Meias ', url: 'loja.com/meias' }, { text: 'Livro', url: '' }])!
+    expect(decodeWish(stored!)).toEqual({ text: 'Meias', url: 'https://loja.com/meias' })
+    expect(decodeWish(plain!)).toEqual({ text: 'Livro' })
+  })
+
+  it('só aceita http e https e limita o tamanho do link', () => {
+    expect(codeOf(() => parseWishlist([{ text: 'a', url: 'javascript:alert(1)' }]))).toBe('INVALID_INPUT')
+    expect(codeOf(() => parseWishlist([{ text: 'a', url: 'https://x.com/' + 'a'.repeat(500) }]))).toBe('INVALID_INPUT')
+    expect(codeOf(() => parseWishlist([{ text: 'a', url: 'http://' }]))).toBe('INVALID_INPUT')
   })
 })
 

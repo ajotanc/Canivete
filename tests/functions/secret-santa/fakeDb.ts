@@ -33,6 +33,14 @@ export function createFakeDb() {
     async listGroupsByOwner(ownerId) {
       return [...groups.values()].filter((g) => g.ownerId === ownerId)
     },
+    async setGroupColor(id, color) {
+      const group = groups.get(id)
+      if (group) group.color = color
+    },
+    async setGroupExclusions(id, exclusions) {
+      const group = groups.get(id)
+      if (group) group.exclusions = exclusions
+    },
     async setGroupSlug(id, slug) {
       const group = groups.get(id)
       if (group) group.slug = slug
@@ -69,6 +77,9 @@ export function createFakeDb() {
       for (let i = posts.length - 1; i >= 0; i--) if (posts[i].groupId === id) posts.splice(i, 1)
       groups.delete(id)
     },
+    async deleteQuestions(groupId) {
+      for (const [key, q] of questions) if (q.groupId === groupId) questions.delete(key)
+    },
     async deleteParticipant(id) {
       participants.delete(id)
     },
@@ -94,6 +105,13 @@ export function createFakeDb() {
     },
     async listPosts(groupId) {
       return posts.filter((p) => p.groupId === groupId)
+    },
+    async getPost(id) {
+      return posts.find((p) => p.id === id) ?? null
+    },
+    async deletePost(id) {
+      const index = posts.findIndex((p) => p.id === id)
+      if (index >= 0) posts.splice(index, 1)
     },
   }
   return db

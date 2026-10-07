@@ -93,6 +93,7 @@ describe('getGroup', () => {
       budget: null,
       eventDate: '',
       status: 'open',
+      color: 'berry',
       participantCount: 2,
       members: [
         { name: 'Lia', hasPin: true },
@@ -164,7 +165,7 @@ describe('addParticipant (organizador)', () => {
     for (let i = 0; i < 100; i++) {
       await db.createParticipant({
         groupId, name: `P${i}`, nameKey: `p${i}`, wishlist: null, pinHash: null,
-        failedAttempts: 0, lockedUntil: null, assignedToId: null, isOrganizer: false,
+        failedAttempts: 0, lockedUntil: null, assignedToId: null, isOrganizer: false, revealed: false,
       })
     }
     expect(await errorCode(handleAction(db, { action: 'addParticipant', groupId, name: 'Extra' }, OWNER))).toBe(
@@ -230,5 +231,20 @@ describe('ações desconhecidas', () => {
   it('devolve INVALID_INPUT', async () => {
     expect(await errorCode(handleAction(createFakeDb(), { action: 'nada' }))).toBe('INVALID_INPUT')
     expect(await errorCode(handleAction(createFakeDb(), null))).toBe('INVALID_INPUT')
+  })
+})
+
+describe('cor do grupo', () => {
+  it('começa framboesa, o organizador troca e só aceita cores da lista', async () => {
+    const db = createFakeDb()
+    const { groupId } = (await handleAction(db, { action: 'createGroup', name: 'Turma' }, OWNER)) as { groupId: string }
+    expect(await handleAction(db, { action: 'getGroup', groupId })).toMatchObject({ color: 'berry' })
+    expect(await handleAction(db, { action: 'setColor', groupId, color: 'pine' }, OWNER)).toEqual({ color: 'pine' })
+    expect(await handleAction(db, { action: 'getGroup', groupId })).toMatchObject({ color: 'pine' })
+    expect(await handleAction(db, { action: 'setColor', groupId, color: '#0F766E' }, OWNER)).toEqual({ color: '#0f766e' })
+    expect(await errorCode(handleAction(db, { action: 'setColor', groupId, color: '#ffffcc' }, OWNER))).toBe('INVALID_INPUT')
+    expect(await errorCode(handleAction(db, { action: 'setColor', groupId, color: '#000000' }, OWNER))).toBe('INVALID_INPUT')
+    expect(await errorCode(handleAction(db, { action: 'setColor', groupId, color: 'red' }, OWNER))).toBe('INVALID_INPUT')
+    expect(await errorCode(handleAction(db, { action: 'setColor', groupId, color: 'cobalt' }, STRANGER))).toBe('FORBIDDEN')
   })
 })

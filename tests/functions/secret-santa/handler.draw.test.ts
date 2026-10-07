@@ -101,3 +101,66 @@ describe('draw', () => {
     expect(result).toEqual({ status: 'open', wishlist: [] })
   })
 })
+
+describe('exclusões', () => {
+  it('guarda os pares, devolve para o organizador e ninguém tira o par proibido', async () => {
+    const { db, groupId } = await groupWith(['Ana', 'Bia', 'Caio', 'Duda'])
+    await handleAction(db, { action: 'setExclusions', groupId, exclusions: [['Ana', 'Bia'], ['bia', 'ANA']] }, OWNER)
+    const listed = (await handleAction(db, { action: 'listParticipants', groupId }, OWNER)) as { exclusions: string[][] }
+    expect(listed.exclusions).toHaveLength(1)
+
+    for (let i = 0; i < 20; i++) {
+      await handleAction(db, { action: 'draw', groupId }, OWNER)
+      const byName = new Map([...db.participants.values()].map((p) => [p.id, p.name]))
+      const given = new Map([...db.participants.values()].map((p) => [p.name, byName.get(p.assignedToId!)]))
+      expect(given.get('Ana')).not.toBe('Bia')
+      expect(given.get('Bia')).not.toBe('Ana')
+      db.groups.get(groupId)!.status = 'open'
+    }
+  })
+
+  it('recusa nomes de fora, o mesmo nome duas vezes e quem não é o dono', async () => {
+    const { db, groupId } = await groupWith(['Ana', 'Bia', 'Caio'])
+    expect(await errorCode(handleAction(db, { action: 'setExclusions', groupId, exclusions: [['Ana', 'Zé']] }, OWNER))).toBe('INVALID_INPUT')
+    expect(await errorCode(handleAction(db, { action: 'setExclusions', groupId, exclusions: [['Ana', 'Ana']] }, OWNER))).toBe('INVALID_INPUT')
+    expect(await errorCode(handleAction(db, { action: 'setExclusions', groupId, exclusions: [] }, STRANGER))).toBe('FORBIDDEN')
+  })
+
+  it('avisa quando as regras tornam o sorteio impossível e some o par de quem foi removido', async () => {
+    const { db, groupId } = await groupWith(['Ana', 'Bia', 'Caio'])
+    await handleAction(db, { action: 'setExclusions', groupId, exclusions: [['Ana', 'Bia'], ['Ana', 'Caio'], ['Bia', 'Caio']] }, OWNER)
+    expect(await errorCode(handleAction(db, { action: 'draw', groupId }, OWNER))).toBe('DRAW_IMPOSSIBLE')
+    expect(db.groups.get(groupId)!.status).toBe('open')
+    await handleAction(db, { action: 'removeParticipant', groupId, name: 'Caio' }, OWNER)
+    expect(db.groups.get(groupId)!.exclusions).toHaveLength(1)
+  })
+})
+
+describe('refazer o sorteio', () => {
+  it('reabre o grupo, apaga os pares e as perguntas quando ninguém abriu a carta', async () => {
+    const { db, groupId } = await groupWith(['Ana', 'Bia', 'Caio'])
+    await handleAction(db, { action: 'draw', groupId }, OWNER)
+    await handleAction(db, { action: 'askQuestion', groupId, name: 'Ana', pin: '1000', question: 'Gosta de quê?' })
+    expect(db.questions.size).toBe(1)
+
+    expect(await errorCode(handleAction(db, { action: 'resetDraw', groupId }, STRANGER))).toBe('FORBIDDEN')
+    await handleAction(db, { action: 'resetDraw', groupId }, OWNER)
+    expect(db.groups.get(groupId)!.status).toBe('open')
+    expect([...db.participants.values()].every((p) => p.assignedToId === null)).toBe(true)
+    expect(db.questions.size).toBe(0)
+    // Dá para sortear de novo.
+    await handleAction(db, { action: 'draw', groupId }, OWNER)
+    expect(db.groups.get(groupId)!.status).toBe('drawn')
+  })
+
+  it('recusa depois que alguém abriu a carta, e antes do sorteio', async () => {
+    const { db, groupId } = await groupWith(['Ana', 'Bia', 'Caio'])
+    expect(await errorCode(handleAction(db, { action: 'resetDraw', groupId }, OWNER))).toBe('INVALID_INPUT')
+    await handleAction(db, { action: 'draw', groupId }, OWNER)
+    await handleAction(db, { action: 'markRevealed', groupId, name: 'Bia', pin: '1001' })
+    const listed = (await handleAction(db, { action: 'listParticipants', groupId }, OWNER)) as { anyRevealed: boolean }
+    expect(listed.anyRevealed).toBe(true)
+    expect(await errorCode(handleAction(db, { action: 'resetDraw', groupId }, OWNER))).toBe('GROUP_CLOSED')
+    expect(db.groups.get(groupId)!.status).toBe('drawn')
+  })
+})

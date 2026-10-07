@@ -29,7 +29,7 @@ As duas ficam no mesmo banco do sorteador. Nenhuma tem permissões (nem para `an
 | `groupId` | string | 36 | sim |
 | `name` | string | 60 | sim |
 | `nameKey` | string | 60 | sim |
-| `wishlist` | string, **array** | 100 por item | não (padrão `null`) |
+| `wishlist` | string, **array** | 620 por item (texto de até 100, mais o link de até 500) | não (padrão `null`) |
 | `pinHash` | string | 200 | não (padrão `null`) |
 | `failedAttempts` | integer | | sim |
 | `lockedUntil` | datetime | | não |

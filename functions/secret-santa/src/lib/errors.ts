@@ -8,6 +8,7 @@ export type SantaErrorCode =
   | 'BAD_CREDENTIALS'
   | 'LOCKED'
   | 'NOT_ENOUGH_PARTICIPANTS'
+  | 'DRAW_IMPOSSIBLE'
   | 'FORBIDDEN'
   | 'INTERNAL'
 
@@ -22,6 +23,7 @@ const STATUS: Record<SantaErrorCode, number> = {
   BAD_CREDENTIALS: 401,
   LOCKED: 429,
   NOT_ENOUGH_PARTICIPANTS: 422,
+  DRAW_IMPOSSIBLE: 422,
   FORBIDDEN: 403,
   INTERNAL: 500,
 }

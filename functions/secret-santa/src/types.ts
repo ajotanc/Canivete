@@ -12,6 +12,10 @@ export interface GroupRow {
   ownerId: string
   /** Endereço amigável opcional, único entre os grupos (ex.: familia-da-bagunca). */
   slug: string | null
+  /** Pares de ids ("idA|idB", em ordem) que não podem se tirar. */
+  exclusions: string[]
+  /** Cor do grupo; null vale framboesa. */
+  color: string | null
 }
 
 export interface ParticipantRow {
@@ -28,6 +32,8 @@ export interface ParticipantRow {
   lockedUntil: string | null
   assignedToId: string | null
   isOrganizer: boolean
+  /** True quando a pessoa já abriu a carta e viu quem tirou. */
+  revealed: boolean
 }
 
 export interface QuestionRow {
@@ -58,12 +64,16 @@ export interface SantaDb {
   setGroupStatus(id: string, status: GroupStatus): Promise<void>
   /** Troca o texto do link (não é único). */
   setGroupSlug(id: string, slug: string): Promise<void>
+  setGroupExclusions(id: string, exclusions: string[]): Promise<void>
+  setGroupColor(id: string, color: string): Promise<void>
   /** Apaga o grupo e tudo dele: participantes, perguntas e recados. */
   deleteGroup(id: string): Promise<void>
   createParticipant(participant: Omit<ParticipantRow, 'id'>): Promise<string>
   listParticipants(groupId: string): Promise<ParticipantRow[]>
   updateParticipant(id: string, patch: Partial<Omit<ParticipantRow, 'id'>>): Promise<void>
   deleteParticipant(id: string): Promise<void>
+  /** Apaga todas as perguntas do grupo (ao refazer o sorteio). */
+  deleteQuestions(groupId: string): Promise<void>
   createQuestion(question: Omit<QuestionRow, 'id'>): Promise<string>
   getQuestion(id: string): Promise<QuestionRow | null>
   /** Perguntas feitas por (`fromId`) ou recebidas por (`toId`) uma pessoa, da mais antiga à mais nova. */
@@ -72,4 +82,6 @@ export interface SantaDb {
   createPost(post: Omit<PostRow, 'id' | 'createdAt'>): Promise<void>
   /** Recados do mural, do mais novo ao mais antigo. */
   listPosts(groupId: string): Promise<PostRow[]>
+  getPost(id: string): Promise<PostRow | null>
+  deletePost(id: string): Promise<void>
 }

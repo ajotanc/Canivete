@@ -27,7 +27,7 @@ describe('reveal antes do sorteio', () => {
     const { db, groupId } = await setup()
     expect(await handleAction(db, { action: 'reveal', groupId, name: 'João', pin: '1234' })).toEqual({
       status: 'open',
-      wishlist: ['livro'],
+      wishlist: [{ text: 'livro' }],
     })
   })
 
@@ -110,15 +110,18 @@ describe('updateWishlist', () => {
     expect((await db.listParticipants(groupId))[0].wishlist).toEqual(['meias', 'chá'])
   })
 
-  it('recusa PIN errado e recusa depois do sorteio', async () => {
+  it('recusa PIN errado, e depois do sorteio ainda deixa editar', async () => {
     const { db, groupId } = await setup()
     expect(
       (await errorOf(handleAction(db, { action: 'updateWishlist', groupId, name: 'João', pin: '9999', wishlist: 'x' })))
         ?.code,
     ).toBe('BAD_CREDENTIALS')
     await db.setGroupStatus(groupId, 'drawn')
+    await handleAction(db, { action: 'updateWishlist', groupId, name: 'João', pin: '1234', wishlist: 'x' })
+    expect((await db.listParticipants(groupId))[0].wishlist).toEqual(['x'])
+    await db.setGroupStatus(groupId, 'drawing')
     expect(
-      (await errorOf(handleAction(db, { action: 'updateWishlist', groupId, name: 'João', pin: '1234', wishlist: 'x' })))
+      (await errorOf(handleAction(db, { action: 'updateWishlist', groupId, name: 'João', pin: '1234', wishlist: 'y' })))
         ?.code,
     ).toBe('GROUP_CLOSED')
   })
@@ -148,8 +151,8 @@ describe('reveal depois do sorteio', () => {
     const result = await handleAction(db, { action: 'reveal', groupId, name: 'João', pin: '1234' })
     expect(result).toEqual({
       status: 'drawn',
-      wishlist: ['livro'],
-      receiver: { name: 'Ana', wishlist: ['chocolate'] },
+      wishlist: [{ text: 'livro' }],
+      receiver: { name: 'Ana', wishlist: [{ text: 'chocolate' }] },
     })
     const text = JSON.stringify(result)
     expect(text).not.toContain('Bia')
@@ -161,7 +164,7 @@ describe('reveal depois do sorteio', () => {
     await db.setGroupStatus(groupId, 'drawing')
     expect(await handleAction(db, { action: 'reveal', groupId, name: 'João', pin: '1234' })).toEqual({
       status: 'open',
-      wishlist: ['livro'],
+      wishlist: [{ text: 'livro' }],
     })
   })
 })

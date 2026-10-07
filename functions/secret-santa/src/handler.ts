@@ -1,6 +1,6 @@
 import dayjs from 'dayjs'
 import { newGroupCode, MAX_CODE_ATTEMPTS } from './lib/code.js'
-import { assignSecretFriends } from './lib/draw.js'
+import { assignSecretFriends, pairKey } from './lib/draw.js'
 import { SantaError } from './lib/errors.js'
 import { hashPin, verifyPin } from './lib/pin.js'
 import type { RandomInt } from './lib/random.js'
@@ -19,6 +19,9 @@ import {
   parsePin,
   parseSlug,
   toSlug,
+  DEFAULT_GROUP_COLOR,
+  decodeWish,
+  parseGroupColor,
   parseWishlist,
   toNameKey,
 } from './lib/validate.js'
@@ -62,6 +65,14 @@ export async function handleAction(db: SantaDb, body: unknown, deps: HandlerDeps
       return reveal(db, input, now)
     case 'draw':
       return draw(db, input, deps)
+    case 'markRevealed':
+      return markRevealed(db, input, now)
+    case 'resetDraw':
+      return resetDraw(db, input, deps)
+    case 'setColor':
+      return setColor(db, input, deps)
+    case 'setExclusions':
+      return setExclusions(db, input, deps)
     case 'deleteGroup':
       return deleteGroup(db, input, deps)
     case 'listMyGroups':
@@ -76,8 +87,10 @@ export async function handleAction(db: SantaDb, body: unknown, deps: HandlerDeps
       return answerQuestion(db, input, now)
     case 'postMessage':
       return postMessage(db, input, now)
+    case 'deletePost':
+      return deletePost(db, input, deps, now)
     case 'listPosts':
-      return listPosts(db, input, now)
+      return listPosts(db, input, deps, now)
     default:
       throw new SantaError('INVALID_INPUT', 'Ação desconhecida.')
   }
@@ -127,7 +140,7 @@ async function createGroup(db: SantaDb, input: Input, deps: HandlerDeps) {
     if ((await db.getGroup(code)) === null) groupId = code
   }
   if (!groupId) throw new SantaError('INTERNAL', 'Não foi possível criar o grupo. Tente de novo.')
-  await db.createGroup(groupId, { name, budget, eventDate, status: 'open', ownerId: deps.userId, slug })
+  await db.createGroup(groupId, { name, budget, eventDate, status: 'open', ownerId: deps.userId, slug, exclusions: [], color: null })
 
   if (organizerData) {
     await db.createParticipant({
@@ -140,6 +153,7 @@ async function createGroup(db: SantaDb, input: Input, deps: HandlerDeps) {
       lockedUntil: null,
       assignedToId: null,
       isOrganizer: true,
+      revealed: false,
     })
   }
 
@@ -156,6 +170,7 @@ async function getGroup(db: SantaDb, input: Input) {
     budget: group.budget,
     eventDate: group.eventDate,
     status: group.status,
+    color: group.color ?? DEFAULT_GROUP_COLOR,
     participantCount: participants.length,
     // Os nomes não são segredo: a pessoa escolhe o próprio nome para entrar ou criar o PIN.
     members: participants.map((p) => ({ name: p.name, hasPin: p.pinHash !== null })),
@@ -189,6 +204,7 @@ async function addParticipant(db: SantaDb, input: Input, deps: HandlerDeps) {
     lockedUntil: null,
     assignedToId: null,
     isOrganizer: false,
+    revealed: false,
   })
   return {}
 }
@@ -238,6 +254,11 @@ async function listParticipants(db: SantaDb, input: Input, deps: HandlerDeps) {
   const participants = await db.listParticipants(group.id)
   return {
     status: group.status,
+    anyRevealed: participants.some((p) => p.revealed),
+    exclusions: group.exclusions.flatMap((pair) => {
+      const [a, b] = pair.split('|').map((id) => participants.find((p) => p.id === id)?.name)
+      return a && b ? [[a, b]] : []
+    }),
     participants: participants.map((p) => ({
       name: p.name,
       isOrganizer: p.isOrganizer,
@@ -255,6 +276,8 @@ async function removeParticipant(db: SantaDb, input: Input, deps: HandlerDeps) {
   const target = (await db.listParticipants(group.id)).find((p) => p.nameKey === key)
   if (!target) throw new SantaError('INVALID_INPUT', 'Participante não encontrado.')
   await db.deleteParticipant(target.id)
+  const kept = group.exclusions.filter((pair) => !pair.split('|').includes(target.id))
+  if (kept.length !== group.exclusions.length) await db.setGroupExclusions(group.id, kept)
   return {}
 }
 
@@ -332,7 +355,8 @@ function lockedError(until: string, current: Date): SantaError {
 async function updateWishlist(db: SantaDb, input: Input, now: () => Date) {
   const wishlist = parseWishlist(input.wishlist)
   const { group, participant } = await authenticate(db, input, now)
-  requireOpen(group)
+  // A lista pode mudar até depois do sorteio (quem tirou vê a versão mais nova); só trava durante o sorteio.
+  if (group.status === 'drawing') throw new SantaError('GROUP_CLOSED', 'O sorteio está acontecendo. Tente de novo em instantes.')
   await db.updateParticipant(participant.id, { wishlist })
   return {}
 }
@@ -341,7 +365,7 @@ async function reveal(db: SantaDb, input: Input, now: () => Date) {
   const { group, participant, participants } = await authenticate(db, input, now)
 
   if (group.status !== 'drawn') {
-    return { status: 'open' as const, wishlist: participant.wishlist ?? [] }
+    return { status: 'open' as const, wishlist: (participant.wishlist ?? []).map(decodeWish) }
   }
 
   const receiver = participants.find((p) => p.id === participant.assignedToId)
@@ -350,8 +374,8 @@ async function reveal(db: SantaDb, input: Input, now: () => Date) {
   }
   return {
     status: 'drawn' as const,
-    wishlist: participant.wishlist ?? [],
-    receiver: { name: receiver.name, wishlist: receiver.wishlist ?? [] },
+    wishlist: (participant.wishlist ?? []).map(decodeWish),
+    receiver: { name: receiver.name, wishlist: (receiver.wishlist ?? []).map(decodeWish) },
   }
 }
 
@@ -365,9 +389,12 @@ async function draw(db: SantaDb, input: Input, deps: HandlerDeps) {
   requireOpen(group)
 
   const participants = await db.listParticipants(group.id)
+  const ids = new Set(participants.map((p) => p.id))
+  const forbidden = new Set(group.exclusions.filter((pair) => pair.split('|').every((id) => ids.has(id))))
   const assignments = assignSecretFriends(
     participants.map((p) => p.id),
     deps.randomInt,
+    forbidden,
   )
 
   await db.setGroupStatus(group.id, 'drawing')
@@ -381,6 +408,67 @@ async function draw(db: SantaDb, input: Input, deps: HandlerDeps) {
     await db.setGroupStatus(group.id, 'open')
     throw new SantaError('INTERNAL', 'Não foi possível concluir o sorteio. Tente de novo.')
   }
+  return {}
+}
+
+/** A pessoa abriu a carta e viu quem tirou: depois disso o sorteio não pode mais ser refeito. */
+async function markRevealed(db: SantaDb, input: Input, now: () => Date) {
+  const { group, participant } = await authenticate(db, input, now)
+  if (group.status === 'drawn' && !participant.revealed) {
+    await db.updateParticipant(participant.id, { revealed: true })
+  }
+  return {}
+}
+
+/**
+ * Desfaz o sorteio e reabre o grupo, desde que ninguém tenha aberto a carta.
+ * Apaga os pares e as perguntas anônimas (que dependiam deles); recados e listas ficam.
+ */
+async function resetDraw(db: SantaDb, input: Input, deps: HandlerDeps) {
+  const group = await requireGroup(db, input.groupId)
+  requireOrganizer(group, deps)
+  if (group.status === 'open') throw new SantaError('INVALID_INPUT', 'O sorteio ainda não foi feito.')
+  const participants = await db.listParticipants(group.id)
+  if (participants.some((p) => p.revealed)) {
+    throw new SantaError('GROUP_CLOSED', 'Alguém já abriu a carta e viu quem tirou. Não dá mais para refazer o sorteio.')
+  }
+  // Fica em `drawing` enquanto limpa: ninguém revela um sorteio pela metade, e dá para tentar de novo se algo falhar.
+  await db.setGroupStatus(group.id, 'drawing')
+  for (const p of participants) {
+    if (p.assignedToId !== null) await db.updateParticipant(p.id, { assignedToId: null })
+  }
+  await db.deleteQuestions(group.id)
+  await db.setGroupStatus(group.id, 'open')
+  return {}
+}
+
+/** O organizador escolhe a cor do grupo; vale para quem abrir os links dele. */
+async function setColor(db: SantaDb, input: Input, deps: HandlerDeps) {
+  const group = await requireGroup(db, input.groupId)
+  requireOrganizer(group, deps)
+  const color = parseGroupColor(input.color)
+  await db.setGroupColor(group.id, color)
+  return { color }
+}
+
+/** Define quem não pode se tirar: pares de nomes, valem nos dois sentidos. Só antes do sorteio. */
+async function setExclusions(db: SantaDb, input: Input, deps: HandlerDeps) {
+  const group = await requireGroup(db, input.groupId)
+  requireOrganizer(group, deps)
+  requireOpen(group)
+  const raw = Array.isArray(input.exclusions) ? input.exclusions : []
+  if (raw.length > 50) throw new SantaError('INVALID_INPUT', 'Dá para definir até 50 regras.')
+  const participants = await db.listParticipants(group.id)
+  const find = (name: unknown) => participants.find((p) => p.nameKey === toNameKey(typeof name === 'string' ? name : ''))
+  const pairs = new Set<string>()
+  for (const entry of raw) {
+    const [first, second] = Array.isArray(entry) ? entry : []
+    const a = find(first)
+    const b = find(second)
+    if (!a || !b || a.id === b.id) throw new SantaError('INVALID_INPUT', 'Escolha duas pessoas diferentes do grupo.')
+    pairs.add(pairKey(a.id, b.id))
+  }
+  await db.setGroupExclusions(group.id, [...pairs])
   return {}
 }
 
@@ -468,8 +556,19 @@ async function postMessage(db: SantaDb, input: Input, now: () => Date) {
   return {}
 }
 
-async function listPosts(db: SantaDb, input: Input, now: () => Date) {
-  const { group, participants } = await authenticate(db, input, now)
+/** Quem lê o mural: participante com PIN, ou a conta dona do grupo (que pode moderar sem PIN). */
+async function boardAccess(db: SantaDb, input: Input, deps: HandlerDeps, now: () => Date) {
+  const group = await requireGroup(db, input.groupId)
+  const isOwner = Boolean(deps.userId) && group.ownerId === deps.userId
+  if (isOwner && (input.name === undefined || input.name === '')) {
+    return { group, participants: await db.listParticipants(group.id), me: null, isOwner }
+  }
+  const { participant, participants } = await authenticate(db, input, now)
+  return { group, participants, me: participant, isOwner }
+}
+
+async function listPosts(db: SantaDb, input: Input, deps: HandlerDeps, now: () => Date) {
+  const { group, participants, me, isOwner } = await boardAccess(db, input, deps, now)
   const names = new Map(participants.map((p) => [p.id, p.name]))
   const posts = await db.listPosts(group.id)
   return {
@@ -478,6 +577,19 @@ async function listPosts(db: SantaDb, input: Input, now: () => Date) {
       author: names.get(p.authorId) ?? 'Alguém que saiu do grupo',
       text: p.text,
       createdAt: p.createdAt,
+      canDelete: isOwner || p.authorId === me?.id,
     })),
   }
+}
+
+/** Apaga um recado: quem escreveu ou o organizador do grupo. */
+async function deletePost(db: SantaDb, input: Input, deps: HandlerDeps, now: () => Date) {
+  const { group, me, isOwner } = await boardAccess(db, input, deps, now)
+  const post = typeof input.postId === 'string' ? await db.getPost(input.postId) : null
+  if (!post || post.groupId !== group.id) throw new SantaError('INVALID_INPUT', 'Recado não encontrado.')
+  if (!isOwner && post.authorId !== me?.id) {
+    throw new SantaError('FORBIDDEN', 'Só quem escreveu ou o organizador pode apagar este recado.')
+  }
+  await db.deletePost(post.id)
+  return {}
 }

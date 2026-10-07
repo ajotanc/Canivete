@@ -31,7 +31,7 @@ describe('setupPin (primeiro acesso)', () => {
     expect(joao.wishlist).toEqual(['livro'])
     expect(await handleAction(db, { action: 'reveal', groupId, name: 'João', pin: '1234' })).toEqual({
       status: 'open',
-      wishlist: ['livro'],
+      wishlist: [{ text: 'livro' }],
     })
   })
 
@@ -68,7 +68,7 @@ describe('setupPin (primeiro acesso)', () => {
     await handleAction(db, { action: 'setupPin', groupId, name: 'João', pin: '1234', wishlist: 'tarde demais' })
     const result = (await handleAction(db, { action: 'reveal', groupId, name: 'João', pin: '1234' })) as {
       status: string
-      wishlist: string[]
+      wishlist: unknown[]
       receiver: { name: string }
     }
     expect(result.status).toBe('drawn')
