@@ -1,5 +1,6 @@
 import type { Models } from 'appwrite'
 import { AppwriteConfigError } from '@/core/services/appwrite'
+import { ROW_ID_PATTERN } from '../constants'
 import { computeHash, verifyRecord, type RaffleRecord } from './verify'
 
 export interface StoredRaffle extends RaffleRecord {
@@ -46,9 +47,6 @@ export function rowToStored(row: RaffleRow): StoredRaffle {
     hash: row.hash,
   }
 }
-
-/** Ids de linha aceitos pelo Appwrite: até 36 caracteres, sem caractere especial no início. */
-const ROW_ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,35}$/
 
 /**
  * Trata um erro de getRow: devolve null só quando a linha não existe.

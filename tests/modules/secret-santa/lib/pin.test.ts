@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { isPin, PIN_LENGTH } from '@/modules/secret-santa/lib/pin'
+import { PIN_LENGTH } from '@/modules/secret-santa/constants'
+import { isPin } from '@/modules/secret-santa/lib/pin'
 
 describe('isPin', () => {
   it('aceita só o tamanho do campo, com números', () => {

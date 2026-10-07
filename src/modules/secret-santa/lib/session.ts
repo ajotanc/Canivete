@@ -1,9 +1,11 @@
+import { STORAGE } from '../constants'
+
 export interface SessionCredentials {
   name: string
   pin: string
 }
 
-const credKey = (groupId: string) => `santa:cred:${groupId}`
+const credKey = (groupId: string) => `${STORAGE.credentialsPrefix}${groupId}`
 
 /** Guarda nome e PIN só na sessão da aba (some ao fechar). O PIN nunca vai para o localStorage. */
 export function saveCredentials(groupId: string, credentials: SessionCredentials): void {

@@ -1,5 +1,4 @@
-export const MAX_NAMES = 1000
-export const MAX_NAME_LENGTH = 100
+import { MAX_NAME_LENGTH, MAX_NAMES } from '../constants'
 
 export interface ParsedNames {
   /** Nomes normalizados, na ordem digitada (duplicados preservados). */

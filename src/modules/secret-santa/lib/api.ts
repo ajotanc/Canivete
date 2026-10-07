@@ -1,5 +1,6 @@
 import { ExecutionMethod } from 'appwrite'
 import { AppwriteConfigError, getAppwrite, getSantaFunctionId } from '@/core/services/appwrite'
+import { MESSAGES } from '../constants'
 
 export type SantaApiErrorCode =
   | 'INVALID_INPUT'
@@ -41,8 +42,6 @@ const executeOnAppwrite: Execute = async (body) => {
   return { responseStatusCode: execution.responseStatusCode, responseBody: execution.responseBody }
 }
 
-const NETWORK_MESSAGE = 'Não foi possível falar com o servidor. Tente novamente em instantes.'
-
 /** Chama uma ação da Function e devolve os dados, ou lança SantaApiError com mensagem em português. */
 export async function callSanta<T>(
   action: string,
@@ -56,18 +55,18 @@ export async function callSanta<T>(
     if (error instanceof AppwriteConfigError) {
       throw new SantaApiError('CONFIG', 'O amigo secreto ainda não está configurado neste site.')
     }
-    throw new SantaApiError('NETWORK', NETWORK_MESSAGE)
+    throw new SantaApiError('NETWORK', MESSAGES.network)
   }
 
   let parsed: { ok: boolean; data?: T; error?: { code: SantaApiErrorCode; message: string; details?: Record<string, unknown> } }
   try {
     parsed = JSON.parse(result.responseBody)
   } catch {
-    throw new SantaApiError('NETWORK', NETWORK_MESSAGE)
+    throw new SantaApiError('NETWORK', MESSAGES.network)
   }
 
   if (parsed.ok) return parsed.data as T
-  throw new SantaApiError(parsed.error?.code ?? 'INTERNAL', parsed.error?.message ?? NETWORK_MESSAGE, parsed.error?.details)
+  throw new SantaApiError(parsed.error?.code ?? 'INTERNAL', parsed.error?.message ?? MESSAGES.network, parsed.error?.details)
 }
 
 export interface Credentials {
@@ -75,9 +74,6 @@ export interface Credentials {
   name: string
   pin: string
 }
-
-export const GROUP_COLORS = ['berry', 'cobalt', 'pine', 'violet', 'amber'] as const
-export type GroupColor = (typeof GROUP_COLORS)[number]
 
 export interface GroupInfo {
   id: string

@@ -15,6 +15,7 @@ import BoardPanel from './components/BoardPanel.vue'
 import GiftTag from './components/GiftTag.vue'
 import MeHeader from './components/MeHeader.vue'
 import QuestionsPanel from './components/QuestionsPanel.vue'
+import { CONFETTI } from './constants'
 import { useReveal } from './composables/useReveal'
 import { useUnsavedGuard } from './composables/useUnsavedGuard'
 import WishlistEditor from './components/WishlistEditor.vue'
@@ -65,7 +66,7 @@ function onLanded() {
   landed.value = true
   if (credentials) void markRevealed({ groupId, ...credentials }).catch(() => {})
   navigator.vibrate?.([40, 60, 40])
-  triggerConfetti({ durationMs: 3500, colors: ['#C2255C', '#FF7AA2', '#F2B600', '#2457F5', '#FFFFFF'] })
+  triggerConfetti({ durationMs: CONFETTI.durationMs, colors: [...CONFETTI.colors] })
 }
 
 watch(revealed, (isRevealed) => {

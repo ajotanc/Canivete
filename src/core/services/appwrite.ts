@@ -1,4 +1,5 @@
 import { Account, Client, Functions, TablesDB } from 'appwrite'
+import { DEFAULT_RAFFLES_TABLE_ID, ENV_NAMES, readEnv } from '@/core/config'
 
 /** Erro de configuração do Appwrite (variáveis de ambiente ausentes). */
 export class AppwriteConfigError extends Error {
@@ -19,11 +20,10 @@ let instance: AppwriteInstance | null = null
 export function getAppwrite(): AppwriteInstance {
   if (instance) return instance
 
-  const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT
-  const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID
+  const { endpoint, projectId } = readEnv()
   if (!endpoint || !projectId) {
     throw new AppwriteConfigError(
-      'O Appwrite não está configurado. Defina VITE_APPWRITE_ENDPOINT e VITE_APPWRITE_PROJECT_ID.',
+      `O Appwrite não está configurado. Defina ${ENV_NAMES.endpoint} e ${ENV_NAMES.projectId}.`,
     )
   }
 
@@ -34,23 +34,18 @@ export function getAppwrite(): AppwriteInstance {
 
 /** Ids do banco de dados e da tabela de sorteios. */
 export function getAppwriteIds(): { databaseId: string; rafflesTableId: string } {
-  const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID
+  const { databaseId, rafflesTableId } = readEnv()
   if (!databaseId) {
-    throw new AppwriteConfigError(
-      'O Appwrite não está configurado. Defina VITE_APPWRITE_DATABASE_ID.',
-    )
+    throw new AppwriteConfigError(`O Appwrite não está configurado. Defina ${ENV_NAMES.databaseId}.`)
   }
-  return {
-    databaseId,
-    rafflesTableId: import.meta.env.VITE_APPWRITE_RAFFLES_TABLE_ID || 'raffles',
-  }
+  return { databaseId, rafflesTableId: rafflesTableId || DEFAULT_RAFFLES_TABLE_ID }
 }
 
 /** Id da Function do amigo secreto. */
 export function getSantaFunctionId(): string {
-  const functionId = import.meta.env.VITE_APPWRITE_SANTA_FUNCTION_ID
+  const functionId = readEnv().santaFunctionId
   if (!functionId) {
-    throw new AppwriteConfigError('O Appwrite não está configurado. Defina VITE_APPWRITE_SANTA_FUNCTION_ID.')
+    throw new AppwriteConfigError(`O Appwrite não está configurado. Defina ${ENV_NAMES.santaFunctionId}.`)
   }
   return functionId
 }

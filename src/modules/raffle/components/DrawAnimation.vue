@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Trophy } from '@lucide/vue'
 import { onBeforeUnmount, ref, watch } from 'vue'
+import { DRAW_ANIMATION } from '../constants'
 
 const props = defineProps<{ names: string[]; winners: string[]; durationMs?: number }>()
 const emit = defineEmits<{ done: [] }>()
@@ -35,8 +36,8 @@ function start() {
     displayed.value = props.winners.map(
       () => props.names[Math.floor(Math.random() * props.names.length)] ?? '',
     )
-  }, 80)
-  timeoutId = setTimeout(finish, props.durationMs ?? 2000)
+  }, DRAW_ANIMATION.shuffleIntervalMs)
+  timeoutId = setTimeout(finish, props.durationMs ?? DRAW_ANIMATION.durationMs)
 }
 
 watch(() => props.winners, start, { immediate: true })

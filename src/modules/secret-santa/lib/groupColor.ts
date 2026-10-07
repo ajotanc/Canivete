@@ -1,4 +1,4 @@
-import { GROUP_COLORS, type GroupColor } from './api'
+import { COLOR_LUMINANCE, DEFAULT_GROUP_COLOR, GROUP_COLORS, type GroupColor } from '../constants'
 
 export const COLOR_LABELS: Record<GroupColor, string> = {
   berry: 'Framboesa',
@@ -10,7 +10,7 @@ export const COLOR_LABELS: Record<GroupColor, string> = {
 
 export const isHexColor = (value: string) => /^#[0-9a-f]{6}$/i.test(value)
 
-export const colorLabel = (color: string) => (isHexColor(color) ? `Cor ${color.toUpperCase()}` : (COLOR_LABELS[color as GroupColor] ?? COLOR_LABELS.berry))
+export const colorLabel = (color: string) => (isHexColor(color) ? `Cor ${color.toUpperCase()}` : (COLOR_LABELS[color as GroupColor] ?? COLOR_LABELS[DEFAULT_GROUP_COLOR]))
 
 /** Luminância relativa (WCAG) de #RRGGBB. */
 export function hexLuminance(hex: string): number {
@@ -24,8 +24,8 @@ export function hexLuminance(hex: string): number {
 /** Mensagem quando a cor livre não dá contraste com o texto branco; null se serve. */
 export function colorProblem(hex: string): string | null {
   const luminance = hexLuminance(hex)
-  if (luminance > 0.3) return 'Essa cor é clara demais. Escolha uma mais escura.'
-  if (luminance < 0.02) return 'Essa cor é escura demais. Escolha uma mais clara.'
+  if (luminance > COLOR_LUMINANCE.max) return 'Essa cor é clara demais. Escolha uma mais escura.'
+  if (luminance < COLOR_LUMINANCE.min) return 'Essa cor é escura demais. Escolha uma mais clara.'
   return null
 }
 
@@ -38,5 +38,5 @@ export function applyGroupColor(color: string | null | undefined): void {
     return
   }
   root.style.removeProperty('--custom')
-  root.dataset.tool = (GROUP_COLORS as readonly string[]).includes(color ?? '') ? color! : 'berry'
+  root.dataset.tool = (GROUP_COLORS as readonly string[]).includes(color ?? '') ? color! : DEFAULT_GROUP_COLOR
 }

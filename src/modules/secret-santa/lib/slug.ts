@@ -1,10 +1,8 @@
-/** Menor texto de link aceito (igual ao da Function) e nomes que são rotas do grupo. */
-export const MIN_SLUG = 3
-const RESERVED_SLUGS = new Set(['me', 'admin'])
+import { LIMITS, RESERVED_SLUGS } from '../constants'
 
 /** Vale para enviar? Texto curto demais ou reservado é descartado em vez de dar erro. */
 export function isUsableSlug(value: string): boolean {
-  return value.length >= MIN_SLUG && !RESERVED_SLUGS.has(value)
+  return value.length >= LIMITS.slugMin && !RESERVED_SLUGS.has(value)
 }
 
 /** Tira os hífens das pontas (o do fim aparece enquanto a pessoa digita um espaço). */

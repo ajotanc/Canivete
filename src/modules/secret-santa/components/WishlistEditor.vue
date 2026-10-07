@@ -5,9 +5,10 @@ import ConfirmDelete from '@/components/ConfirmDelete.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
+import { LIMITS } from '../constants'
 import type { WishItem } from '../lib/api'
 
-const props = withDefaults(defineProps<{ modelValue: WishItem[]; max?: number }>(), { max: 10 })
+const props = withDefaults(defineProps<{ modelValue: WishItem[]; max?: number }>(), { max: LIMITS.wishlistItems })
 const emit = defineEmits<{ (e: 'update:modelValue', value: WishItem[]): void }>()
 
 interface Row {
@@ -83,7 +84,7 @@ function remove() {
           <Input
             v-model="row.text"
             data-wish-text
-            maxlength="100"
+            :maxlength="LIMITS.wishlistText"
             placeholder="Ex.: meias de lã"
             :aria-label="`Presente ${index + 1}`"
           />
@@ -104,7 +105,7 @@ function remove() {
               type="url"
               inputmode="url"
               autocomplete="off"
-              maxlength="500"
+              :maxlength="LIMITS.wishlistUrl"
               placeholder="Cole o link do produto"
               :aria-label="`Link de ${row.text || 'presente ' + (index + 1)}`"
               :tabindex="row.hasLink ? 0 : -1"

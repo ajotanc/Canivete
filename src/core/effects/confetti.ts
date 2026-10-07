@@ -1,11 +1,6 @@
 import { Confetti } from 'vue-confetti'
 import type { ConfettiStartOptions } from 'vue-confetti'
-
-const DEFAULT_DURATION_MS = 3000
-const FADE_MS = 3500
-
-/** Cores padrão da chuva de confetes do Canivete (família das cores de ferramenta). */
-export const CONFETTI_COLORS = ['#2457F5', '#0E7C57', '#E5322D', '#F2B600', '#FFFFFF']
+import { CONFETTI } from '@/core/config'
 
 export interface ConfettiOptions {
   colors?: string[]
@@ -47,7 +42,7 @@ function fitCanvas(): void {
 }
 
 function fadeOutCanvas(): void {
-  fadeAnimation = getCanvas()?.animate?.([{ opacity: 1 }, { opacity: 0 }], { duration: FADE_MS, easing: 'ease-out', fill: 'forwards' }) ?? null
+  fadeAnimation = getCanvas()?.animate?.([{ opacity: 1 }, { opacity: 0 }], { duration: CONFETTI.fadeMs, easing: 'ease-out', fill: 'forwards' }) ?? null
 }
 
 /** Para a chuva e remove o canvas. Seguro de chamar várias vezes. */
@@ -68,7 +63,7 @@ export function disposeConfetti(): void {
  * Dispara uma chuva de confetes em tela cheia. Com "reduzir movimento" ligado, cai menos e some mais cedo.
  * Núcleo reaproveitável: qualquer ferramenta pode chamar para celebrar um resultado.
  */
-export function triggerConfetti({ colors = CONFETTI_COLORS, durationMs = DEFAULT_DURATION_MS }: ConfettiOptions = {}): void {
+export function triggerConfetti({ colors = [...CONFETTI.colors], durationMs = CONFETTI.durationMs }: ConfettiOptions = {}): void {
   if (typeof window === 'undefined') return
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   window.clearTimeout(stopTimer)
@@ -92,9 +87,9 @@ export function triggerConfetti({ colors = CONFETTI_COLORS, durationMs = DEFAULT
     confetti.stop()
     confetti.start(options)
     fitCanvas()
-    const duration = reduced ? Math.min(durationMs, 1800) : durationMs
+    const duration = reduced ? Math.min(durationMs, CONFETTI.reducedMotionMaxMs) : durationMs
     stopTimer = window.setTimeout(fadeOutCanvas, duration)
-    removeTimer = window.setTimeout(disposeConfetti, duration + FADE_MS)
+    removeTimer = window.setTimeout(disposeConfetti, duration + CONFETTI.fadeMs)
   } catch {
     disposeConfetti()
   }

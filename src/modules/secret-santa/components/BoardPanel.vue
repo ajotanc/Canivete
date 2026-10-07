@@ -11,6 +11,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/u
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { Spinner } from '@/components/ui/spinner'
+import { LIMITS } from '../constants'
 import { useRefreshOnFocus } from '../composables/useRefreshOnFocus'
 import { deletePost, listPosts, postMessage, SantaApiError, type BoardPost, type Credentials } from '../lib/api'
 
@@ -80,7 +81,7 @@ function when(iso: string): string {
     <CardContent class="space-y-4">
       <form v-if="canWrite" @submit.prevent="onPost">
         <InputGroup class="h-11 bg-card">
-          <InputGroupInput v-model="text" maxlength="300" autocomplete="off" placeholder="Escreva um recado" aria-label="Recado para o grupo" />
+          <InputGroupInput v-model="text" :maxlength="LIMITS.post" autocomplete="off" placeholder="Escreva um recado" aria-label="Recado para o grupo" />
           <InputGroupAddon align="inline-end">
             <InputGroupButton type="submit" variant="default" size="sm" :disabled="sending || !text.trim()">
               <Spinner v-if="sending" />

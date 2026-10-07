@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { Spinner } from '@/components/ui/spinner'
+import { LIMITS } from '../constants'
 import { useRefreshOnFocus } from '../composables/useRefreshOnFocus'
 import { answerQuestion, askQuestion, listQuestions, SantaApiError, type Credentials, type QuestionItem } from '../lib/api'
 
@@ -82,7 +83,7 @@ async function onAnswer(item: QuestionItem) {
         <InputGroup class="h-11 bg-card">
           <InputGroupInput
             v-model="question"
-            maxlength="200"
+            :maxlength="LIMITS.question"
             autocomplete="off"
             :placeholder="`Pergunta para ${receiverName}`"
             aria-label="Pergunta anônima"
@@ -125,7 +126,7 @@ async function onAnswer(item: QuestionItem) {
               <InputGroup class="h-11 bg-card">
                 <InputGroupInput
                   v-model="drafts[item.id]"
-                  maxlength="300"
+                  :maxlength="LIMITS.answer"
                   autocomplete="off"
                   placeholder="Sua resposta"
                   :aria-label="`Resposta para: ${item.question}`"

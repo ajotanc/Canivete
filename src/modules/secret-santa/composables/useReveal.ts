@@ -1,7 +1,8 @@
 import { getCurrentScope, onScopeDispose, ref } from 'vue'
+import { TIMING } from '../constants'
 
 /** Controla a revelação do nome: aparece ao pedir e se esconde sozinho depois de um tempo. */
-export function useReveal(autoHideMs = 15_000) {
+export function useReveal(autoHideMs: number = TIMING.revealAutoHideMs) {
   const revealed = ref(false)
   let timer: ReturnType<typeof setTimeout> | undefined
 

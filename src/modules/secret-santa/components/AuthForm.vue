@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { LIMITS } from '../constants'
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -50,7 +51,7 @@ async function onSubmit() {
     <FieldGroup>
       <Field v-if="mode === 'register'">
         <FieldLabel for="auth-name">Seu nome</FieldLabel>
-        <Input id="auth-name" v-model="name" maxlength="60" autocomplete="name" />
+        <Input id="auth-name" v-model="name" :maxlength="LIMITS.personName" autocomplete="name" />
       </Field>
       <Field>
         <FieldLabel for="auth-email">E-mail</FieldLabel>

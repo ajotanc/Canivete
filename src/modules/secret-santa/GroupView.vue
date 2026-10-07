@@ -21,7 +21,8 @@ import { applyGroupColor } from './lib/groupColor'
 import { getGroup, revealMatch, SantaApiError, setupPin, type GroupInfo, type WishItem } from './lib/api'
 import { eventCountdown, formatEventDate } from './lib/event'
 import { mePath } from './lib/links'
-import { isPin, PIN_LENGTH } from './lib/pin'
+import { NAME_SEARCH_FROM, PIN_LENGTH } from './constants'
+import { isPin } from './lib/pin'
 import { loadCredentials, saveCredentials } from './lib/session'
 
 const route = useRoute()
@@ -45,7 +46,6 @@ const formError = ref('')
 const firstName = computed(() => (selected.value ?? '').split(' ')[0])
 
 /** Lista longa ganha um filtro por nome; "João" e "joao" se encontram. */
-const SEARCH_FROM = 8
 const query = ref('')
 const plain = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 const visibleMembers = computed(() => {
@@ -183,7 +183,7 @@ async function onSubmit() {
             <EmptyDescription>O organizador ainda não cadastrou as pessoas. Volte mais tarde.</EmptyDescription>
           </EmptyHeader>
         </Empty>
-        <InputGroup v-if="group.members.length >= SEARCH_FROM" class="h-11 bg-card">
+        <InputGroup v-if="group.members.length >= NAME_SEARCH_FROM" class="h-11 bg-card">
           <InputGroupAddon><Search aria-hidden="true" /></InputGroupAddon>
           <InputGroupInput v-model="query" type="search" autocomplete="off" placeholder="Buscar seu nome" aria-label="Buscar seu nome" />
         </InputGroup>
