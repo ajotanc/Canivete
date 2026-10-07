@@ -64,11 +64,11 @@ function saveSvg() {
 
 <template>
   <div class="space-y-4">
-    <div class="mx-auto flex aspect-square w-full max-w-72 items-center justify-center overflow-hidden rounded-2xl border bg-white p-2">
+    <div class="mx-auto flex aspect-square w-full max-w-64 items-center justify-center overflow-hidden rounded-2xl p-2" :class="svg ? 'border bg-white' : 'border-2 border-dashed bg-muted/40'">
       <div v-if="svg" role="img" :aria-label="label" class="size-full [&>svg]:size-full" v-html="svg" />
-      <div v-else class="flex flex-col items-center gap-2 p-6 text-center text-sm text-neutral-500">
-        <QrCode class="size-10" aria-hidden="true" />
-        <p role="status">{{ failed ? 'Texto grande demais para um QR Code. Reduza o conteúdo.' : 'O QR Code aparece aqui quando você preencher os campos.' }}</p>
+      <div v-else class="flex flex-col items-center gap-2 p-4 text-center text-sm text-muted-foreground">
+        <QrCode class="size-8" aria-hidden="true" />
+        <p role="status">{{ failed ? 'Texto grande demais para um QR Code. Reduza o conteúdo.' : 'Preencha o conteúdo para gerar o QR Code.' }}</p>
       </div>
     </div>
     <div class="grid gap-2 sm:grid-cols-2">

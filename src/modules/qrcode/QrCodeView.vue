@@ -46,9 +46,6 @@ function onSecurity(next: unknown) {
   if (next === 'WPA' || next === 'WEP' || next === 'nopass') wifi.value.security = next
 }
 
-function onColor(next: unknown) {
-  if (typeof next === 'string' && next) dark.value = next
-}
 </script>
 
 <template>
@@ -143,27 +140,31 @@ function onColor(next: unknown) {
               </FieldGroup>
             </TabsContent>
           </Tabs>
+
+          <div class="mt-6 flex items-center justify-between gap-3 border-t pt-4">
+            <span id="qr-color-label" class="text-sm font-medium">Cor do QR Code</span>
+            <div role="radiogroup" aria-labelledby="qr-color-label" class="flex items-center">
+              <label v-for="color in COLORS" :key="color.value" class="group cursor-pointer" :title="color.label">
+                <input v-model="dark" type="radio" name="qr-color" :value="color.value" :aria-label="color.label" class="sr-only" />
+                <span class="flex size-11 items-center justify-center">
+                  <span
+                    class="size-7 rounded-full ring-offset-2 ring-offset-card transition-shadow group-has-[:checked]:ring-2 group-has-[:checked]:ring-primary group-has-[:focus-visible]:ring-4 group-has-[:focus-visible]:ring-ring/50 motion-reduce:transition-none"
+                    :style="{ backgroundColor: color.value }"
+                  />
+                </span>
+              </label>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      <Card>
+      <Card class="lg:sticky lg:top-20">
         <CardHeader>
           <CardTitle class="text-lg">QR Code</CardTitle>
           <CardDescription>Gerado no seu navegador; nada é enviado a nenhum servidor.</CardDescription>
         </CardHeader>
-        <CardContent class="space-y-6">
+        <CardContent>
           <QrCodeCard :value="value" :dark="dark" :filename="filename" label="QR Code gerado" />
-          <Field>
-            <FieldContent>
-              <FieldLabel>Cor</FieldLabel>
-              <FieldDescription>Prefira cores escuras sobre o fundo branco.</FieldDescription>
-            </FieldContent>
-            <ToggleGroup type="single" variant="outline" :model-value="dark" aria-label="Cor do QR Code" class="w-full bg-card" @update:model-value="onColor">
-              <ToggleGroupItem v-for="color in COLORS" :key="color.value" :value="color.value" :aria-label="color.label" class="h-11 flex-1 p-0">
-                <span class="size-5 rounded-full border border-black/10" :style="{ backgroundColor: color.value }" />
-              </ToggleGroupItem>
-            </ToggleGroup>
-          </Field>
         </CardContent>
       </Card>
     </div>
