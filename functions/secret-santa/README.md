@@ -16,9 +16,8 @@ As duas ficam no mesmo banco do sorteador. Nenhuma tem permissões (nem para `an
 | `status` | string | 10 | sim |
 | `ownerId` | string | 36 | sim |
 | `slug` | string | 40 | não (padrão `null`) |
-| `createdAt` | datetime | | não |
 
-Índice: `idx_owner` (key) em `ownerId`. O `slug` não tem índice único: vários grupos podem repetir o texto do link.
+Índice: `idx_owner` (key) em `ownerId`. O `slug` não tem índice único: vários grupos podem repetir o texto do link. A data de criação não tem coluna própria: use o `$createdAt` que o Appwrite já guarda em toda linha.
 
 `ownerId` é o id da conta (Appwrite Auth, e-mail e senha) do organizador que criou o grupo. Só ele administra o grupo e a lista "meus grupos" vem dele; a Function lê o id no cabeçalho `x-appwrite-user-id`. O id do grupo é um código curto aleatório (6 caracteres, ex.: `k7x2m9`). `slug` é o texto opcional e repetível do link (`/secret-santa/g/k7x2m9/familia-da-bagunca`); quem identifica o grupo é o id. `deleteGroup` apaga o grupo com participantes, perguntas e recados.
 
@@ -74,6 +73,8 @@ As colunas de texto são `string`, porque o servidor (1.8.1) não tem a rota de 
 - Escopos da chave gerada por execução: `databases.read`, `databases.write`, `tables.read`, `tables.write`, `rows.read`, `rows.write`.
 
 ### Variáveis
+
+Os nomes das variáveis, os ids padrão das tabelas, os cabeçalhos, os limites de texto, o bloqueio por PIN errado e as demais regras ficam num arquivo só: `src/config.ts`. Para mudar um limite ou um nome, edite lá; os limites também aparecem no site em `src/modules/secret-santa/constants.ts`, e um teste confere que os dois continuam iguais.
 
 | Variável | Obrigatória | Valor |
 |---|---|---|

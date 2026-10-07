@@ -1,3 +1,4 @@
+import { DRAW } from '../config.js'
 import { SantaError } from './errors.js'
 import { secureRandomInt, type RandomInt } from './random.js'
 
@@ -8,15 +9,13 @@ import { secureRandomInt, type RandomInt } from './random.js'
  */
 export const pairKey = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`)
 
-const MAX_ATTEMPTS = 500
-
 export function assignSecretFriends(
   ids: string[],
   randomInt: RandomInt = secureRandomInt,
   forbidden: ReadonlySet<string> = new Set(),
 ): Map<string, string> {
-  if (ids.length < 3) {
-    throw new SantaError('NOT_ENOUGH_PARTICIPANTS', 'São necessárias pelo menos 3 pessoas para sortear.')
+  if (ids.length < DRAW.minParticipants) {
+    throw new SantaError('NOT_ENOUGH_PARTICIPANTS', `São necessárias pelo menos ${DRAW.minParticipants} pessoas para sortear.`)
   }
 
   const order = [...ids]
@@ -28,7 +27,7 @@ export function assignSecretFriends(
       ;[order[i], order[j]] = [order[j], order[i]]
     }
     attempt++
-  } while (forbidden.size > 0 && !allowed() && attempt < MAX_ATTEMPTS)
+  } while (forbidden.size > 0 && !allowed() && attempt < DRAW.maxAttempts)
   if (!allowed()) {
     throw new SantaError('DRAW_IMPOSSIBLE', 'Não dá para sortear com essas regras. Tire alguma restrição e tente de novo.')
   }

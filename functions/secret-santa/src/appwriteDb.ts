@@ -1,31 +1,9 @@
 import dayjs from 'dayjs'
 import { Client, ID, Query, TablesDB } from 'node-appwrite'
+import { QUERY, readConfig, type Env } from './config.js'
 import { SantaError } from './lib/errors.js'
 import { storedPinHash } from './lib/pin.js'
 import type { GroupRow, GroupStatus, ParticipantRow, PostRow, QuestionRow, SantaDb } from './types.js'
-
-type Env = Record<string, string | undefined>
-
-/** Lê a configuração: variáveis da Function com fallback para as que a Appwrite injeta. */
-function readConfig(env: Env) {
-  const endpoint = env.APPWRITE_ENDPOINT || env.APPWRITE_FUNCTION_API_ENDPOINT
-  const projectId = env.APPWRITE_PROJECT_ID || env.APPWRITE_FUNCTION_PROJECT_ID
-  const apiKey = env.APPWRITE_API_KEY
-  const databaseId = env.SANTA_DATABASE_ID
-  if (!endpoint || !projectId || !apiKey || !databaseId) {
-    throw new Error('Faltam variáveis: APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY, SANTA_DATABASE_ID.')
-  }
-  return {
-    endpoint,
-    projectId,
-    apiKey,
-    databaseId,
-    groupsTableId: env.SANTA_GROUPS_TABLE_ID || 'santa_groups',
-    participantsTableId: env.SANTA_PARTICIPANTS_TABLE_ID || 'santa_participants',
-    questionsTableId: env.SANTA_QUESTIONS_TABLE_ID || 'santa_questions',
-    postsTableId: env.SANTA_POSTS_TABLE_ID || 'santa_posts',
-  }
-}
 
 /** Banco real, sobre o Appwrite TablesDB com chave de servidor. */
 export function createAppwriteDb(env: Env): SantaDb {
@@ -86,7 +64,7 @@ export function createAppwriteDb(env: Env): SantaDb {
         databaseId,
         tableId: groupsTableId,
         rowId: id,
-        data: { ...group, createdAt: dayjs().toISOString() },
+        data: group,
       })
     },
     async getGroup(id) {
@@ -101,7 +79,7 @@ export function createAppwriteDb(env: Env): SantaDb {
       const result = await tables.listRows({
         databaseId,
         tableId: groupsTableId,
-        queries: [Query.equal('ownerId', [ownerId]), Query.orderDesc('$createdAt'), Query.limit(50)],
+        queries: [Query.equal('ownerId', [ownerId]), Query.orderDesc('$createdAt'), Query.limit(QUERY.groupsPerOwner)],
       })
       return result.rows.map(toGroup)
     },
@@ -141,7 +119,7 @@ export function createAppwriteDb(env: Env): SantaDb {
       const result = await tables.listRows({
         databaseId,
         tableId: participantsTableId,
-        queries: [Query.equal('groupId', [groupId]), Query.limit(100)],
+        queries: [Query.equal('groupId', [groupId]), Query.limit(QUERY.rows)],
       })
       return result.rows.map(toParticipant)
     },
@@ -159,11 +137,11 @@ export function createAppwriteDb(env: Env): SantaDb {
     async deleteGroup(id) {
       // Apaga em lotes até não sobrar nada; o grupo vai por último, assim dá para tentar de novo se algo falhar.
       for (const tableId of [questionsTableId, postsTableId, participantsTableId]) {
-        for (let batch = 0; batch < 100; batch++) {
+        for (let batch = 0; batch < QUERY.deleteBatches; batch++) {
           const result = await tables.deleteRows({
             databaseId,
             tableId,
-            queries: [Query.equal('groupId', [id]), Query.limit(100)],
+            queries: [Query.equal('groupId', [id]), Query.limit(QUERY.rows)],
           })
           if (result.total === 0) break
         }
@@ -171,11 +149,11 @@ export function createAppwriteDb(env: Env): SantaDb {
       await tables.deleteRow({ databaseId, tableId: groupsTableId, rowId: id })
     },
     async deleteQuestions(groupId) {
-      for (let batch = 0; batch < 100; batch++) {
+      for (let batch = 0; batch < QUERY.deleteBatches; batch++) {
         const result = await tables.deleteRows({
           databaseId,
           tableId: questionsTableId,
-          queries: [Query.equal('groupId', [groupId]), Query.limit(100)],
+          queries: [Query.equal('groupId', [groupId]), Query.limit(QUERY.rows)],
         })
         if (result.total === 0) break
       }
@@ -203,7 +181,7 @@ export function createAppwriteDb(env: Env): SantaDb {
           Query.equal('groupId', [groupId]),
           'fromId' in filter ? Query.equal('fromId', [filter.fromId]) : Query.equal('toId', [filter.toId]),
           Query.orderAsc('$createdAt'),
-          Query.limit(100),
+          Query.limit(QUERY.rows),
         ],
       })
       return result.rows.map(toQuestion)
@@ -218,7 +196,7 @@ export function createAppwriteDb(env: Env): SantaDb {
       const result = await tables.listRows({
         databaseId,
         tableId: postsTableId,
-        queries: [Query.equal('groupId', [groupId]), Query.orderDesc('$createdAt'), Query.limit(100)],
+        queries: [Query.equal('groupId', [groupId]), Query.orderDesc('$createdAt'), Query.limit(QUERY.rows)],
       })
       return result.rows.map(toPost)
     },

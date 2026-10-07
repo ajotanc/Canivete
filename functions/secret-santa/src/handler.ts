@@ -1,34 +1,26 @@
 import dayjs from 'dayjs'
-import { newGroupCode, MAX_CODE_ATTEMPTS } from './lib/code.js'
+import { DEFAULT_GROUP_COLOR, GROUP_CODE, LIMITS, LOCK } from './config.js'
+import { newGroupCode } from './lib/code.js'
 import { assignSecretFriends, pairKey } from './lib/draw.js'
 import { SantaError } from './lib/errors.js'
 import { hashPin, verifyPin } from './lib/pin.js'
 import type { RandomInt } from './lib/random.js'
 import {
-  MAX_ANSWER,
-  MAX_PARTICIPANTS,
-  MAX_POST,
-  MAX_QUESTION,
-  MAX_QUESTIONS_PER_PERSON,
+  decodeWish,
   parseBudget,
   parseEventDate,
+  parseGroupColor,
   parseGroupId,
   parseGroupName,
   parseMessage,
   parsePersonName,
   parsePin,
   parseSlug,
-  toSlug,
-  DEFAULT_GROUP_COLOR,
-  decodeWish,
-  parseGroupColor,
   parseWishlist,
   toNameKey,
+  toSlug,
 } from './lib/validate.js'
 import type { GroupRow, ParticipantRow, SantaDb } from './types.js'
-
-export const LOCK_AFTER_FAILURES = 5
-export const LOCK_MINUTES = 15
 
 export interface HandlerDeps {
   now?: () => Date
@@ -139,7 +131,7 @@ async function createGroup(db: SantaDb, input: Input, deps: HandlerDeps) {
 
   // O id é um código curto aleatório; sorteia de novo se por azar já existir.
   let groupId = ''
-  for (let attempt = 0; attempt < MAX_CODE_ATTEMPTS && !groupId; attempt++) {
+  for (let attempt = 0; attempt < GROUP_CODE.maxAttempts && !groupId; attempt++) {
     const code = newGroupCode(deps.randomInt)
     if ((await db.getGroup(code)) === null) groupId = code
   }
@@ -226,8 +218,8 @@ async function addParticipant(db: SantaDb, input: Input, deps: HandlerDeps) {
   const nameKey = toNameKey(name)
 
   const participants = await db.listParticipants(group.id)
-  if (participants.length >= MAX_PARTICIPANTS) {
-    throw new SantaError('INVALID_INPUT', `Este grupo já tem ${MAX_PARTICIPANTS} pessoas, que é o limite.`)
+  if (participants.length >= LIMITS.participants) {
+    throw new SantaError('INVALID_INPUT', `Este grupo já tem ${LIMITS.participants} pessoas, que é o limite.`)
   }
   if (participants.some((p) => p.nameKey === nameKey)) {
     throw new SantaError('NAME_TAKEN', 'Já existe alguém com esse nome neste grupo. Use outro nome.')
@@ -364,8 +356,8 @@ async function authenticate(
 
   if (!(await verifyPin(pin, participant.pinHash))) {
     const failures = participant.failedAttempts + 1
-    if (failures >= LOCK_AFTER_FAILURES) {
-      const until = dayjs(now()).add(LOCK_MINUTES, 'minute').toISOString()
+    if (failures >= LOCK.afterFailures) {
+      const until = dayjs(now()).add(LOCK.minutes, 'minute').toISOString()
       await db.updateParticipant(participant.id, { failedAttempts: 0, lockedUntil: until })
       throw lockedError(until, now())
     }
@@ -497,7 +489,7 @@ async function setExclusions(db: SantaDb, input: Input, deps: HandlerDeps) {
   requireOrganizer(group, deps)
   requireOpen(group)
   const raw = Array.isArray(input.exclusions) ? input.exclusions : []
-  if (raw.length > 50) throw new SantaError('INVALID_INPUT', 'Dá para definir até 50 regras.')
+  if (raw.length > LIMITS.exclusions) throw new SantaError('INVALID_INPUT', `Dá para definir até ${LIMITS.exclusions} regras.`)
   const participants = await db.listParticipants(group.id)
   const find = (name: unknown) => participants.find((p) => p.nameKey === toNameKey(typeof name === 'string' ? name : ''))
   const pairs = new Set<string>()
@@ -545,10 +537,10 @@ async function askQuestion(db: SantaDb, input: Input, now: () => Date) {
   if (group.status !== 'drawn' || !participant.assignedToId) {
     throw new SantaError('INVALID_INPUT', 'Dá para perguntar só depois do sorteio.')
   }
-  const question = parseMessage(input.question, MAX_QUESTION, 'A pergunta')
+  const question = parseMessage(input.question, LIMITS.question, 'A pergunta')
   const asked = await db.listQuestions(group.id, { fromId: participant.id })
-  if (asked.length >= MAX_QUESTIONS_PER_PERSON) {
-    throw new SantaError('INVALID_INPUT', `Você já fez ${MAX_QUESTIONS_PER_PERSON} perguntas, que é o limite.`)
+  if (asked.length >= LIMITS.questionsPerPerson) {
+    throw new SantaError('INVALID_INPUT', `Você já fez ${LIMITS.questionsPerPerson} perguntas, que é o limite.`)
   }
   await db.createQuestion({
     groupId: group.id,
@@ -578,7 +570,7 @@ async function listQuestions(db: SantaDb, input: Input, now: () => Date) {
 
 async function answerQuestion(db: SantaDb, input: Input, now: () => Date) {
   const { group, participant } = await authenticate(db, input, now)
-  const answer = parseMessage(input.answer, MAX_ANSWER, 'A resposta')
+  const answer = parseMessage(input.answer, LIMITS.answer, 'A resposta')
   const question = typeof input.questionId === 'string' ? await db.getQuestion(input.questionId) : null
   // Pergunta de outro grupo ou feita a outra pessoa: mesma resposta que "não existe".
   if (!question || question.groupId !== group.id || question.toId !== participant.id) {
@@ -591,7 +583,7 @@ async function answerQuestion(db: SantaDb, input: Input, now: () => Date) {
 /** Mural do grupo: qualquer participante autenticado escreve e todos veem quem escreveu. */
 async function postMessage(db: SantaDb, input: Input, now: () => Date) {
   const { group, participant } = await authenticate(db, input, now)
-  const text = parseMessage(input.text, MAX_POST, 'O recado')
+  const text = parseMessage(input.text, LIMITS.post, 'O recado')
   await db.createPost({ groupId: group.id, authorId: participant.id, text })
   return {}
 }

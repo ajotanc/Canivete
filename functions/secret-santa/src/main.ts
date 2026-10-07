@@ -1,3 +1,4 @@
+import { ENV, HEADERS } from './config.js'
 import { createAppwriteDb } from './appwriteDb.js'
 import { createEntrypoint } from './entrypoint.js'
 
@@ -6,6 +7,6 @@ import { createEntrypoint } from './entrypoint.js'
 export default createEntrypoint(({ req }) =>
   createAppwriteDb({
     ...process.env,
-    APPWRITE_API_KEY: process.env.APPWRITE_API_KEY || req.headers?.['x-appwrite-key'],
+    [ENV.apiKey[0]]: process.env[ENV.apiKey[0]] || req.headers?.[HEADERS.apiKey],
   }),
 )

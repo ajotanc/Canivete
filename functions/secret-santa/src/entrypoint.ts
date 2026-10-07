@@ -1,3 +1,4 @@
+import { HEADERS } from './config.js'
 import { handleAction } from './handler.js'
 import { SantaError } from './lib/errors.js'
 import type { SantaDb } from './types.js'
@@ -27,7 +28,7 @@ export function createEntrypoint(getDb: (context: FunctionContext) => SantaDb) {
     }
 
     try {
-      const data = await handleAction(getDb(context), body, { userId: req.headers?.['x-appwrite-user-id'] || null })
+      const data = await handleAction(getDb(context), body, { userId: req.headers?.[HEADERS.userId] || null })
       return res.json({ ok: true, data })
     } catch (caught) {
       if (caught instanceof SantaError) {

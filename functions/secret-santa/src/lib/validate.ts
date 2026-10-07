@@ -1,18 +1,15 @@
 import dayjs from 'dayjs'
 import customParseFormat from 'dayjs/plugin/customParseFormat.js'
+import {
+  COLOR_LUMINANCE,
+  GROUP_COLORS,
+  LIMITS,
+  RESERVED_SLUGS,
+  WISH_SEPARATOR,
+} from '../config.js'
 import { SantaError } from './errors.js'
 
 dayjs.extend(customParseFormat)
-
-export const MAX_GROUP_NAME = 80
-export const MAX_PERSON_NAME = 60
-export const MAX_WISHLIST_ITEMS = 10
-export const MAX_WISHLIST_ITEM = 100
-export const MAX_WISHLIST_URL = 500
-/** Cores que o organizador pode dar ao grupo; sem escolha vale `berry` (framboesa). */
-export const GROUP_COLORS = ['berry', 'cobalt', 'pine', 'violet', 'amber'] as const
-export type GroupColor = (typeof GROUP_COLORS)[number]
-export const DEFAULT_GROUP_COLOR: GroupColor = 'berry'
 
 /** Luminância relativa (WCAG) de #RRGGBB. */
 export function hexLuminance(hex: string): number {
@@ -29,22 +26,12 @@ export function parseGroupColor(value: unknown): string {
   if (typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)) {
     const hex = value.toLowerCase()
     const luminance = hexLuminance(hex)
-    if (luminance > 0.3) throw new SantaError('INVALID_INPUT', 'Essa cor é clara demais. Escolha uma mais escura.')
-    if (luminance < 0.02) throw new SantaError('INVALID_INPUT', 'Essa cor é escura demais. Escolha uma mais clara.')
+    if (luminance > COLOR_LUMINANCE.max) throw new SantaError('INVALID_INPUT', 'Essa cor é clara demais. Escolha uma mais escura.')
+    if (luminance < COLOR_LUMINANCE.min) throw new SantaError('INVALID_INPUT', 'Essa cor é escura demais. Escolha uma mais clara.')
     return hex
   }
   throw new SantaError('INVALID_INPUT', 'Escolha uma das cores disponíveis.')
 }
-/** Separa o texto do link dentro de um item guardado (um valor só por item na coluna). */
-const WISH_SEP = String.fromCharCode(9)
-export const MAX_QUESTION = 200
-export const MAX_ANSWER = 300
-export const MAX_POST = 300
-export const MAX_QUESTIONS_PER_PERSON = 10
-export const MAX_BUDGET = 1_000_000
-export const MIN_SLUG = 3
-export const MAX_SLUG = 40
-export const MAX_PARTICIPANTS = 100
 
 /** Texto de uma linha: NFC, espaços nas pontas removidos e espaços repetidos colapsados. */
 export function cleanLine(value: unknown): string {
@@ -59,8 +46,8 @@ export function toNameKey(name: string): string {
 
 export function parseGroupName(value: unknown): string {
   const name = cleanLine(value)
-  if (name.length < 1 || name.length > MAX_GROUP_NAME) {
-    throw new SantaError('INVALID_INPUT', `Informe o nome do grupo (até ${MAX_GROUP_NAME} caracteres).`)
+  if (name.length < 1 || name.length > LIMITS.groupName) {
+    throw new SantaError('INVALID_INPUT', `Informe o nome do grupo (até ${LIMITS.groupName} caracteres).`)
   }
   return name
 }
@@ -69,7 +56,7 @@ export function parseGroupName(value: unknown): string {
 export function parseBudget(value: unknown): number | null {
   if (value === null || value === undefined || value === '') return null
   const amount = typeof value === 'string' ? Number(value.replace(',', '.')) : value
-  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0 || amount > MAX_BUDGET) {
+  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0 || amount > LIMITS.budget) {
     throw new SantaError('INVALID_INPUT', 'Informe um valor sugerido válido, em reais.')
   }
   return Math.round(amount * 100) / 100
@@ -89,8 +76,8 @@ export function parseEventDate(value: unknown): string {
 
 export function parsePersonName(value: unknown): string {
   const name = cleanLine(value)
-  if (name.length < 1 || name.length > MAX_PERSON_NAME) {
-    throw new SantaError('INVALID_INPUT', `Informe seu nome (até ${MAX_PERSON_NAME} caracteres).`)
+  if (name.length < 1 || name.length > LIMITS.personName) {
+    throw new SantaError('INVALID_INPUT', `Informe seu nome (até ${LIMITS.personName} caracteres).`)
   }
   return name
 }
@@ -110,7 +97,7 @@ export interface WishItem {
 
 /** Item guardado como texto simples ou "texto<TAB>link". */
 export function decodeWish(stored: string): WishItem {
-  const at = stored.indexOf(WISH_SEP)
+  const at = stored.indexOf(WISH_SEPARATOR)
   if (at === -1) return { text: stored }
   return { text: stored.slice(0, at), url: stored.slice(at + 1) }
 }
@@ -129,8 +116,8 @@ function parseWishUrl(value: unknown): string | undefined {
     throw new SantaError('INVALID_INPUT', 'O link precisa começar com http:// ou https://.')
   }
   const href = url.href
-  if (href.length > MAX_WISHLIST_URL) {
-    throw new SantaError('INVALID_INPUT', `Cada link pode ter até ${MAX_WISHLIST_URL} caracteres.`)
+  if (href.length > LIMITS.wishlistUrl) {
+    throw new SantaError('INVALID_INPUT', `Cada link pode ter até ${LIMITS.wishlistUrl} caracteres.`)
   }
   return href
 }
@@ -147,17 +134,17 @@ export function parseWishlist(value: unknown): string[] | null {
     const isObject = typeof entry === 'object' && entry !== null
     const text = cleanLine(isObject ? (entry as WishItem).text : entry)
     if (text === '') continue
-    if (text.length > MAX_WISHLIST_ITEM) {
-      throw new SantaError('INVALID_INPUT', `Cada item da lista pode ter até ${MAX_WISHLIST_ITEM} caracteres.`)
+    if (text.length > LIMITS.wishlistText) {
+      throw new SantaError('INVALID_INPUT', `Cada item da lista pode ter até ${LIMITS.wishlistText} caracteres.`)
     }
     const key = text.toLocaleLowerCase('pt-BR')
     if (seen.has(key)) continue
     seen.add(key)
     const url = isObject ? parseWishUrl((entry as WishItem).url) : undefined
-    items.push(url ? `${text}${WISH_SEP}${url}` : text)
+    items.push(url ? `${text}${WISH_SEPARATOR}${url}` : text)
   }
-  if (items.length > MAX_WISHLIST_ITEMS) {
-    throw new SantaError('INVALID_INPUT', `A lista pode ter até ${MAX_WISHLIST_ITEMS} itens.`)
+  if (items.length > LIMITS.wishlistItems) {
+    throw new SantaError('INVALID_INPUT', `A lista pode ter até ${LIMITS.wishlistItems} itens.`)
   }
   return items.length > 0 ? items : null
 }
@@ -181,16 +168,13 @@ export function toSlug(value: unknown): string {
     .replace(/^-+|-+$/g, '')
 }
 
-/** Nomes que são rotas do grupo (`/g/:id/me`, `/g/:id/admin`) e não podem ser texto de link. */
-const RESERVED_SLUGS = new Set(['me', 'admin'])
-
 export function parseSlug(value: unknown): string {
   const slug = toSlug(value)
   // Ids do Appwrite têm 20 caracteres hexadecimais: um endereço assim se confundiria com o id de outro grupo.
-  if (slug.length < MIN_SLUG || slug.length > MAX_SLUG || RESERVED_SLUGS.has(slug)) {
+  if (slug.length < LIMITS.slugMin || slug.length > LIMITS.slugMax || RESERVED_SLUGS.has(slug)) {
     throw new SantaError(
       'INVALID_INPUT',
-      `O endereço precisa ter de ${MIN_SLUG} a ${MAX_SLUG} letras, números ou hífens (ex.: familia-da-bagunca).`,
+      `O endereço precisa ter de ${LIMITS.slugMin} a ${LIMITS.slugMax} letras, números ou hífens (ex.: familia-da-bagunca).`,
     )
   }
   return slug
