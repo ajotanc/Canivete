@@ -16,6 +16,13 @@
       "args": [
         "@playwright/mcp@latest"
       ]
+    },
+    "shadcnVue": {
+      "command": "npx",
+      "args": [
+        "shadcn-vue@latest",
+        "mcp"
+      ]
     }
   }
 }

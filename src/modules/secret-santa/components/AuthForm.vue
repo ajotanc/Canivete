@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Button } from '@/components/ui/button'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Spinner } from '@/components/ui/spinner'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { authErrorMessage, login, register } from '@/core/services/auth'
 
 const emit = defineEmits<{ done: [] }>()
@@ -30,51 +32,50 @@ async function onSubmit() {
 </script>
 
 <template>
-  <form class="space-y-4" @submit.prevent="onSubmit">
-    <h2 class="font-display text-2xl leading-tight">
-      {{ mode === 'login' ? 'Entre para organizar' : 'Crie sua conta de organizador' }}
-    </h2>
-    <p class="text-sm text-muted-foreground">
-      A conta é só para quem organiza. Quem participa entra pelo link do grupo, com nome e PIN.
-    </p>
-
-    <div v-if="mode === 'register'" class="space-y-2">
-      <Label for="auth-name">Seu nome</Label>
-      <Input id="auth-name" v-model="name" class="h-11" maxlength="60" autocomplete="name" />
-    </div>
+  <form class="space-y-6" @submit.prevent="onSubmit">
     <div class="space-y-2">
-      <Label for="auth-email">E-mail</Label>
-      <Input id="auth-email" v-model="email" class="h-11" type="email" autocomplete="email" />
-    </div>
-    <div class="space-y-2">
-      <Label for="auth-password">Senha</Label>
-      <Input
-        id="auth-password"
-        v-model="password"
-        class="h-11"
-        type="password"
-        :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
-        :placeholder="mode === 'register' ? 'Pelo menos 8 caracteres' : ''"
-      />
+      <h2 class="text-xl">{{ mode === 'login' ? 'Entre para organizar' : 'Crie sua conta de organizador' }}</h2>
+      <p class="text-sm text-muted-foreground">
+        A conta é só para quem organiza. Quem participa entra pelo link do grupo, com nome e PIN.
+      </p>
     </div>
 
-    <p v-if="error" class="text-sm text-destructive" role="alert">{{ error }}</p>
+    <Tabs v-model="mode">
+      <TabsList class="grid w-full grid-cols-2">
+        <TabsTrigger value="login">Já tenho conta</TabsTrigger>
+        <TabsTrigger value="register">Criar conta</TabsTrigger>
+      </TabsList>
+    </Tabs>
 
-    <Button
-      type="submit"
-      size="lg"
-      class="h-11 w-full"
-      :disabled="loading || !email.trim() || password.length < 8 || (mode === 'register' && !name.trim())"
-    >
-      {{ loading ? 'Aguarde...' : mode === 'login' ? 'Entrar' : 'Criar conta' }}
-    </Button>
-    <Button
-      type="button"
-      variant="ghost"
-      class="h-11 w-full"
-      @click="mode = mode === 'login' ? 'register' : 'login'"
-    >
-      {{ mode === 'login' ? 'Não tenho conta' : 'Já tenho conta' }}
-    </Button>
+    <FieldGroup>
+      <Field v-if="mode === 'register'">
+        <FieldLabel for="auth-name">Seu nome</FieldLabel>
+        <Input id="auth-name" v-model="name" maxlength="60" autocomplete="name" />
+      </Field>
+      <Field>
+        <FieldLabel for="auth-email">E-mail</FieldLabel>
+        <Input id="auth-email" v-model="email" type="email" autocomplete="email" />
+      </Field>
+      <Field>
+        <FieldLabel for="auth-password">Senha</FieldLabel>
+        <Input
+          id="auth-password"
+          v-model="password"
+          type="password"
+          :autocomplete="mode === 'login' ? 'current-password' : 'new-password'"
+        />
+        <FieldDescription v-if="mode === 'register'">Pelo menos 8 caracteres.</FieldDescription>
+      </Field>
+      <FieldError v-if="error">{{ error }}</FieldError>
+      <Button
+        type="submit"
+        size="lg"
+        class="w-full"
+        :disabled="loading || !email.trim() || password.length < 8 || (mode === 'register' && !name.trim())"
+      >
+        <Spinner v-if="loading" />
+        {{ loading ? 'Aguarde...' : mode === 'login' ? 'Entrar' : 'Criar conta' }}
+      </Button>
+    </FieldGroup>
   </form>
 </template>

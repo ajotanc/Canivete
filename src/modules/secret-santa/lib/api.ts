@@ -76,6 +76,9 @@ export interface Credentials {
   pin: string
 }
 
+export const GROUP_COLORS = ['berry', 'cobalt', 'pine', 'violet', 'amber'] as const
+export type GroupColor = (typeof GROUP_COLORS)[number]
+
 export interface GroupInfo {
   id: string
   /** Endereço amigável, quando o organizador definiu um. */
@@ -86,6 +89,8 @@ export interface GroupInfo {
   eventDate: string
   status: 'open' | 'drawing' | 'drawn'
   participantCount: number
+  /** Cor do grupo: uma da lista ou #RRGGBB; framboesa quando o organizador não escolheu. */
+  color: string
   /** Nomes do grupo e se cada pessoa já criou o PIN (primeiro acesso). */
   members: { name: string; hasPin: boolean }[]
 }
@@ -96,9 +101,15 @@ export interface ParticipantSummary {
   hasPin: boolean
 }
 
+/** Um presente da lista; `url` é o link do produto, quando a pessoa tem. */
+export interface WishItem {
+  text: string
+  url?: string
+}
+
 export type RevealResult =
-  | { status: 'open'; wishlist: string[] }
-  | { status: 'drawn'; wishlist: string[]; receiver: { name: string; wishlist: string[] } }
+  | { status: 'open'; wishlist: WishItem[] }
+  | { status: 'drawn'; wishlist: WishItem[]; receiver: { name: string; wishlist: WishItem[] } }
 
 export interface MyGroup {
   id: string
@@ -118,6 +129,8 @@ export interface BoardPost {
   author: string
   text: string
   createdAt: string
+  /** Quem escreveu e o organizador podem apagar. */
+  canDelete: boolean
 }
 
 export function createGroup(
@@ -127,7 +140,7 @@ export function createGroup(
     slug?: string
     budget?: number | null
     eventDate?: string
-    organizer?: { name: string; pin: string; wishlist?: string[] }
+    organizer?: { name: string; pin: string; wishlist?: WishItem[] }
   },
   execute?: Execute,
 ) {
@@ -139,20 +152,39 @@ export function getGroup(groupId: string, execute?: Execute) {
 }
 
 /** Primeiro acesso: a pessoa escolhe o próprio nome e cria o PIN. */
-export function setupPin(input: Credentials & { wishlist?: string[] }, execute?: Execute) {
+export function setupPin(input: Credentials & { wishlist?: WishItem[] }, execute?: Execute) {
   return callSanta<Record<string, never>>('setupPin', { ...input }, execute)
 }
 
-export function updateWishlist(input: Credentials & { wishlist: string[] }, execute?: Execute) {
+export function updateWishlist(input: Credentials & { wishlist: WishItem[] }, execute?: Execute) {
   return callSanta<Record<string, never>>('updateWishlist', { ...input }, execute)
 }
 
 export function listParticipants(input: { groupId: string }, execute?: Execute) {
-  return callSanta<{ status: GroupInfo['status']; participants: ParticipantSummary[] }>(
+  return callSanta<{ status: GroupInfo['status']; participants: ParticipantSummary[]; exclusions: [string, string][]; anyRevealed: boolean }>(
     'listParticipants',
     { ...input },
     execute,
   )
+}
+
+/** Pares de nomes que não podem se tirar (valem nos dois sentidos). */
+export function setExclusions(input: { groupId: string; exclusions: [string, string][] }, execute?: Execute) {
+  return callSanta<Record<string, never>>('setExclusions', { ...input }, execute)
+}
+
+/** A pessoa abriu a carta: a partir daí o sorteio não pode mais ser refeito. */
+export function markRevealed(input: Credentials, execute?: Execute) {
+  return callSanta<Record<string, never>>('markRevealed', { ...input }, execute)
+}
+
+/** Desfaz o sorteio e reabre o grupo; só funciona se ninguém abriu a carta. */
+export function resetDraw(input: { groupId: string }, execute?: Execute) {
+  return callSanta<Record<string, never>>('resetDraw', { ...input }, execute)
+}
+
+export function setColor(input: { groupId: string; color: string }, execute?: Execute) {
+  return callSanta<{ color: string }>('setColor', { ...input }, execute)
 }
 
 export function addParticipant(input: { groupId: string; name: string }, execute?: Execute) {
@@ -204,6 +236,11 @@ export function postMessage(input: Credentials & { text: string }, execute?: Exe
   return callSanta<Record<string, never>>('postMessage', { ...input }, execute)
 }
 
-export function listPosts(input: Credentials, execute?: Execute) {
+/** Sem nome e PIN, só a conta do organizador consegue ler o mural. */
+export function deletePost(input: { groupId: string; postId: string } & Partial<Credentials>, execute?: Execute) {
+  return callSanta<Record<string, never>>('deletePost', { ...input }, execute)
+}
+
+export function listPosts(input: { groupId: string } & Partial<Credentials>, execute?: Execute) {
   return callSanta<{ posts: BoardPost[] }>('listPosts', { ...input }, execute)
 }

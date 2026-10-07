@@ -8,6 +8,13 @@ export function inviteUrl(origin: string, groupId: string, slug?: string | null)
   return `${origin}${invitePath(groupId, slug)}`
 }
 
+/** Lembrete para quem ainda não criou o PIN. */
+export function whatsappReminderUrl(groupName: string, personName: string, inviteLink: string): string {
+  const firstName = personName.split(' ')[0]
+  const text = `Oi, ${firstName}! Falta você criar o seu PIN no amigo secreto "${groupName}": ${inviteLink}`
+  return `https://wa.me/?text=${encodeURIComponent(text)}`
+}
+
 export function whatsappUrl(groupName: string, inviteLink: string): string {
   const text = `Amigo secreto "${groupName}": entre, escolha seu nome e crie seu PIN: ${inviteLink}`
   return `https://wa.me/?text=${encodeURIComponent(text)}`

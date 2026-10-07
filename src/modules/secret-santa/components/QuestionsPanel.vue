@@ -2,8 +2,11 @@
 import { MessageCircleQuestion, Send } from '@lucide/vue'
 import { onMounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
+import { Spinner } from '@/components/ui/spinner'
 import { answerQuestion, askQuestion, listQuestions, SantaApiError, type Credentials, type QuestionItem } from '../lib/api'
 
 const props = defineProps<{ credentials: Credentials; receiverName: string }>()
@@ -61,55 +64,80 @@ async function onAnswer(item: QuestionItem) {
 </script>
 
 <template>
-  <section class="space-y-6" aria-labelledby="questions-title">
-    <div class="space-y-1">
-      <h2 id="questions-title" class="flex items-center gap-2 font-display text-xl">
-        <MessageCircleQuestion class="size-5 text-secondary" aria-hidden="true" />
+  <Card aria-labelledby="questions-title">
+    <CardHeader>
+      <CardTitle id="questions-title" class="flex items-center gap-2 text-lg">
+        <MessageCircleQuestion class="size-5" aria-hidden="true" />
         Perguntas anônimas
-      </h2>
-      <p class="text-sm text-muted-foreground">
+      </CardTitle>
+      <CardDescription>
         Pergunte algo a {{ receiverName }} sem se identificar, como "Você prefere chocolate ou vinho?". A resposta aparece só para você.
-      </p>
-    </div>
+      </CardDescription>
+    </CardHeader>
+    <CardContent class="space-y-6">
+      <form @submit.prevent="onAsk">
+        <InputGroup class="h-11 bg-card">
+          <InputGroupInput
+            v-model="question"
+            maxlength="200"
+            autocomplete="off"
+            :placeholder="`Pergunta para ${receiverName}`"
+            aria-label="Pergunta anônima"
+          />
+          <InputGroupAddon align="inline-end">
+            <InputGroupButton type="submit" variant="default" size="sm" :disabled="asking || !question.trim()">
+              <Spinner v-if="asking" />
+              <Send v-else aria-hidden="true" />
+              Enviar
+            </InputGroupButton>
+          </InputGroupAddon>
+        </InputGroup>
+      </form>
 
-    <form class="flex gap-2" @submit.prevent="onAsk">
-      <Input
-        v-model="question"
-        class="h-11"
-        maxlength="200"
-        autocomplete="off"
-        :placeholder="`Pergunta para ${receiverName}`"
-        aria-label="Pergunta anônima"
-      />
-      <Button type="submit" class="h-11 shrink-0" :disabled="asking || !question.trim()">
-        <Send class="size-4" aria-hidden="true" />
-        Enviar
-      </Button>
-    </form>
+      <div v-if="sent.length > 0" class="space-y-2">
+        <h3 class="text-sm font-medium text-muted-foreground">Suas perguntas</h3>
+        <ItemGroup class="gap-2">
+          <Item v-for="item in sent" :key="item.id" variant="muted" size="sm">
+            <ItemContent>
+              <ItemTitle>{{ item.question }}</ItemTitle>
+              <ItemDescription v-if="item.answer" class="line-clamp-none text-success">{{ item.answer }}</ItemDescription>
+              <ItemDescription v-else>Ainda sem resposta.</ItemDescription>
+            </ItemContent>
+          </Item>
+        </ItemGroup>
+      </div>
 
-    <div v-if="sent.length > 0" class="space-y-2">
-      <h3 class="text-sm font-medium text-muted-foreground">Suas perguntas</h3>
-      <ul class="space-y-2">
-        <li v-for="item in sent" :key="item.id" class="rounded-lg border bg-card p-3">
-          <p class="font-medium">{{ item.question }}</p>
-          <p v-if="item.answer" class="mt-1 text-success">{{ item.answer }}</p>
-          <p v-else class="mt-1 text-sm text-muted-foreground">Ainda sem resposta.</p>
-        </li>
-      </ul>
-    </div>
-
-    <div v-if="received.length > 0" class="space-y-2">
-      <h3 class="text-sm font-medium text-muted-foreground">Perguntas para você</h3>
-      <ul class="space-y-2">
-        <li v-for="item in received" :key="item.id" class="space-y-2 rounded-lg border border-secondary/60 bg-card p-3">
-          <p class="font-medium">{{ item.question }}</p>
-          <p v-if="item.answer" class="text-sm text-muted-foreground">Você respondeu: {{ item.answer }}</p>
-          <form v-else class="flex gap-2" @submit.prevent="onAnswer(item)">
-            <Input v-model="drafts[item.id]" class="h-11" maxlength="300" autocomplete="off" placeholder="Sua resposta" :aria-label="`Resposta para: ${item.question}`" />
-            <Button type="submit" class="h-11 shrink-0" :disabled="answeringId === item.id || !(drafts[item.id] ?? '').trim()">Responder</Button>
-          </form>
-        </li>
-      </ul>
-    </div>
-  </section>
+      <div v-if="received.length > 0" class="space-y-2">
+        <h3 class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          Perguntas para você
+          <Badge v-if="received.some((item) => !item.answer)" variant="warning" class="rounded-md">{{ received.filter((item) => !item.answer).length }} sem resposta</Badge>
+        </h3>
+        <ItemGroup class="gap-2">
+          <Item v-for="item in received" :key="item.id" variant="muted" size="sm" class="flex-col items-stretch">
+            <ItemContent>
+              <ItemTitle>{{ item.question }}</ItemTitle>
+              <ItemDescription v-if="item.answer" class="line-clamp-none">Você respondeu: {{ item.answer }}</ItemDescription>
+            </ItemContent>
+            <form v-if="!item.answer" @submit.prevent="onAnswer(item)">
+              <InputGroup class="h-11 bg-card">
+                <InputGroupInput
+                  v-model="drafts[item.id]"
+                  maxlength="300"
+                  autocomplete="off"
+                  placeholder="Sua resposta"
+                  :aria-label="`Resposta para: ${item.question}`"
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton type="submit" variant="default" size="sm" :disabled="answeringId === item.id || !(drafts[item.id] ?? '').trim()">
+                    <Spinner v-if="answeringId === item.id" />
+                    Responder
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+            </form>
+          </Item>
+        </ItemGroup>
+      </div>
+    </CardContent>
+  </Card>
 </template>

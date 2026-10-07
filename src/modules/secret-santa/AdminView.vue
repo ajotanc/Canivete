@@ -1,18 +1,36 @@
 <script setup lang="ts">
-import { Copy, Dices, Gift, KeyRound, Link2, LogOut, MessageCircle, Trash2, UserPlus } from '@lucide/vue'
+import { ArrowLeft, CalendarDays, Check, Clock, Copy, Dices, Gift, KeyRound, Link2, Lock, LogOut, Palette, RotateCcw, RefreshCw, SearchX, Trash2, TriangleAlert, UserPlus, Users } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
-import { Button } from '@/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import WhatsappIcon from '@/components/icons/WhatsappIcon.vue'
+import { applyGroupColor, COLOR_LABELS, colorLabel, colorProblem, isHexColor } from './lib/groupColor'
+import ConfirmDelete from '@/components/ConfirmDelete.vue'
+import BoardPanel from './components/BoardPanel.vue'
+import ExclusionsCard from './components/ExclusionsCard.vue'
+import FactTile from '@/components/FactTile.vue'
+import PageHeader from '@/components/PageHeader.vue'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
+import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
+import { Progress } from '@/components/ui/progress'
+import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { loadUser, logout, useAuth } from '@/core/services/auth'
 import AuthForm from './components/AuthForm.vue'
 import {
@@ -22,13 +40,17 @@ import {
   getGroup,
   listParticipants,
   removeParticipant,
+  resetDraw,
   resetPin,
+  GROUP_COLORS,
   SantaApiError,
+  setColor,
   setSlug,
   type ParticipantSummary,
 } from './lib/api'
+import { eventCountdown, formatEventDate } from './lib/event'
 import { slugifyInput, trimSlug } from './lib/slug'
-import { adminPath, inviteUrl, mePath, whatsappUrl } from './lib/links'
+import { adminPath, inviteUrl, mePath, whatsappReminderUrl, whatsappUrl } from './lib/links'
 import { loadCredentials, saveCredentials } from './lib/session'
 
 const route = useRoute()
@@ -41,25 +63,36 @@ type State = 'loading' | 'ready' | 'login' | 'forbidden' | 'not-found' | 'error'
 const state = ref<State>('loading')
 const errorMessage = ref('')
 const status = ref<'open' | 'drawing' | 'drawn'>('open')
+const anyRevealed = ref(false)
+const resetDrawOpen = ref(false)
+const resettingDraw = ref(false)
+const color = ref('berry')
+const customColor = ref('#0f766e')
+const savingColor = ref(false)
 const participants = ref<ParticipantSummary[]>([])
+const exclusions = ref<[string, string][]>([])
 const groupName = ref('')
 const slug = ref<string | null>(null)
 const slugDraft = ref('')
+const eventDate = ref('')
 const savingSlug = ref(false)
 const confirmOpen = ref(false)
 const drawing = ref(false)
 const newName = ref('')
 const adding = ref(false)
-const newNameInput = ref<InstanceType<typeof Input> | null>(null)
+const newNameInput = ref<InstanceType<typeof InputGroupInput> | null>(null)
 /** Pessoa cujo PIN o organizador quer zerar (abre a confirmação). */
 const resetTarget = ref<string | null>(null)
 const resetting = ref(false)
+const removeTarget = ref<string | null>(null)
+const removing = ref(false)
 const deleteOpen = ref(false)
 const deleting = ref(false)
 
 const origin = window.location.origin
 const invite = computed(() => inviteUrl(window.location.origin, groupId.value, slug.value))
 const hasMyself = computed(() => participants.value.some((p) => p.isOrganizer))
+const myName = computed(() => participants.value.find((p) => p.isOrganizer)?.name ?? '')
 const canDraw = computed(() => status.value === 'open' && participants.value.length >= 3)
 const pendingCount = computed(() => participants.value.filter((p) => !p.hasPin).length)
 
@@ -70,11 +103,18 @@ async function refresh() {
       getGroup(groupId.value),
     ])
     groupId.value = group.id
+    color.value = group.color
+    if (isHexColor(group.color)) customColor.value = group.color
+    applyGroupColor(group.color)
     groupName.value = group.name
+    eventDate.value = group.eventDate
     slug.value = group.slug
-    slugDraft.value ||= group.slug ?? ''
+    // O texto do link já vem sugerido a partir do nome do grupo; o organizador só confirma ou troca.
+    slugDraft.value ||= group.slug ?? trimSlug(slugifyInput(group.name))
     status.value = result.status
     participants.value = result.participants
+    exclusions.value = result.exclusions ?? []
+    anyRevealed.value = result.anyRevealed
     state.value = 'ready'
   } catch (e) {
     if (e instanceof SantaApiError && e.code === 'FORBIDDEN') state.value = 'forbidden'
@@ -183,13 +223,59 @@ async function onDeleteGroup() {
   }
 }
 
+async function onColor(next: string) {
+  if (next === color.value || savingColor.value) return
+  if (isHexColor(next)) {
+    const problem = colorProblem(next)
+    if (problem) {
+      toast.error(problem)
+      return
+    }
+    customColor.value = next
+  }
+  const previous = color.value
+  color.value = next
+  applyGroupColor(next)
+  savingColor.value = true
+  try {
+    await setColor({ groupId: groupId.value, color: next })
+    toast.success(`Cor do grupo: ${colorLabel(next)}.`)
+  } catch (e) {
+    color.value = previous
+    applyGroupColor(previous)
+    toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível salvar a cor.')
+  } finally {
+    savingColor.value = false
+  }
+}
+
 async function onRemove(name: string) {
+  removing.value = true
   try {
     await removeParticipant({ groupId: groupId.value, name })
     toast.success(`${name} saiu do grupo.`)
     await refresh()
   } catch (e) {
     toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível remover.')
+  } finally {
+    removing.value = false
+    removeTarget.value = null
+  }
+}
+
+async function onResetDraw() {
+  resettingDraw.value = true
+  try {
+    await resetDraw({ groupId: groupId.value })
+    toast.success('Sorteio desfeito. O grupo está aberto de novo.')
+    resetDrawOpen.value = false
+    await refresh()
+  } catch (e) {
+    toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível refazer o sorteio.')
+    resetDrawOpen.value = false
+    await refresh()
+  } finally {
+    resettingDraw.value = false
   }
 }
 
@@ -209,222 +295,427 @@ async function onDraw() {
 </script>
 
 <template>
-  <section class="mx-auto w-full max-w-md space-y-8">
-    <p v-if="state === 'loading'" class="py-12 text-center text-muted-foreground">Abrindo o painel...</p>
-
-    <div v-else-if="state === 'login'" class="space-y-6 py-8">
-      <AuthForm @done="onLoggedIn" />
+  <section class="mx-auto w-full max-w-5xl space-y-8">
+    <div v-if="state === 'loading'" class="space-y-4" role="status" aria-label="Abrindo o painel">
+      <Skeleton class="h-9 w-1/2" />
+      <Skeleton class="h-5 w-2/3" />
+      <Skeleton class="h-64 w-full" />
     </div>
 
-    <div v-else-if="state === 'forbidden'" class="space-y-4 py-12">
-      <h1 class="font-display text-3xl leading-tight">Este grupo é de outra conta</h1>
-      <p class="text-muted-foreground">
-        Só quem criou o grupo administra. Você está como {{ user?.email }}. Entre com a conta certa para abrir o painel.
-      </p>
-      <div class="flex flex-wrap gap-3">
-        <Button class="h-11" size="lg" @click="onLogout">Trocar de conta</Button>
-        <Button class="h-11" as-child size="lg" variant="outline"><RouterLink :to="`/secret-santa/g/${groupId}`">Ir para o convite</RouterLink></Button>
+    <Card v-else-if="state === 'login'" class="mx-auto w-full max-w-xl">
+      <CardContent><AuthForm @done="onLoggedIn" /></CardContent>
+    </Card>
+
+    <Empty v-else-if="state === 'forbidden'" class="rounded-xl border border-dashed bg-card/50 py-12">
+      <EmptyHeader>
+        <EmptyMedia variant="icon"><Lock aria-hidden="true" /></EmptyMedia>
+        <EmptyTitle>Este grupo é de outra conta</EmptyTitle>
+        <EmptyDescription>
+          Só quem criou o grupo administra. Você está como {{ user?.email }}. Entre com a conta certa para abrir o painel.
+        </EmptyDescription>
+      </EmptyHeader>
+      <div class="flex flex-wrap justify-center gap-3">
+        <Button size="lg" @click="onLogout">Trocar de conta</Button>
+        <Button as-child size="lg" variant="outline"><RouterLink :to="`/secret-santa/g/${groupId}`">Ir para o convite</RouterLink></Button>
       </div>
-    </div>
+    </Empty>
 
-    <div v-else-if="state === 'not-found'" class="space-y-4 py-12">
-      <h1 class="font-display text-3xl leading-tight">Grupo não encontrado</h1>
-      <Button class="h-11" as-child size="lg"><RouterLink to="/secret-santa">Criar um grupo</RouterLink></Button>
-    </div>
+    <Empty v-else-if="state === 'not-found'" class="rounded-xl border border-dashed bg-card/50 py-12">
+      <EmptyHeader>
+        <EmptyMedia variant="icon"><SearchX aria-hidden="true" /></EmptyMedia>
+        <EmptyTitle>Grupo não encontrado</EmptyTitle>
+        <EmptyDescription>Ele pode ter sido excluído ou o link está incompleto.</EmptyDescription>
+      </EmptyHeader>
+      <Button as-child size="lg"><RouterLink to="/secret-santa">Criar um grupo</RouterLink></Button>
+    </Empty>
 
-    <div v-else-if="state === 'error'" class="space-y-4 py-12">
-      <h1 class="font-display text-3xl leading-tight">Não foi possível abrir o painel</h1>
-      <p class="text-muted-foreground">{{ errorMessage }}</p>
-      <Button class="h-11" size="lg" @click="refresh">Tentar de novo</Button>
-    </div>
+    <Empty v-else-if="state === 'error'" class="rounded-xl border border-dashed bg-card/50 py-12">
+      <EmptyHeader>
+        <EmptyMedia variant="icon"><TriangleAlert aria-hidden="true" /></EmptyMedia>
+        <EmptyTitle>Não foi possível abrir o painel</EmptyTitle>
+        <EmptyDescription>{{ errorMessage }}</EmptyDescription>
+      </EmptyHeader>
+      <Button size="lg" @click="refresh">Tentar de novo</Button>
+    </Empty>
 
     <template v-else>
-      <header class="space-y-1">
-        <div class="flex items-center justify-between gap-3">
-          <p class="text-sm text-muted-foreground">Painel do organizador</p>
-          <div class="flex items-center gap-1">
-            <Button as-child variant="ghost" size="sm"><RouterLink to="/secret-santa">Meus grupos</RouterLink></Button>
-            <Button variant="ghost" size="sm" @click="onLogout">
-              <LogOut class="size-4" aria-hidden="true" />
-              Sair
-            </Button>
-          </div>
-        </div>
-        <h1 class="font-display text-3xl leading-tight">{{ groupName }}</h1>
-        <p class="text-muted-foreground">
-          {{
-            status === 'drawn'
-              ? 'O sorteio foi feito. Quem ainda não acessou pode criar o PIN e ver quem tirou.'
-              : 'Adicione as pessoas e mande o link do grupo. Cada uma escolhe o próprio nome e cria o PIN.'
-          }}
-        </p>
-      </header>
-
-      <div class="space-y-3">
-        <h2 class="font-display text-xl">Convite</h2>
-        <div class="flex gap-2">
-          <Input class="h-11" :model-value="invite" readonly aria-label="Link do convite" />
-          <Button class="size-11" variant="outline" size="icon" aria-label="Copiar convite" @click="copy(invite, 'Convite')">
-            <Copy class="size-4" aria-hidden="true" />
+      <PageHeader
+        filled
+        :icon="Gift"
+        :title="groupName"
+        :description="
+          status === 'drawn'
+            ? 'O sorteio foi feito. Quem ainda não acessou pode criar o PIN e ver quem tirou.'
+            : 'Adicione as pessoas e mande o link do grupo. Cada uma escolhe o próprio nome e cria o PIN.'
+        "
+      >
+        <template #back>
+          <Button as-child variant="ghost" size="sm">
+            <RouterLink to="/secret-santa"><ArrowLeft aria-hidden="true" />Meus grupos</RouterLink>
           </Button>
-        </div>
-        <Button as-child variant="outline" size="lg" class="w-full h-11">
-          <a :href="whatsappUrl(groupName, invite)" target="_blank" rel="noopener noreferrer">
-            <MessageCircle class="size-4" aria-hidden="true" />
-            Enviar pelo WhatsApp
-          </a>
-        </Button>
-      </div>
-
-      <div v-if="status === 'drawn' && hasMyself" class="rounded-lg border border-secondary/60 bg-secondary/10 p-4">
-        <p class="mb-3 font-semibold">O sorteio foi feito!</p>
-        <Button as-child size="lg" class="h-11 w-full" variant="secondary">
-          <RouterLink :to="mePath(String(route.params.id))">
-            <Gift class="size-4" aria-hidden="true" />
-            Ver meu amigo
-          </RouterLink>
-        </Button>
-      </div>
-
-      <form class="space-y-2" @submit.prevent="onSaveSlug">
-        <h2 class="flex items-center gap-2 font-display text-xl"><Link2 class="size-5" aria-hidden="true" />Texto do link</h2>
-        <p class="text-sm text-muted-foreground">Opcional. Deixa o link mais bonito, como <span class="font-medium">familia-da-bagunca</span>. Pode repetir o de outros grupos.</p>
-        <div class="flex gap-2">
-          <Input :value="slugDraft" class="h-11" maxlength="40" autocomplete="off" placeholder="familia-da-bagunca" aria-label="Texto do link" @input="onSlugInput" @blur="slugDraft = trimSlug(slugDraft)" />
-          <Button type="submit" class="h-11 shrink-0" :disabled="savingSlug || slugDraft.trim().length < 3">Salvar</Button>
-        </div>
-        <p class="break-all text-sm text-muted-foreground">{{ inviteUrl(origin, groupId, slugDraft ? trimSlug(slugDraft) : null) }}</p>
-      </form>
-
-      <div class="space-y-3">
-        <h2 class="font-display text-xl">Pessoas ({{ participants.length }})</h2>
-        <form v-if="status === 'open'" class="flex gap-2" @submit.prevent="onAdd">
-          <Input
-            ref="newNameInput"
-            v-model="newName"
-            class="h-11"
-            maxlength="60"
-            autocomplete="off"
-            placeholder="Nome da pessoa"
-            aria-label="Nome da pessoa"
-          />
-          <Button type="submit" class="h-11 shrink-0" :disabled="adding || !newName.trim()">
-            <UserPlus class="size-4" aria-hidden="true" />
-            Adicionar
-          </Button>
-        </form>
-        <p v-if="participants.length === 0" class="text-muted-foreground">Ninguém foi adicionado ainda.</p>
-        <template v-else>
-          <p class="text-sm text-muted-foreground">
-            {{ participants.length - pendingCount }} de {{ participants.length }} já criaram o PIN.
-          </p>
-          <ul class="divide-y rounded-lg bg-card">
-            <li v-for="person in participants" :key="person.name" class="flex items-center justify-between gap-2 py-1 pl-4 pr-1">
-              <div class="min-w-0">
-                <p class="truncate">
-                  {{ person.name }}<span v-if="person.isOrganizer" class="ml-2 text-sm text-muted-foreground">(você)</span>
-                </p>
-                <p class="text-sm" :class="person.hasPin ? 'text-muted-foreground' : 'text-warning'">
-                  {{ person.hasPin ? 'PIN criado' : 'Ainda não acessou' }}
-                </p>
-              </div>
-              <div class="flex shrink-0">
-                <Button
-                  v-if="person.hasPin"
-                  class="size-11"
-                  variant="ghost"
-                  size="icon"
-                  :aria-label="`Zerar PIN de ${person.name}`"
-                  @click="resetTarget = person.name"
-                >
-                  <KeyRound class="size-4" aria-hidden="true" />
-                </Button>
-                <Button
-                  v-if="status === 'open'"
-                  class="size-11"
-                  variant="ghost"
-                  size="icon"
-                  :aria-label="`Remover ${person.name}`"
-                  @click="onRemove(person.name)"
-                >
-                  <Trash2 class="size-4" aria-hidden="true" />
-                </Button>
-              </div>
-            </li>
-          </ul>
         </template>
-        <Button class="h-11" variant="ghost" size="sm" @click="refresh">Atualizar lista</Button>
+        <template #actions>
+          <Button variant="ghost" size="sm" @click="onLogout">
+            <LogOut aria-hidden="true" />
+            Sair
+          </Button>
+        </template>
+        <template #badge>
+          <Badge variant="glass" class="rounded-md">{{ status === 'drawn' ? 'Sorteado' : 'Aberto' }}</Badge>
+        </template>
+        <dl class="grid grid-cols-2 gap-3 pt-2">
+          <FactTile :icon="Users" label="Participantes">{{ participants.length }} {{ participants.length === 1 ? 'pessoa' : 'pessoas' }}</FactTile>
+          <FactTile :icon="KeyRound" label="PIN criado">{{ participants.length - pendingCount }} de {{ participants.length }}</FactTile>
+          <FactTile v-if="eventDate" :icon="CalendarDays" :label="eventCountdown(eventDate)" tone="paper" class="col-span-2">{{ formatEventDate(eventDate) }}</FactTile>
+          <FactTile v-else :icon="Gift" label="Sorteio" tone="paper" class="col-span-2">{{ status === 'drawn' ? 'Já foi feito' : 'Ainda não foi feito' }}</FactTile>
+        </dl>
+      </PageHeader>
+
+      <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,23rem)]">
+        <!-- Pessoas -->
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-lg">Pessoas ({{ participants.length }})</CardTitle>
+            <CardDescription v-if="participants.length > 0">
+              {{ participants.length - pendingCount }} de {{ participants.length }} já criaram o PIN.
+            </CardDescription>
+          </CardHeader>
+          <CardContent class="space-y-5">
+            <Progress v-if="participants.length > 0" :model-value="((participants.length - pendingCount) / participants.length) * 100" aria-label="Pessoas que já criaram o PIN" class="h-1.5" />
+
+            <form v-if="status === 'open'" @submit.prevent="onAdd">
+              <InputGroup class="h-11 bg-card">
+                <InputGroupInput
+                  ref="newNameInput"
+                  v-model="newName"
+                  maxlength="60"
+                  autocomplete="off"
+                  placeholder="Nome da pessoa"
+                  aria-label="Nome da pessoa"
+                />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton type="submit" variant="default" size="sm" :disabled="adding || !newName.trim()">
+                    <Spinner v-if="adding" />
+                    <UserPlus v-else aria-hidden="true" />
+                    Adicionar
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+            </form>
+
+            <Empty v-if="participants.length === 0" class="rounded-lg border border-dashed p-8">
+              <EmptyHeader>
+                <EmptyMedia variant="icon"><Users aria-hidden="true" /></EmptyMedia>
+                <EmptyTitle>Ninguém foi adicionado ainda</EmptyTitle>
+                <EmptyDescription>Digite o nome da primeira pessoa acima. São necessárias pelo menos 3 para sortear.</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+            <TooltipProvider v-else :delay-duration="300">
+              <ItemGroup class="gap-2">
+                <Item v-for="person in participants" :key="person.name" variant="muted" size="sm">
+                  <ItemContent>
+                    <ItemTitle>
+                      {{ person.name }}
+                      <Badge v-if="person.isOrganizer" variant="outline" class="rounded-md font-normal">você</Badge>
+                    </ItemTitle>
+                    <ItemDescription class="flex items-center gap-1.5" :class="person.hasPin ? 'text-success' : 'text-warning'">
+                      <component :is="person.hasPin ? Check : Clock" class="size-3.5" aria-hidden="true" />
+                      {{ person.hasPin ? 'PIN criado' : 'Ainda não acessou' }}
+                    </ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <Tooltip v-if="!person.hasPin">
+                      <TooltipTrigger as-child>
+                        <Button as-child variant="ghost" size="icon">
+                          <a :href="whatsappReminderUrl(groupName, person.name, invite)" target="_blank" rel="noopener noreferrer" :aria-label="`Lembrar ${person.name} pelo WhatsApp`">
+                            <WhatsappIcon class="size-4 text-[#25D366]" />
+                          </a>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Lembrar pelo WhatsApp</TooltipContent>
+                    </Tooltip>
+                    <Tooltip v-if="person.hasPin">
+                      <TooltipTrigger as-child>
+                        <Button variant="ghost" size="icon" :aria-label="`Zerar PIN de ${person.name}`" @click="resetTarget = person.name">
+                          <KeyRound class="size-4" aria-hidden="true" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Zerar PIN</TooltipContent>
+                    </Tooltip>
+                    <Tooltip v-if="status === 'open'">
+                      <TooltipTrigger as-child>
+                        <Button variant="ghost" size="icon" class="text-destructive hover:bg-destructive/10 hover:text-destructive" :aria-label="`Remover ${person.name}`" @click="removeTarget = person.name">
+                          <Trash2 class="size-4" aria-hidden="true" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Remover</TooltipContent>
+                    </Tooltip>
+                  </ItemActions>
+                </Item>
+              </ItemGroup>
+            </TooltipProvider>
+
+            <Button variant="ghost" size="sm" @click="refresh">
+              <RefreshCw aria-hidden="true" />
+              Atualizar lista
+            </Button>
+          </CardContent>
+        </Card>
+
+        <div class="space-y-6">
+          <!-- Convite -->
+          <Card>
+            <CardHeader><CardTitle class="text-lg">Convite</CardTitle></CardHeader>
+            <CardContent class="space-y-4">
+              <InputGroup class="h-11 bg-card">
+                <InputGroupInput :model-value="invite" readonly aria-label="Link do convite" />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton size="sm" aria-label="Copiar convite" @click="copy(invite, 'Convite')">
+                    <Copy aria-hidden="true" />
+                    Copiar
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+              <Button as-child size="lg" class="w-full bg-success text-white hover:bg-success/90">
+                <a :href="whatsappUrl(groupName, invite)" target="_blank" rel="noopener noreferrer">
+                  <WhatsappIcon class="size-4" />
+                  Enviar pelo WhatsApp
+                </a>
+              </Button>
+              <Separator />
+              <form @submit.prevent="onSaveSlug">
+                <Field>
+                  <FieldLabel for="slug">Texto do link</FieldLabel>
+                  <InputGroup class="h-11 bg-card">
+                    <InputGroupAddon><Link2 aria-hidden="true" /></InputGroupAddon>
+                    <InputGroupInput
+                      id="slug"
+                      :model-value="slugDraft"
+                      maxlength="40"
+                      autocomplete="off"
+                      placeholder="familia-da-bagunca"
+                      @input="onSlugInput"
+                      @blur="slugDraft = trimSlug(slugDraft)"
+                    />
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupButton type="submit" variant="default" size="sm" :disabled="savingSlug || slugDraft.trim().length < 3">Salvar</InputGroupButton>
+                    </InputGroupAddon>
+                  </InputGroup>
+                  <FieldDescription class="break-all">{{ inviteUrl(origin, groupId, slugDraft ? trimSlug(slugDraft) : null) }}</FieldDescription>
+                </Field>
+              </form>
+            </CardContent>
+          </Card>
+
+          <!-- Cor do grupo -->
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-lg">Cor do grupo</CardTitle>
+              <CardDescription>Todo mundo que abrir o link vê o grupo nessa cor. Sem escolha, fica framboesa.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div class="flex flex-wrap gap-3" role="radiogroup" aria-label="Cor do grupo">
+                <button
+                  v-for="option in GROUP_COLORS"
+                  :key="option"
+                  type="button"
+                  role="radio"
+                  :aria-checked="color === option"
+                  :aria-label="COLOR_LABELS[option]"
+                  :data-tool="option"
+                  :disabled="savingColor"
+                  class="flex size-9 items-center justify-center rounded-full bg-tool text-tool-foreground outline-none transition-transform focus-visible:ring-3 focus-visible:ring-ring/60 enabled:hover:scale-105 motion-reduce:transition-none"
+                  :class="color === option ? 'ring-3 ring-foreground ring-offset-2 ring-offset-card' : ''"
+                  @click="onColor(option)"
+                >
+                  <Check v-if="color === option" class="size-4" aria-hidden="true" />
+                </button>
+                <label
+                  class="relative flex size-9 cursor-pointer items-center justify-center rounded-full text-white outline-none transition-transform focus-within:ring-3 focus-within:ring-ring/60 hover:scale-105 motion-reduce:transition-none"
+                  :class="isHexColor(color) ? 'ring-3 ring-foreground ring-offset-2 ring-offset-card' : ''"
+                  :style="{ background: isHexColor(color) ? color : 'conic-gradient(var(--berry), var(--amber), var(--pine), var(--cobalt), var(--violet), var(--berry))' }"
+                  title="Escolher outra cor"
+                >
+                  <Check v-if="isHexColor(color)" class="size-4" aria-hidden="true" />
+                  <Palette v-else class="size-4 drop-shadow" aria-hidden="true" />
+                  <input
+                    type="color"
+                    class="absolute inset-0 size-full cursor-pointer opacity-0"
+                    :value="customColor"
+                    :disabled="savingColor"
+                    aria-label="Escolher outra cor"
+                    @change="onColor(($event.target as HTMLInputElement).value)"
+                  />
+                </label>
+              </div>
+              <p class="mt-3 text-sm text-muted-foreground">{{ colorLabel(color) }}</p>
+            </CardContent>
+          </Card>
+
+          <BoardPanel :credentials="{ groupId }" />
+
+          <ExclusionsCard
+            v-if="status === 'open' && participants.length >= 3"
+            :group-id="groupId"
+            :names="participants.map((p) => p.name)"
+            :exclusions="exclusions"
+            @changed="refresh"
+          />
+
+          <!-- Minha lista de presentes -->
+          <Card v-if="hasMyself && status === 'open'">
+            <CardHeader>
+              <CardTitle class="text-lg">Minha lista de presentes</CardTitle>
+              <CardDescription>Escreva o que você gostaria de ganhar e, se tiver, o link do produto.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button as-child variant="outline" size="lg" class="w-full">
+                <RouterLink :to="{ path: mePath(String(route.params.id)), query: { pessoa: myName } }">
+                  <Gift aria-hidden="true" />
+                  Editar minha lista
+                </RouterLink>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <!-- Sorteio -->
+          <Card v-if="status === 'open'">
+            <CardHeader>
+              <CardTitle class="text-lg">Sorteio</CardTitle>
+              <CardDescription>Depois de sortear não dá para mudar as pessoas.</CardDescription>
+            </CardHeader>
+            <CardContent class="space-y-3">
+              <Button size="lg" class="w-full" :disabled="!canDraw" @click="confirmOpen = true">
+                <Dices aria-hidden="true" />
+                Sortear
+              </Button>
+              <p v-if="!canDraw" class="text-sm text-muted-foreground">São necessárias pelo menos 3 pessoas para sortear.</p>
+              <p v-else-if="pendingCount > 0" class="text-sm text-muted-foreground">
+                {{ pendingCount === 1 ? '1 pessoa ainda não criou' : `${pendingCount} pessoas ainda não criaram` }} o PIN. Dá para
+                sortear assim mesmo: quem não criou cria depois e vê quem tirou.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card v-else-if="hasMyself">
+            <CardHeader>
+              <CardTitle class="text-lg">O sorteio foi feito</CardTitle>
+              <CardDescription>Veja quem você tirou.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button as-child size="lg" class="w-full">
+                <RouterLink :to="{ path: mePath(String(route.params.id)), query: { pessoa: myName } }">
+                  <Gift aria-hidden="true" />
+                  Ver meu amigo
+                </RouterLink>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <!-- Refazer o sorteio -->
+          <Card v-if="status === 'drawn'">
+            <CardHeader>
+              <CardTitle class="text-lg">Refazer o sorteio</CardTitle>
+              <CardDescription>
+                {{ anyRevealed ? 'Alguém já abriu a carta e viu quem tirou. Agora não dá mais para refazer.' : 'Enquanto ninguém abrir a carta, dá para desfazer o sorteio e sortear de novo.' }}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" size="lg" class="w-full" :disabled="anyRevealed" @click="resetDrawOpen = true">
+                <RotateCcw aria-hidden="true" />
+                Refazer o sorteio
+              </Button>
+            </CardContent>
+          </Card>
+
+          <!-- Excluir -->
+          <Card class="border-destructive/40">
+            <CardHeader>
+              <CardTitle class="text-lg text-destructive">Excluir grupo</CardTitle>
+              <CardDescription>Apaga o grupo, as pessoas, as perguntas e o mural. Não dá para desfazer.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="destructive" @click="deleteOpen = true">
+                <Trash2 aria-hidden="true" />
+                Excluir grupo
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      <div v-if="status === 'open'" class="space-y-2">
-        <Button size="lg" class="w-full h-11" :disabled="!canDraw" @click="confirmOpen = true">
-          <Dices class="size-4" aria-hidden="true" />
-          Sortear
-        </Button>
-        <p v-if="!canDraw" class="text-sm text-muted-foreground">São necessárias pelo menos 3 pessoas para sortear.</p>
-        <p v-else-if="pendingCount > 0" class="text-sm text-muted-foreground">
-          {{ pendingCount === 1 ? '1 pessoa ainda não criou' : `${pendingCount} pessoas ainda não criaram` }} o PIN. Dá para
-          sortear assim mesmo: quem não criou cria depois e vê quem tirou.
-        </p>
-      </div>
+      <ConfirmDelete
+        v-model:open="resetDrawOpen"
+        title="Desfazer o sorteio?"
+        description="Os pares somem, as perguntas anônimas são apagadas e o grupo volta a ficar aberto. Depois é só sortear de novo."
+        confirm-label="Desfazer sorteio"
+        :busy="resettingDraw"
+        @confirm="onResetDraw"
+      />
 
-      <div class="space-y-2 rounded-lg border border-destructive/40 p-4">
-        <h2 class="font-display text-xl">Excluir grupo</h2>
-        <p class="text-sm text-muted-foreground">
-          Apaga o grupo, as pessoas, as perguntas e o mural. Não dá para desfazer.
-        </p>
-        <Button class="h-11" variant="destructive" @click="deleteOpen = true">
-          <Trash2 class="size-4" aria-hidden="true" />
-          Excluir grupo
-        </Button>
-      </div>
+      <ConfirmDelete
+        :open="removeTarget !== null"
+        :title="`Remover ${removeTarget} do grupo?`"
+        description="A pessoa sai da lista, perde o PIN e as regras de sorteio dela. Dá para adicionar de novo depois."
+        confirm-label="Remover"
+        :busy="removing"
+        @update:open="(open: boolean) => !open && (removeTarget = null)"
+        @confirm="removeTarget && onRemove(removeTarget)"
+      />
 
-      <Dialog v-model:open="deleteOpen">
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Excluir "{{ groupName }}"?</DialogTitle>
-            <DialogDescription>
+      <AlertDialog v-model:open="deleteOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir "{{ groupName }}"?</AlertDialogTitle>
+            <AlertDialogDescription>
               Todas as pessoas cadastradas, o sorteio, as perguntas anônimas e os recados do mural serão apagados para sempre.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button class="h-11" variant="outline" @click="deleteOpen = false">Cancelar</Button>
-            <Button class="h-11" variant="destructive" :disabled="deleting" @click="onDeleteGroup">
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button variant="destructive" :disabled="deleting" @click="onDeleteGroup">
+              <Spinner v-if="deleting" />
               {{ deleting ? 'Excluindo...' : 'Excluir tudo' }}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      <Dialog v-model:open="confirmOpen">
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Sortear agora?</DialogTitle>
-            <DialogDescription>
+      <AlertDialog v-model:open="confirmOpen">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sortear agora?</AlertDialogTitle>
+            <AlertDialogDescription>
               Depois do sorteio não dá para adicionar nem remover pessoas, nem mudar a lista de desejos. Não dá para desfazer.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button class="h-11" variant="outline" @click="confirmOpen = false">Cancelar</Button>
-            <Button class="h-11" :disabled="drawing" @click="onDraw">{{ drawing ? 'Sorteando...' : 'Sortear' }}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button :disabled="drawing" @click="onDraw">
+              <Spinner v-if="drawing" />
+              {{ drawing ? 'Sorteando...' : 'Sortear' }}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      <Dialog :open="resetTarget !== null" @update:open="(open: boolean) => !open && (resetTarget = null)">
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Zerar o PIN de {{ resetTarget }}?</DialogTitle>
-            <DialogDescription>
+      <AlertDialog :open="resetTarget !== null" @update:open="(open: boolean) => !open && (resetTarget = null)">
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Zerar o PIN de {{ resetTarget }}?</AlertDialogTitle>
+            <AlertDialogDescription>
               A pessoa vai criar um PIN novo no próximo acesso. O par do sorteio não muda.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button class="h-11" variant="outline" @click="resetTarget = null">Cancelar</Button>
-            <Button class="h-11" :disabled="resetting" @click="onReset">{{ resetting ? 'Zerando...' : 'Zerar PIN' }}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <Button :disabled="resetting" @click="onReset">
+              <Spinner v-if="resetting" />
+              {{ resetting ? 'Zerando...' : 'Zerar PIN' }}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </template>
   </section>
 </template>

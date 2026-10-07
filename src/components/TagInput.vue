@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import { X } from '@lucide/vue'
-import { ref } from 'vue'
-import { cn } from '@/lib/utils'
+import { TagsInput, TagsInputInput, TagsInputItem, TagsInputItemDelete, TagsInputItemText } from '@/components/ui/tags-input'
 
 const props = withDefaults(
   defineProps<{
@@ -15,64 +13,42 @@ const props = withDefaults(
 )
 const emit = defineEmits<{ (e: 'update:modelValue', value: string[]): void }>()
 
-const draft = ref('')
+const sameKey = (value: string) => value.toLocaleLowerCase('pt-BR')
 
-/** Enter (ou vírgula) transforma o texto em item; repetidos e vazios são ignorados. */
-function commit() {
-  const item = draft.value.trim().replace(/\s+/g, ' ')
-  draft.value = ''
-  if (!item || props.modelValue.length >= props.maxItems) return
-  if (props.modelValue.some((current) => current.toLocaleLowerCase('pt-BR') === item.toLocaleLowerCase('pt-BR'))) return
-  emit('update:modelValue', [...props.modelValue, item])
-}
-
-function remove(index: number) {
-  emit('update:modelValue', props.modelValue.filter((_, i) => i !== index))
-}
-
-function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Enter' || event.key === ',') {
-    event.preventDefault()
-    commit()
-  } else if (event.key === 'Backspace' && draft.value === '' && props.modelValue.length > 0) {
-    remove(props.modelValue.length - 1)
+/** Normaliza espaços, descarta vazios e repetidos (sem diferenciar maiúsculas) e respeita o limite. */
+function onUpdate(value: unknown) {
+  const seen = new Set<string>()
+  const next: string[] = []
+  for (const raw of value as string[]) {
+    const item = raw.trim().replace(/\s+/g, ' ')
+    if (!item || seen.has(sameKey(item)) || next.length >= props.maxItems) continue
+    seen.add(sameKey(item))
+    next.push(item)
   }
+  const unchanged = next.length === props.modelValue.length && next.every((item, index) => item === props.modelValue[index])
+  if (!unchanged) emit('update:modelValue', next)
 }
 </script>
 
 <template>
-  <div class="space-y-2">
-    <ul v-if="modelValue.length > 0" class="flex flex-wrap gap-2" aria-label="Itens da lista">
-      <li
-        v-for="(item, index) in modelValue"
-        :key="item"
-        class="inline-flex max-w-full items-center gap-1 rounded-full bg-primary/10 py-1 pl-3 pr-1 text-sm text-primary"
-      >
-        <span class="truncate">{{ item }}</span>
-        <button
-          type="button"
-          class="inline-flex size-6 shrink-0 items-center justify-center rounded-full hover:bg-primary/20 focus-visible:ring-2 focus-visible:ring-ring"
-          :aria-label="`Remover ${item}`"
-          @click="remove(index)"
-        >
-          <X class="size-3.5" aria-hidden="true" />
-        </button>
-      </li>
-    </ul>
-    <input
+  <TagsInput
+    :model-value="modelValue"
+    :max="maxItems"
+    add-on-blur
+    delimiter=","
+    class="min-h-11 gap-1.5 bg-card px-2.5 py-1.5"
+    @update:model-value="onUpdate"
+  >
+    <TagsInputItem v-for="item in modelValue" :key="item" :value="item" class="h-7 rounded-md bg-primary/10 pl-2 text-primary">
+      <TagsInputItemText class="px-0 text-sm font-medium" />
+      <TagsInputItemDelete :aria-label="`Remover ${item}`" class="size-5 items-center justify-center hover:bg-primary/15" />
+    </TagsInputItem>
+    <TagsInputInput
       :id="id"
-      v-model="draft"
-      type="text"
-      autocomplete="off"
       :maxlength="maxLength"
       :placeholder="modelValue.length >= maxItems ? `Limite de ${maxItems} itens` : placeholder"
       :disabled="modelValue.length >= maxItems"
-      :class="cn(
-        'border-input bg-surface placeholder:text-muted-foreground h-11 w-full min-w-0 rounded-md border px-3 py-1 text-base shadow-xs outline-none transition-[color,box-shadow] md:text-sm',
-        'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-3 disabled:cursor-not-allowed disabled:opacity-50',
-      )"
-      @keydown="onKeydown"
-      @blur="commit"
-    >
-  </div>
+      class="h-7 min-w-32 text-base md:text-sm"
+    />
+  </TagsInput>
 </template>

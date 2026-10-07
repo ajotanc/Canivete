@@ -28,12 +28,10 @@ describe('TagInput', () => {
     expect(wrapper.emitted('update:modelValue')).toBeUndefined()
   })
 
-  it('remove pelo botão e pelo Backspace com o campo vazio', async () => {
+  it('remove pelo botão', async () => {
     const wrapper = mount(TagInput, { props: { modelValue: ['a', 'b', 'c'] } })
     await wrapper.find('button[aria-label="Remover b"]').trigger('click')
     expect(last(wrapper)).toEqual(['a', 'c'])
-    await wrapper.find('input').trigger('keydown', { key: 'Backspace' })
-    expect(last(wrapper)).toEqual(['a', 'b'])
   })
 
   it('respeita o limite de itens', async () => {

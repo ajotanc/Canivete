@@ -1,8 +1,13 @@
 <script setup lang="ts">
-import { AlertTriangle, ShieldCheck } from '@lucide/vue'
+import { AlertTriangle, Dices, SearchX, ShieldCheck, Trophy, TriangleAlert, Users } from '@lucide/vue'
 import { onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import FactTile from '@/components/FactTile.vue'
+import PageHeader from '@/components/PageHeader.vue'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { loadShare, ShareError, type StoredRaffle } from './lib/share'
 
@@ -38,36 +43,42 @@ function formatDate(iso: string): string {
 
 <template>
   <section class="mx-auto max-w-2xl space-y-6">
-    <p v-if="state === 'loading'" class="py-12 text-center text-muted-foreground">Carregando sorteio...</p>
-
-    <div v-else-if="state === 'not-found'" class="space-y-4 py-12 text-center">
-      <h1 class="text-2xl font-bold">Sorteio não encontrado</h1>
-      <p class="text-muted-foreground">Confira se o link está completo.</p>
-      <Button as-child><RouterLink to="/raffle">Fazer um novo sorteio</RouterLink></Button>
+    <div v-if="state === 'loading'" class="space-y-4" role="status" aria-label="Carregando o sorteio">
+      <Skeleton class="h-44 w-full rounded-2xl" />
+      <Skeleton class="h-40 w-full" />
     </div>
 
-    <div v-else-if="state === 'error'" class="space-y-4 py-12 text-center">
-      <h1 class="text-2xl font-bold">Não foi possível abrir o sorteio</h1>
-      <p class="text-muted-foreground">{{ errorMessage }}</p>
-      <Button as-child><RouterLink to="/raffle">Fazer um novo sorteio</RouterLink></Button>
-    </div>
+    <Empty v-else-if="state === 'not-found'" class="rounded-xl border border-dashed bg-card/50 py-12">
+      <EmptyHeader>
+        <EmptyMedia variant="icon"><SearchX aria-hidden="true" /></EmptyMedia>
+        <EmptyTitle>Sorteio não encontrado</EmptyTitle>
+        <EmptyDescription>Confira se o link está completo.</EmptyDescription>
+      </EmptyHeader>
+      <Button as-child size="lg"><RouterLink to="/raffle">Fazer um novo sorteio</RouterLink></Button>
+    </Empty>
+
+    <Empty v-else-if="state === 'error'" class="rounded-xl border border-dashed bg-card/50 py-12">
+      <EmptyHeader>
+        <EmptyMedia variant="icon"><TriangleAlert aria-hidden="true" /></EmptyMedia>
+        <EmptyTitle>Não foi possível abrir o sorteio</EmptyTitle>
+        <EmptyDescription>{{ errorMessage }}</EmptyDescription>
+      </EmptyHeader>
+      <Button as-child size="lg"><RouterLink to="/raffle">Fazer um novo sorteio</RouterLink></Button>
+    </Empty>
 
     <template v-else-if="raffle">
+      <PageHeader filled :icon="Dices" title="Resultado do sorteio" :description="`Sorteio de ${formatDate(raffle.drawnAt)}`">
+        <template v-if="verified" #badge>
+          <Badge variant="glass" class="gap-1.5 rounded-md py-1"><ShieldCheck aria-hidden="true" />Registro verificado</Badge>
+        </template>
+        <dl class="grid grid-cols-2 gap-3 pt-2">
+          <FactTile :icon="Users" label="Participantes">{{ raffle.participants.length }} {{ raffle.participants.length === 1 ? 'nome' : 'nomes' }}</FactTile>
+          <FactTile :icon="Trophy" label="Sorteados">{{ raffle.winners.length }} {{ raffle.winners.length === 1 ? 'vencedor' : 'vencedores' }}</FactTile>
+          <FactTile v-if="verified" :icon="ShieldCheck" label="Registro" tone="paper" class="col-span-2">Não foi alterado depois de criado</FactTile>
+        </dl>
+      </PageHeader>
       <div
-        v-if="verified"
-        class="flex items-start gap-3 rounded-lg border border-green-600/40 bg-green-600/10 p-4"
-      >
-        <ShieldCheck class="mt-0.5 size-5 shrink-0 text-green-600" />
-        <div class="space-y-1 text-sm">
-          <p class="font-semibold">Registro verificado</p>
-          <p class="text-muted-foreground">
-            Este registro não foi alterado depois de criado. A verificação não prova que o sorteio foi
-            justo: quem o criou fez o sorteio no próprio navegador.
-          </p>
-        </div>
-      </div>
-      <div
-        v-else
+        v-if="!verified"
         class="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4"
       >
         <AlertTriangle class="mt-0.5 size-5 shrink-0 text-destructive" />
@@ -82,16 +93,23 @@ function formatDate(iso: string): string {
       <Card>
         <CardHeader>
           <CardTitle>{{ raffle.winners.length === 1 ? 'Vencedor' : 'Vencedores' }}</CardTitle>
-          <p class="text-sm text-muted-foreground">Sorteio de {{ formatDate(raffle.drawnAt) }}</p>
         </CardHeader>
         <CardContent class="space-y-6">
-          <ul class="space-y-2">
+          <ul class="overflow-hidden rounded-2xl border border-primary/20 bg-primary p-2 shadow-[0_16px_32px_-20px_color-mix(in_oklab,var(--primary),transparent_20%)]">
             <li
               v-for="(winner, index) in raffle.winners"
               :key="index"
-              class="rounded-lg border border-primary bg-primary/10 px-4 py-3 text-center text-2xl font-bold text-primary"
+              class="flex items-center gap-3 rounded-xl bg-card px-4 py-4 text-card-foreground shadow-sm"
             >
-              {{ winner }}
+              <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Trophy aria-hidden="true" class="size-5" />
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  {{ raffle.winners.length === 1 ? 'Nome sorteado' : `${index + 1}º sorteado` }}
+                </p>
+                <p class="truncate text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{{ winner }}</p>
+              </div>
             </li>
           </ul>
           <details class="text-sm">
@@ -102,7 +120,10 @@ function formatDate(iso: string): string {
               <li v-for="(name, index) in raffle.participants" :key="index">{{ name }}</li>
             </ul>
           </details>
-          <p class="break-all font-mono text-xs text-muted-foreground">Código: {{ raffle.hash }}</p>
+          <p v-if="verified" class="text-sm text-muted-foreground">
+            A verificação mostra que este registro não foi alterado. Ela não prova que o sorteio foi justo: quem o criou fez o sorteio no próprio navegador.
+          </p>
+          <p class="break-all text-xs text-muted-foreground">Código: {{ raffle.hash }}</p>
         </CardContent>
       </Card>
     </template>

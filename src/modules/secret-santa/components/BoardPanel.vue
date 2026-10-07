@@ -1,14 +1,21 @@
 <script setup lang="ts">
-import { Megaphone, Send } from '@lucide/vue'
+import { Megaphone, Send, Trash2 } from '@lucide/vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/pt-br'
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
+import ConfirmDelete from '@/components/ConfirmDelete.vue'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { listPosts, postMessage, SantaApiError, type BoardPost, type Credentials } from '../lib/api'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
+import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
+import { Spinner } from '@/components/ui/spinner'
+import { deletePost, listPosts, postMessage, SantaApiError, type BoardPost, type Credentials } from '../lib/api'
 
-const props = defineProps<{ credentials: Credentials }>()
+/** Sem nome e PIN (painel do organizador), o mural é só para ler e moderar. */
+const props = defineProps<{ credentials: { groupId: string } & Partial<Credentials> }>()
+const canWrite = computed(() => Boolean(props.credentials.name && props.credentials.pin))
 
 const posts = ref<BoardPost[]>([])
 const text = ref('')
@@ -26,10 +33,10 @@ onMounted(load)
 
 async function onPost() {
   const value = text.value.trim()
-  if (!value) return
+  if (!value || !props.credentials.name || !props.credentials.pin) return
   sending.value = true
   try {
-    await postMessage({ ...props.credentials, text: value })
+    await postMessage({ groupId: props.credentials.groupId, name: props.credentials.name, pin: props.credentials.pin, text: value })
     text.value = ''
     await load()
   } catch (e) {
@@ -39,38 +46,77 @@ async function onPost() {
   }
 }
 
+const deleteTarget = ref<BoardPost | null>(null)
+const deleting = ref(false)
+
+async function onDelete(post: BoardPost) {
+  deleting.value = true
+  try {
+    await deletePost({ ...props.credentials, postId: post.id })
+    posts.value = posts.value.filter((p) => p.id !== post.id)
+    toast.success('Recado apagado.')
+  } catch (e) {
+    toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível apagar o recado.')
+  } finally {
+    deleting.value = false
+    deleteTarget.value = null
+  }
+}
+
 function when(iso: string): string {
   return dayjs(iso).locale('pt-br').format('D MMM, HH:mm')
 }
 </script>
 
 <template>
-  <section class="space-y-4" aria-labelledby="board-title">
-    <div class="space-y-1">
-      <h2 id="board-title" class="flex items-center gap-2 font-display text-xl">
-        <Megaphone class="size-5 text-primary" aria-hidden="true" />
-        Mural do grupo
-      </h2>
-      <p class="text-sm text-muted-foreground">Recados para todo mundo. Aqui aparece quem escreveu.</p>
-    </div>
+  <Card aria-labelledby="board-title">
+    <CardHeader>
+      <CardTitle id="board-title" class="flex items-center gap-2 text-lg"><Megaphone class="size-5" aria-hidden="true" />Mural do grupo</CardTitle>
+      <CardDescription>Recados para todo mundo. Aqui aparece quem escreveu.</CardDescription>
+    </CardHeader>
+    <CardContent class="space-y-4">
+      <form v-if="canWrite" @submit.prevent="onPost">
+        <InputGroup class="h-11 bg-card">
+          <InputGroupInput v-model="text" maxlength="300" autocomplete="off" placeholder="Escreva um recado" aria-label="Recado para o grupo" />
+          <InputGroupAddon align="inline-end">
+            <InputGroupButton type="submit" variant="default" size="sm" :disabled="sending || !text.trim()">
+              <Spinner v-if="sending" />
+              <Send v-else aria-hidden="true" />
+              Publicar
+            </InputGroupButton>
+          </InputGroupAddon>
+        </InputGroup>
+      </form>
 
-    <form class="flex gap-2" @submit.prevent="onPost">
-      <Input v-model="text" class="h-11" maxlength="300" autocomplete="off" placeholder="Escreva um recado" aria-label="Recado para o grupo" />
-      <Button type="submit" class="h-11 shrink-0" :disabled="sending || !text.trim()">
-        <Send class="size-4" aria-hidden="true" />
-        Publicar
-      </Button>
-    </form>
-
-    <p v-if="posts.length === 0" class="text-sm text-muted-foreground">Nenhum recado ainda. Seja a primeira pessoa.</p>
-    <ul v-else class="space-y-2">
-      <li v-for="post in posts" :key="post.id" class="rounded-lg border bg-card p-3">
-        <p class="flex items-baseline justify-between gap-2 text-sm">
-          <span class="font-semibold text-primary">{{ post.author }}</span>
-          <time class="text-muted-foreground" :datetime="post.createdAt">{{ when(post.createdAt) }}</time>
-        </p>
-        <p class="mt-1 whitespace-pre-line break-words">{{ post.text }}</p>
-      </li>
-    </ul>
-  </section>
+      <Empty v-if="posts.length === 0" class="rounded-lg border border-dashed p-6">
+        <EmptyHeader>
+          <EmptyTitle>Nenhum recado ainda</EmptyTitle>
+          <EmptyDescription>Seja a primeira pessoa a escrever.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+      <ItemGroup v-else class="gap-2">
+        <Item v-for="post in posts" :key="post.id" variant="muted" size="sm" class="items-start">
+          <ItemContent>
+            <ItemTitle class="w-full justify-between">
+              {{ post.author }}
+              <time class="text-xs font-normal text-muted-foreground" :datetime="post.createdAt">{{ when(post.createdAt) }}</time>
+            </ItemTitle>
+            <ItemDescription class="line-clamp-none whitespace-pre-line break-words text-foreground">{{ post.text }}</ItemDescription>
+          </ItemContent>
+          <Button v-if="post.canDelete" type="button" variant="ghost" size="icon" class="-my-1 -mr-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive" :aria-label="`Apagar recado de ${post.author}`" @click="deleteTarget = post">
+            <Trash2 class="size-4" aria-hidden="true" />
+          </Button>
+        </Item>
+      </ItemGroup>
+    </CardContent>
+    <ConfirmDelete
+      :open="deleteTarget !== null"
+      title="Apagar este recado?"
+      :description="deleteTarget ? `O recado de ${deleteTarget.author} some do mural para todo mundo.` : undefined"
+      confirm-label="Apagar recado"
+      :busy="deleting"
+      @update:open="(open: boolean) => !open && (deleteTarget = null)"
+      @confirm="deleteTarget && onDelete(deleteTarget)"
+    />
+  </Card>
 </template>

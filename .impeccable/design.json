@@ -1,0 +1,376 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-06T20:00:00+00:00",
+  "title": "Design System: Canivete",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Tinta Azul-noite",
+        "canonical": "#0E1420",
+        "tonalRamp": [
+          "#0E1420",
+          "#222B3D",
+          "#3A4560",
+          "#55607A",
+          "#7D879C",
+          "#A8B0C0",
+          "#D5DBE3",
+          "#EEF1F4"
+        ]
+      },
+      "cobalt": {
+        "role": "primary",
+        "displayName": "Cobalto de Cabo",
+        "canonical": "#2457F5",
+        "tonalRamp": [
+          "#0B1D5E",
+          "#112D8F",
+          "#1941C4",
+          "#2457F5",
+          "#5B80F7",
+          "#8EA6F9",
+          "#C0CDFC",
+          "#E8EDFE"
+        ]
+      },
+      "berry": {
+        "role": "primary",
+        "displayName": "Framboesa de Cabo",
+        "canonical": "#C2255C",
+        "tonalRamp": [
+          "#3D0A1D",
+          "#6B1233",
+          "#911A46",
+          "#C2255C",
+          "#D65482",
+          "#E58BA8",
+          "#F2BFD0",
+          "#FBE8EE"
+        ]
+      },
+      "pivot": {
+        "role": "tertiary",
+        "displayName": "Vermelho de Pivô",
+        "canonical": "#E5322D",
+        "tonalRamp": [
+          "#4A0C0A",
+          "#781613",
+          "#A81F1B",
+          "#E5322D",
+          "#EE6561",
+          "#F49A97",
+          "#F9C9C7",
+          "#FDEDEC"
+        ]
+      },
+      "background": {
+        "role": "neutral",
+        "displayName": "Chão Cinza-aço",
+        "canonical": "#EEF1F4",
+        "tonalRamp": [
+          "#111823",
+          "#223044",
+          "#55607A",
+          "#93A0B5",
+          "#C3CBD6",
+          "#D5DBE3",
+          "#E2E7ED",
+          "#EEF1F4"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Superfície Branca",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "#18212F",
+          "#223044",
+          "#55607A",
+          "#93A0B5",
+          "#C3CBD6",
+          "#E2E7ED",
+          "#F7F8FA",
+          "#FFFFFF"
+        ]
+      },
+      "destructive": {
+        "role": "tertiary",
+        "displayName": "Vermelho de Alerta",
+        "canonical": "#D92D27",
+        "tonalRamp": [
+          "#430B09",
+          "#701512",
+          "#9F1F1A",
+          "#D92D27",
+          "#E5605B",
+          "#EE918D",
+          "#F6C3C1",
+          "#FCEDEC"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Título da home; Gabarito 600, -0.03em."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "h1 das ferramentas."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Título de card e seções (h2/h3)."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Texto corrido em Onest, números tabulares."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Botões, badges e itens de lista."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-rest",
+        "value": "0 1px 2px rgb(14 20 32 / 0.06)",
+        "purpose": "Card de ferramenta na home."
+      },
+      {
+        "name": "card-hover",
+        "value": "0 12px 28px -12px rgb(14 20 32 / 0.35)",
+        "purpose": "Hover do card, com subida de 2px."
+      },
+      {
+        "name": "preview",
+        "value": "0 6px 16px -6px rgb(14 20 32 / 0.45)",
+        "purpose": "Miniaturas de ferramenta sobre a faixa colorida."
+      },
+      {
+        "name": "machine",
+        "value": "0 22px 44px -20px rgb(14 20 32 / 0.55)",
+        "purpose": "Máquina caça-níquel (GiftTag) do amigo secreto, direto sobre o fundo da página."
+      },
+      {
+        "name": "person-card",
+        "value": "shadow-sm; hover shadow-md",
+        "purpose": "Cartões de pessoa no convite, com subida de 2px no hover."
+      }
+    ],
+    "motion": [
+      {
+        "name": "card-lift",
+        "value": "200ms, box-shadow e transform",
+        "purpose": "Hover do card da home."
+      },
+      {
+        "name": "ease-out-expo",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Subidas e entradas (hover do card, marca da miniatura). Sem bounce. Desligado com prefers-reduced-motion."
+      },
+      {
+        "name": "name-reel",
+        "value": "3500ms, cubic-bezier(0.12, 0.8, 0.2, 1)",
+        "purpose": "Roleta vertical da máquina: 26 nomes embaralhados e o sorteado, ease-out forte; roda também com prefers-reduced-motion, pois é iniciada pelo usuário e só rola texto."
+      },
+      {
+        "name": "machine-lights",
+        "value": "animate-pulse, atraso de 120ms por luz",
+        "purpose": "7 luzes da máquina pulsam até o nome pousar; desligadas com prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botão primário",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação principal; assume a cor de cabo dentro de uma ferramenta.",
+      "html": "<button class=\"ds-btn-primary\">Sortear</button>",
+      "css": ".ds-btn-primary { background: var(--primary, #0E1420); color: var(--primary-foreground, #F7F8FA); height: 44px; padding: 0 20px; border: 0; border-radius: 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .15s; } .ds-btn-primary:hover { background: color-mix(in oklab, var(--primary, #0E1420) 90%, transparent); } .ds-btn-primary:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring, #2457F5) 50%, transparent); }"
+    },
+    {
+      "name": "Botão outline",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Ação secundária, como o botão de busca do cabeçalho.",
+      "html": "<button class=\"ds-btn-outline\">Buscar ferramenta</button>",
+      "css": ".ds-btn-outline { background: var(--background, #EEF1F4); color: var(--foreground, #0E1420); height: 44px; padding: 0 16px; border: 1px solid var(--border, #D5DBE3); border-radius: 16px; font-size: 14px; font-weight: 500; box-shadow: 0 1px 2px rgb(0 0 0 / .05); cursor: pointer; } .ds-btn-outline:hover { background: var(--accent, #E2E7ED); } .ds-btn-outline:focus-visible { outline: none; border-color: var(--ring, #2457F5); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring, #2457F5) 50%, transparent); }"
+    },
+    {
+      "name": "Campo de texto",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo padrão de 44px com anel de foco na cor ring.",
+      "html": "<input class=\"ds-input\" placeholder=\"Nome\">",
+      "css": ".ds-input { width: 100%; height: 44px; padding: 4px 12px; background: transparent; color: var(--foreground, #0E1420); border: 1px solid var(--input, #C3CBD6); border-radius: 16px; font-size: 14px; box-shadow: 0 1px 2px rgb(0 0 0 / .05); outline: none; } .ds-input::placeholder { color: var(--muted-foreground, #55607A); } .ds-input:focus-visible { border-color: var(--ring, #2457F5); box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring, #2457F5) 50%, transparent); }"
+    },
+    {
+      "name": "Card de ferramenta",
+      "kind": "card",
+      "refersTo": "tool-card",
+      "description": "Faixa de cabo colorida com miniatura, título, descrição, categoria e Abrir.",
+      "html": "<a class=\"ds-card\" href=\"#\"><div class=\"ds-card-handle\"><div class=\"ds-card-mini\"></div></div><div class=\"ds-card-body\"><div class=\"ds-card-title\"><span class=\"ds-card-chip\"></span><h2>Amigo secreto</h2></div><p>Crie um grupo, cadastre as pessoas e sorteie.</p><div class=\"ds-card-foot\"><span class=\"ds-badge\">Sorteios</span><span>Abrir</span></div></div></a>",
+      "css": ".ds-card { display: flex; flex-direction: column; overflow: hidden; width: 320px; background: var(--surface, #fff); color: var(--foreground, #0E1420); border: 1px solid var(--border, #D5DBE3); border-radius: 20px; box-shadow: 0 1px 2px rgb(14 20 32 / .06); text-decoration: none; transition: box-shadow .2s, transform .2s; } .ds-card:hover { transform: translateY(-2px); box-shadow: 0 12px 28px -12px rgb(14 20 32 / .35); } .ds-card-handle { height: 176px; display: flex; align-items: center; justify-content: center; background: var(--berry, #C2255C); } .ds-card-mini { width: 176px; height: 88px; background: var(--surface, #fff); border-radius: 12px; box-shadow: 0 6px 16px -6px rgb(14 20 32 / .45); } .ds-card-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; } .ds-card-title { display: flex; align-items: center; gap: 12px; margin: 0 0 6px; } .ds-card-chip { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 20px; background: var(--berry, #C2255C); color: #fff; font-size: 18px; } .ds-card-body h2 { margin: 0; font-family: 'Gabarito Variable', sans-serif; font-size: 20px; font-weight: 600; letter-spacing: -0.025em; } .ds-card-body p { margin: 0; color: var(--muted-foreground, #55607A); } .ds-card-foot { display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600; } .ds-badge { background: var(--secondary, #E2E7ED); border-radius: 12px; padding: 2px 8px; font-size: 12px; font-weight: 500; }"
+    },
+    {
+      "name": "Cabeçalho com faixa de cabo",
+      "kind": "nav",
+      "refersTo": "header",
+      "description": "56px, marca com pino de pivô, busca com Kbd; faixa de 4px na cor da ferramenta.",
+      "html": "<header class=\"ds-header\"><div class=\"ds-header-row\"><span class=\"ds-logo\"><svg viewBox=\"0 0 32 32\" width=\"28\" height=\"28\"><rect width=\"32\" height=\"32\" rx=\"7\" fill=\"currentColor\"/><circle cx=\"9\" cy=\"23\" r=\"2\" fill=\"#E5322D\"/></svg>Canivete</span><button class=\"ds-search\">Buscar ferramenta <kbd>Ctrl K</kbd></button></div><div class=\"ds-strip\"></div></header>",
+      "css": ".ds-header { background: var(--background, #EEF1F4); color: var(--foreground, #0E1420); border-bottom: 1px solid var(--border, #D5DBE3); } .ds-header-row { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; } .ds-logo { display: flex; align-items: center; gap: 10px; font-family: 'Gabarito Variable', sans-serif; font-size: 18px; font-weight: 600; letter-spacing: -0.025em; } .ds-search { display: flex; align-items: center; gap: 12px; height: 44px; padding: 0 8px 0 16px; background: var(--background, #EEF1F4); color: var(--muted-foreground, #55607A); border: 1px solid var(--border, #D5DBE3); border-radius: 16px; font-size: 14px; } .ds-search kbd { background: var(--muted, #E2E7ED); border-radius: 4px; padding: 2px 6px; font-size: 12px; } .ds-strip { height: 4px; background: var(--primary, #2457F5); }"
+    },
+    {
+      "name": "Campo de PIN",
+      "kind": "custom",
+      "refersTo": "pin-slot",
+      "description": "Slots numéricos mascarados de 44px usados no amigo secreto.",
+      "html": "<div class=\"ds-pin\"><span>•</span><span>•</span><span>•</span><span></span></div>",
+      "css": ".ds-pin { display: flex; gap: 6px; } .ds-pin span { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; background: var(--surface, #fff); border: 1px solid var(--input, #C3CBD6); border-radius: 16px; font-size: 18px; color: var(--foreground, #0E1420); }"
+    },
+    {
+      "name": "Botão destrutivo",
+      "kind": "button",
+      "refersTo": "button-destructive",
+      "description": "Ação irreversível, como excluir grupo; vermelho cheio.",
+      "html": "<button class=\"ds-btn-danger\">Excluir grupo</button>",
+      "css": ".ds-btn-danger { background: var(--destructive, #D92D27); color: #fff; height: 44px; padding: 0 20px; border: 0; border-radius: 16px; font-size: 14px; font-weight: 600; cursor: pointer; } .ds-btn-danger:hover { background: color-mix(in oklab, var(--destructive, #D92D27) 90%, transparent); } .ds-btn-danger:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklab, var(--destructive, #D92D27) 30%, transparent); }"
+    },
+    {
+      "name": "Placa de resultado",
+      "kind": "custom",
+      "refersTo": "button-primary",
+      "description": "Vencedor no resultado compartilhado: placa primária.",
+      "html": "<div class=\"ds-plate\">Ana</div>",
+      "css": ".ds-plate { background: var(--primary, #0E1420); color: var(--primary-foreground, #F7F8FA); border-radius: 16px; padding: 14px 16px; text-align: center; font-size: 24px; font-weight: 600; }"
+    },
+    {
+      "name": "Cabeçalho de página (aberto)",
+      "kind": "custom",
+      "refersTo": "header",
+      "description": "PageHeader sem filled: base neutra, com o chip do ícone acima do título no celular e ao lado a partir de sm; toda página real abre com filled (ver Hero do convite).",
+      "html": "<header class=\"ds-ph\"><div class=\"ds-ph-row\"><span>Voltar</span><span>Sair</span></div><div class=\"ds-ph-main\"><span class=\"ds-ph-chip\">&#9679;</span><div><div class=\"ds-ph-title\"><h1>Amigo secreto</h1></div><p>Crie o grupo, cadastre as pessoas e sorteie.</p></div></div></header>",
+      "css": ".ds-ph { display: flex; flex-direction: column; gap: 16px; color: var(--foreground, #0E1420); } .ds-ph-row { display: flex; justify-content: space-between; align-items: center; min-height: 44px; font-size: 14px; font-weight: 500; } .ds-ph-main { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; } .ds-ph-chip { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 16px; background: color-mix(in oklab, var(--primary, #C2255C) 10%, transparent); color: var(--primary, #C2255C); } @media (min-width: 640px) { .ds-ph-main { flex-direction: row; align-items: center; } } .ds-ph h1 { margin: 0; font-family: \"Gabarito Variable\", sans-serif; font-size: 36px; line-height: 1.25; font-weight: 600; letter-spacing: -0.025em; } .ds-ph p { margin: 8px 0 0; max-width: 48rem; font-size: 18px; color: var(--muted-foreground, #55607A); } .ds-ph-chip { width: 56px; height: 56px; flex-shrink: 0; border-radius: 16px; background: color-mix(in oklab, var(--primary, #C2255C) 10%, transparent); }"
+    },
+    {
+      "name": "Card de PIN do convite",
+      "kind": "card",
+      "refersTo": "pin-slot-large",
+      "description": "Cabeçalho tingido com avatar grande e saudação, e o formulário com PIN grande (56px) centralizado.",
+      "html": "<div class=\"ds-pincard\"><div class=\"ds-pinhead\"><span class=\"ds-avatar\">A</span><h2>Olá, Ana!</h2><p>Digite o seu PIN para abrir o seu amigo secreto.</p></div><div class=\"ds-pinform\"><div class=\"ds-pin\"><span>&bull;</span><span>&bull;</span><span>&bull;</span><span></span></div></div></div>",
+      "css": ".ds-pincard { overflow: hidden; width: 320px; display: flex; flex-direction: column; background: var(--surface, #fff); border: 1px solid var(--border, #D5DBE3); border-radius: 20px; text-align: center; } .ds-pinhead { padding: 32px 24px 24px; background: color-mix(in oklab, var(--primary, #C2255C) 10%, transparent); } .ds-avatar { width: 80px; height: 80px; margin: 0 auto; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--primary, #C2255C); color: var(--primary-foreground, #fff); font-size: 30px; font-weight: 600; box-shadow: 0 0 0 8px color-mix(in oklab, var(--primary, #C2255C) 15%, transparent); } .ds-pinhead h2 { margin: 16px 0 0; font-family: \"Gabarito Variable\", sans-serif; font-size: 24px; font-weight: 600; letter-spacing: -0.025em; } .ds-pinhead p { margin: 4px 0 0; color: var(--muted-foreground, #55607A); } .ds-pinform { padding: 24px; } .ds-pin { display: flex; justify-content: center; gap: 12px; } .ds-pin span { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; background: var(--surface, #fff); border: 1px solid var(--input, #C3CBD6); border-radius: 16px; font-size: 24px; }"
+    },
+    {
+      "name": "Máquina (GiftTag)",
+      "kind": "custom",
+      "refersTo": "gift-slot",
+      "description": "Máquina caça-níquel do amigo secreto: corpo na cor da ferramenta, 7 luzes, moldura branca com \"Você tirou\" e janela da roleta de 96px; a máquina inteira é o botão.",
+      "html": "<button class=\"ds-slot\"><span class=\"ds-lights\"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class=\"ds-frame\"><span class=\"ds-lead\">Você tirou</span><span class=\"ds-reel\">Toque para girar</span></span></button>",
+      "css": ".ds-slot { display: block; width: 320px; padding: 16px; border: 0; border-radius: 32px; text-align: left; background: var(--primary, #C2255C); color: var(--primary-foreground, #fff); box-shadow: 0 22px 44px -20px rgb(14 20 32 / .55); cursor: pointer; transition: transform .3s; } .ds-slot:hover { transform: translateY(-4px); } .ds-slot:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring, #C2255C) 60%, transparent); } .ds-lights { display: flex; justify-content: center; gap: 8px; padding-bottom: 12px; } .ds-lights i { width: 10px; height: 10px; border-radius: 9999px; background: color-mix(in oklab, var(--primary-foreground, #fff) 70%, transparent); } .ds-frame { display: block; padding: 12px; border-radius: 24px; background: var(--card, #fff); color: var(--card-foreground, #0E1420); box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary-foreground, #fff) 25%, transparent); } .ds-lead { display: block; padding-bottom: 8px; text-align: center; font-size: 14px; font-weight: 500; color: var(--muted-foreground, #55607A); } .ds-reel { display: flex; align-items: center; justify-content: center; height: 96px; border-radius: 16px; background: var(--muted, #E2E7ED); color: var(--primary, #C2255C); font-size: 18px; font-weight: 600; }"
+    },
+    {
+      "name": "Hero do convite",
+      "kind": "custom",
+      "refersTo": "page-header-filled",
+      "description": "PageHeader preenchido na cor da ferramenta, com FactTile glass e o FactTile paper (data da troca com contagem regressiva).",
+      "html": "<header class=\"ds-hero\"><h1>Natal da Família</h1><p>Você foi convidado. Escolha seu nome e crie um PIN para participar.</p><dl class=\"ds-hero-grid\"><div class=\"ds-tile\"><dt>Participantes</dt><dd>8 pessoas</dd></div><div class=\"ds-tile\"><dt>Valor sugerido</dt><dd>R$ 50,00</dd></div><div class=\"ds-tile ds-tile-paper\"><dt>Troca em 79 dias</dt><dd>24 de dezembro de 2026</dd></div></dl></header>",
+      "css": ".ds-hero { width: 520px; max-width: 100%; box-sizing: border-box; padding: 32px; border-radius: 24px; background: var(--primary, #0E7C57); color: var(--primary-foreground, #F7F8FA); } .ds-hero h1 { margin: 0 0 8px; font-family: 'Gabarito Variable', sans-serif; font-size: 36px; line-height: 1.25; font-weight: 600; letter-spacing: -0.025em; } .ds-hero p { margin: 0; font-size: 18px; color: rgb(247 248 250 / .9); } .ds-hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0 0; } .ds-tile { padding: 12px; border-radius: 20px; background: rgb(247 248 250 / .15); } .ds-tile dt { font-size: 12px; opacity: .9; } .ds-tile dd { margin: 0; font-weight: 600; text-wrap: balance; } .ds-tile-paper { grid-column: span 2; background: var(--card, #fff); color: var(--card-foreground, #0E1420); box-shadow: 0 1px 2px rgb(0 0 0 / .05); } .ds-tile-paper dt { color: var(--muted-foreground, #55607A); opacity: 1; }"
+    },
+    {
+      "name": "Selo do módulo",
+      "kind": "chip",
+      "refersTo": "badge-tool",
+      "description": "Badge tool (cor do módulo a 15%) e variante semântica.",
+      "html": "<span class=\"ds-badge-tool\">Aberto</span> <span class=\"ds-badge-success\">Sorteado</span>",
+      "css": ".ds-badge-tool, .ds-badge-success { display: inline-flex; align-items: center; border-radius: 9999px; padding: 2px 8px; font-size: 12px; font-weight: 500; } .ds-badge-tool { background: color-mix(in oklab, var(--primary, #0E7C57) 15%, transparent); color: var(--primary, #0E7C57); } .ds-badge-success { background: color-mix(in oklab, var(--success, #0E7C57) 15%, transparent); color: var(--success, #0E7C57); }"
+    },
+    {
+      "name": "Cartão de pessoa",
+      "kind": "card",
+      "refersTo": "person-card",
+      "description": "Passo \"Quem é você?\" do convite: avatar com inicial e ação de PIN.",
+      "html": "<button class=\"ds-person\"><span class=\"ds-person-av\">A</span><span class=\"ds-person-t\"><b>Ana</b><small>Entrar com o PIN</small></span></button>",
+      "css": ".ds-person { display: flex; align-items: center; gap: 12px; width: 280px; padding: 12px; background: var(--surface, #fff); color: var(--foreground, #0E1420); border: 1px solid var(--border, #D5DBE3); border-radius: 16px; box-shadow: 0 1px 2px rgb(0 0 0 / .05); text-align: left; cursor: pointer; transition: transform .2s, box-shadow .2s; } .ds-person:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgb(0 0 0 / .1); } .ds-person:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring, #C2255C) 60%, transparent); } .ds-person-av { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--primary, #C2255C); color: var(--primary-foreground, #fff); font-size: 18px; font-weight: 600; } .ds-person-t b { display: block; font-weight: 600; } .ds-person-t small { display: block; font-size: 14px; color: var(--muted-foreground, #55607A); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "A Caixa de Cabos Coloridos",
+    "overview": "**Creative North Star: \"A Caixa de Cabos Coloridos\"**\n\nCanivete é um catálogo de ferramentas de precisão, não uma landing. O chão é cinza-aço frio, as superfícies são brancas e a tinta é azul-noite. Cada ferramenta tem uma cor de cabo (cobalto para o sorteador, framboesa para o amigo secreto) que aparece como faixa no card da home e, ao abrir a ferramenta, vira o primário da página inteira: botões, foco, seleção, a faixa sob o cabeçalho e o bloco de abertura da página. O vermelho de pivô existe só no pino da marca e no ícone do app (tinta #0E1420 com pino vermelho; `theme-color` igual).\n\nA densidade é de ferramenta: linhas de 1px, raio generoso e redondo, números tabulares, atalhos de teclado visíveis (Kbd). Profundidade é quase toda tonal e por borda; sombra aparece só em cards da home, cartões de pessoa, miniaturas e na máquina do amigo secreto. O tema claro é o padrão: sem escolha salva o app abre claro, mesmo com o sistema em escuro, e a escolha salva do usuário prevalece (`src/core/theme/useTheme.ts`). O tema escuro é grafite azulado, nunca preto.",
+    "keyCharacteristics": [
+      "Chão cinza-aço, superfície branca, tinta azul-noite; dark em grafite azulado.",
+      "A cor de cabo da ferramenta troca o primário da página (`html[data-tool]`).",
+      "Gabarito nos títulos, Onest no texto, sem monoespaçada.",
+      "Raio-base 1rem: 16px nos controles, 20px nos cards, 24px no bloco de abertura; todo controle tem 44px de altura.",
+      "Busca por Command palette (Ctrl/Cmd K ou \"/\") e filtros por categoria.",
+      "Toda página abre com o `PageHeader filled` e o ícone da ferramenta num chip: bloco na cor da ferramenta (tinta na home), com `FactTile`s e exatamente um de papel (`paper`).",
+      "A revelação do par é uma máquina caça-níquel na cor da ferramenta: a máquina inteira é o botão, os nomes rolam numa roleta vertical, o nome pousa e o confete dispara (`src/core/effects/confetti.ts`); o nome se esconde sozinho após 15s.",
+      "Movimento curto, sempre com alternativa para `prefers-reduced-motion`."
+    ],
+    "rules": [
+      {
+        "name": "The Um Papel Rule",
+        "body": "Cada hero tem exatamente um `FactTile` `paper`, o fato-chave da página: branco no tema claro e card escuro sobre a placa clara do hero no dark. Nenhuma outra caixa do hero usa a superfície do card.",
+        "section": "colors"
+      },
+      {
+        "name": "The Cabo Rule",
+        "body": "Cada ferramenta tem exatamente uma cor de cabo; ela serve de primário da página e é usada nas miniaturas, no bloco de abertura e no ponto da paleta de comandos. Ferramenta nova declara color no manifest e uma entrada [data-tool] em src/style.css.",
+        "section": "colors"
+      },
+      {
+        "name": "The Selo do Módulo Rule",
+        "body": "Selo de status dentro de um módulo usa a cor do módulo (tool) ou uma cor semântica (success, warning, danger). O info cobalto nunca entra no módulo framboesa.",
+        "section": "colors"
+      },
+      {
+        "name": "The Pivô Rule",
+        "body": "O vermelho de pivô fica só no pino da marca. Não vira cor de botão, aviso ou texto. Erros e destruição usam destructive, em botões vermelhos.",
+        "section": "colors"
+      },
+      {
+        "name": "The Dois Fios Rule",
+        "body": "h1, h2 e h3 usam Gabarito 600 com tracking-tight e text-balance por regra global; o resto é Onest.",
+        "section": "typography"
+      },
+      {
+        "name": "The Chão Plano Rule",
+        "body": "Páginas e seções não têm sombra; ela só aparece em objetos que se levantam (card da home, cartão de pessoa, miniatura e máquina). Sempre sombras difusas, nunca deslocamento duro.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** colocar uma ferramenta nova sob a Cabo Rule: `color` no manifest, entrada `[data-tool]` e `preview` próprio.",
+      "**Do** usar tokens (`bg-primary`, `text-muted-foreground`, `border-border`) em vez de hex nas telas.",
+      "**Do** manter 44px de alvo de toque no celular e anel de foco visível em todo controle.",
+      "**Do** usar Gabarito só em `h1`-`h3` e Onest no resto, com números tabulares.",
+      "**Do** abrir toda página nova com `PageHeader filled` e `FactTile`s, com exatamente um `tone=\"paper\"`, em vez de `h1` solto.",
+      "**Do** usar `Badge` `tool` ou semântico para status dentro de um módulo.",
+      "**Do** oferecer alternativa para `prefers-reduced-motion` em toda transição ou rotação; efeito que só troca texto (roleta) pode continuar.",
+      "**Do** usar easing ease-out expo `cubic-bezier(0.16, 1, 0.3, 1)` em subidas e entradas, e ease-out forte `cubic-bezier(0.12, 0.8, 0.2, 1)` na roleta, sem bounce.",
+      "**Do** passar o ícone da ferramenta ao `PageHeader` (`icon`) e manter os valores dos `FactTile` curtos, de uma linha.",
+      "**Do** manter o tema claro como padrão; o escuro só por escolha salva.",
+      "**Do** mostrar atalhos com Kbd quando existirem."
+    ],
+    "donts": [
+      "**Don't** usar vermelho de pivô fora do pino da marca, nem o dourado #F2B600 fora das paletas de confete.",
+      "**Don't** usar o selo `info` cobalto dentro do módulo framboesa.",
+      "**Don't** usar fonte monoespaçada nem outra família de título.",
+      "**Don't** sombra fora dos objetos listados em Elevation & Depth.",
+      "**Don't** ícone em quadradinho cinza no estilo de cartão de SaaS; o chip do ícone é sempre na cor da ferramenta (cabo ou `primary`).",
+      "**Don't** preto puro no dark; o chão é #111823."
+    ]
+  }
+}

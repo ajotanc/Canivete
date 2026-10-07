@@ -1,3 +1,5 @@
+import '@fontsource-variable/gabarito'
+import '@fontsource-variable/onest'
 import './style.css'
 import { registerSW } from 'virtual:pwa-register'
 import { createApp } from 'vue'

@@ -3,21 +3,24 @@ import type { ToasterProps } from "vue-sonner"
 import { CircleCheckIcon, InfoIcon, Loader2Icon, OctagonXIcon, TriangleAlertIcon, XIcon } from "@lucide/vue"
 import { Toaster as Sonner } from "vue-sonner"
 import "vue-sonner/style.css"
+import { useTheme } from "@/core/theme/useTheme"
 import { cn } from "@/lib/utils"
 
 const props = defineProps<ToasterProps>()
+const { isDark } = useTheme()
 </script>
 
 <template>
   <Sonner
-    :class="cn('toaster group', props.class)"
     :style="{
       '--normal-bg': 'var(--popover)',
       '--normal-text': 'var(--popover-foreground)',
       '--normal-border': 'var(--border)',
       '--border-radius': 'var(--radius)',
     }"
-    v-bind="props"
+    :class="cn('toaster group', props.class)"
+    rich-colors
+    :theme="isDark ? 'dark' : 'light'"
   >
     <template #success-icon>
       <CircleCheckIcon class="size-4" />

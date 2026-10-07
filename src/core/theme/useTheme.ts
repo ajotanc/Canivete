@@ -3,15 +3,15 @@ import { ref } from 'vue'
 const STORAGE_KEY = 'canivete-theme'
 const isDark = ref(false)
 
-/** Lê a preferência salva; se não houver (ou o storage falhar), usa a do sistema. */
+/** Lê a preferência salva; se não houver (ou o storage falhar), o padrão é o tema claro. */
 function readInitial(): boolean {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
     if (saved) return saved === 'dark'
   } catch {
-    // Storage indisponível (modo privado, etc.): segue para a preferência do sistema.
+    // Storage indisponível (modo privado, etc.): segue para o tema claro.
   }
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
+  return false
 }
 
 function apply(dark: boolean) {

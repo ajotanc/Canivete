@@ -1,14 +1,18 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Nunito:wght@800&display=swap');
-
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-heading: var(--font-sans);
-  --font-display: 'Nunito', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Onest Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Gabarito Variable', 'Onest Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-display);
+  --color-pivot: var(--pivot);
+  --color-tool: var(--tool);
+  --color-tool-foreground: var(--tool-foreground);
+  --color-cobalt: var(--cobalt);
+  --color-berry: var(--berry);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -34,6 +38,8 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-hover: var(--primary-hover);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
   --color-primary: var(--primary);
   --color-secondary-hover: var(--secondary-hover);
   --color-surface: var(--surface);
@@ -53,100 +59,172 @@
 }
 
 /*
- * Paleta do Canivete.
- *   primary   #2563EB azul royal (ações, links, foco)     secondary #F97316 coral (Amigo Secreto, CTAs festivos)
- *   fundo     #F8FAFC   superfície #FFFFFF   borda #E2E8F0
- *   texto     #0F172A   texto auxiliar #64748B
- *   estados   success #10B981  warning #F59E0B  danger #EF4444  info #0EA5E9
- * No tema escuro os mesmos papéis usam tons de Slate e um azul mais claro, para manter o contraste.
+ * Canivete: chão cinza-aço frio, superfícies brancas e tinta azul-noite.
+ * Cada ferramenta tem uma cor de cabo (--tool); ao abrir a ferramenta, essa cor vira o primário da página.
+ * O vermelho de pivô (--pivot) fica só na marca do Canivete.
  */
 :root {
-  --radius: 0.75rem;
-  --background: #F8FAFC;
-  --foreground: #0F172A;
+  --radius: 1rem;
+  --background: #EEF1F4;
+  --foreground: #0E1420;
   --surface: #FFFFFF;
   --card: #FFFFFF;
-  --card-foreground: #0F172A;
+  --card-foreground: #0E1420;
   --popover: #FFFFFF;
-  --popover-foreground: #0F172A;
-  --primary: #2563EB;
-  --primary-hover: #1D4ED8;
-  --primary-foreground: #FFFFFF;
-  --secondary: #F97316;
-  --secondary-hover: #EA580C;
-  /* Texto escuro sobre o coral: branco daria só 2,8:1 de contraste. */
-  --secondary-foreground: #0F172A;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-  --accent: color-mix(in srgb, #2563EB 10%, white);
-  --accent-foreground: #0F172A;
-  --destructive: #EF4444;
-  --success: #10B981;
-  --warning: #F59E0B;
-  --info: #0EA5E9;
-  --border: #E2E8F0;
-  --input: #E2E8F0;
-  --ring: #2563EB;
-  --chart-1: #2563EB;
-  --chart-2: #F97316;
-  --chart-3: #10B981;
-  --chart-4: #0EA5E9;
-  --chart-5: #F59E0B;
+  --popover-foreground: #0E1420;
+  --primary: #0E1420;
+  --primary-hover: color-mix(in oklab, var(--primary) 88%, white);
+  --primary-foreground: #F7F8FA;
+  --secondary: #E2E7ED;
+  --secondary-hover: color-mix(in oklab, var(--secondary) 85%, #0E1420);
+  --secondary-foreground: #0E1420;
+  --muted: #E2E7ED;
+  --muted-foreground: #55607A;
+  --accent: #E2E7ED;
+  --accent-foreground: #0E1420;
+  --destructive: #D92D27;
+  --success: #0E7C57;
+  --warning: #B45309;
+  --info: #2457F5;
+  --border: #D5DBE3;
+  --input: #C3CBD6;
+  --ring: #2457F5;
+  --pivot: #E5322D;
+  --chart-1: #2457F5;
+  --chart-2: #0E7C57;
+  --chart-3: #B45309;
+  --chart-4: #E5322D;
+  --chart-5: #55607A;
   --sidebar: #FFFFFF;
-  --sidebar-foreground: #0F172A;
-  --sidebar-primary: #2563EB;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: color-mix(in srgb, #2563EB 10%, white);
-  --sidebar-accent-foreground: #0F172A;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #2563EB;
+  --sidebar-foreground: #0E1420;
+  --sidebar-primary: #0E1420;
+  --sidebar-primary-foreground: #F7F8FA;
+  --sidebar-accent: #E2E7ED;
+  --sidebar-accent-foreground: #0E1420;
+  --sidebar-border: #D5DBE3;
+  --sidebar-ring: #2457F5;
+  --cobalt: #2457F5;
+  --cobalt-foreground: #FFFFFF;
+  --berry: #C2255C;
+  --berry-foreground: #FFFFFF;
+  --pine: #0F766E;
+  --pine-foreground: #FFFFFF;
+  --violet: #6D4AE0;
+  --violet-foreground: #FFFFFF;
+  --amber: #B45309;
+  --amber-foreground: #FFFFFF;
 }
 
 .dark {
-  --background: #0F172A;
-  --foreground: #F8FAFC;
-  --surface: #1E293B;
-  --card: #1E293B;
-  --card-foreground: #F8FAFC;
-  --popover: #1E293B;
-  --popover-foreground: #F8FAFC;
-  --primary: #3B82F6;
-  --primary-hover: #60A5FA;
-  --primary-foreground: #0F172A;
-  --secondary: #FB923C;
-  --secondary-hover: #FDBA74;
-  --secondary-foreground: #0F172A;
-  --muted: #1E293B;
-  --muted-foreground: #94A3B8;
-  --accent: color-mix(in srgb, #3B82F6 20%, #0F172A);
-  --accent-foreground: #F8FAFC;
+  --background: #111823;
+  --foreground: #E8ECF2;
+  --surface: #18212F;
+  --card: #18212F;
+  --card-foreground: #E8ECF2;
+  --popover: #18212F;
+  --popover-foreground: #E8ECF2;
+  --primary: #E8ECF2;
+  --primary-foreground: #111823;
+  --secondary: #223044;
+  --secondary-foreground: #E8ECF2;
+  --muted: #223044;
+  --muted-foreground: #93A0B5;
+  --accent: #223044;
+  --accent-foreground: #E8ECF2;
   --destructive: #F87171;
-  --success: #34D399;
+  --success: #3FD19B;
   --warning: #FBBF24;
-  --info: #38BDF8;
-  --border: #334155;
-  --input: #334155;
-  --ring: #3B82F6;
-  --chart-1: #3B82F6;
-  --chart-2: #FB923C;
-  --chart-3: #34D399;
-  --chart-4: #38BDF8;
-  --chart-5: #FBBF24;
-  --sidebar: #1E293B;
-  --sidebar-foreground: #F8FAFC;
-  --sidebar-primary: #3B82F6;
-  --sidebar-primary-foreground: #0F172A;
-  --sidebar-accent: color-mix(in srgb, #3B82F6 20%, #0F172A);
-  --sidebar-accent-foreground: #F8FAFC;
-  --sidebar-border: #334155;
-  --sidebar-ring: #3B82F6;
+  --info: #7C9BFF;
+  --border: #2A384D;
+  --input: #34445C;
+  --ring: #7C9BFF;
+  --pivot: #FF5A52;
+  --chart-1: #7C9BFF;
+  --chart-2: #3FD19B;
+  --chart-3: #FBBF24;
+  --chart-4: #FF5A52;
+  --chart-5: #93A0B5;
+  --sidebar: #18212F;
+  --sidebar-foreground: #E8ECF2;
+  --sidebar-primary: #E8ECF2;
+  --sidebar-primary-foreground: #111823;
+  --sidebar-accent: #223044;
+  --sidebar-accent-foreground: #E8ECF2;
+  --sidebar-border: #2A384D;
+  --sidebar-ring: #7C9BFF;
+  --cobalt: #7C9BFF;
+  --cobalt-foreground: #0B1020;
+  --berry: #FF7AA2;
+  --berry-foreground: #2A0A14;
+  --pine: #4FD1C5;
+  --pine-foreground: #04201D;
+  --violet: #A78BFA;
+  --violet-foreground: #140B33;
+  --amber: #F5B14C;
+  --amber-foreground: #2B1600;
+}
+
+/* Cor de cabo da ferramenta: em qualquer elemento define --tool; no <html> também troca o primário da página. */
+[data-tool='cobalt'] {
+  --tool: var(--cobalt);
+  --tool-foreground: var(--cobalt-foreground);
+}
+[data-tool='berry'] {
+  --tool: var(--berry);
+  --tool-foreground: var(--berry-foreground);
+}
+[data-tool='pine'] {
+  --tool: var(--pine);
+  --tool-foreground: var(--pine-foreground);
+}
+[data-tool='violet'] {
+  --tool: var(--violet);
+  --tool-foreground: var(--violet-foreground);
+}
+[data-tool='amber'] {
+  --tool: var(--amber);
+  --tool-foreground: var(--amber-foreground);
+}
+/* Cor livre escolhida pelo organizador (--custom vem do grupo). No escuro, clareia para não sumir no fundo. */
+[data-tool='custom'] {
+  --tool: var(--custom);
+  --tool-foreground: #FFFFFF;
+}
+.dark[data-tool='custom'],
+.dark [data-tool='custom'] {
+  --tool: color-mix(in oklab, var(--custom) 60%, white);
+  --tool-foreground: #0B0B0B;
+}
+html[data-tool] {
+  --primary: var(--tool);
+  --primary-foreground: var(--tool-foreground);
+  --ring: var(--tool);
+  --accent: color-mix(in oklab, var(--tool) 12%, var(--background));
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scrollbar-gutter: stable;
+    color-scheme: light;
+    scrollbar-color: var(--input) transparent;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-variant-numeric: tabular-nums;
+    caret-color: var(--ring);
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--ring) 30%, transparent);
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-semibold tracking-tight text-balance;
   }
 }

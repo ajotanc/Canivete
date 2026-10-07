@@ -83,8 +83,8 @@ describe('funções tipadas', () => {
       sent = JSON.parse(body)
       return { responseStatusCode: 200, responseBody: JSON.stringify({ ok: true, data: {} }) }
     }
-    await setupPin({ groupId: 'g', name: 'Ana', pin: '1234', wishlist: ['chá'] }, execute)
-    expect(sent).toEqual({ action: 'setupPin', groupId: 'g', name: 'Ana', pin: '1234', wishlist: ['chá'] })
+    await setupPin({ groupId: 'g', name: 'Ana', pin: '1234', wishlist: [{ text: 'chá', url: 'https://loja.com/cha' }] }, execute)
+    expect(sent).toEqual({ action: 'setupPin', groupId: 'g', name: 'Ana', pin: '1234', wishlist: [{ text: 'chá', url: 'https://loja.com/cha' }] })
   })
 
   it('PIN_ALREADY_SET chega como código próprio', async () => {

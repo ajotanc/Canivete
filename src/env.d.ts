@@ -13,3 +13,20 @@ interface ImportMetaEnv {
   readonly VITE_APPWRITE_RAFFLES_TABLE_ID: string
   readonly VITE_APPWRITE_SANTA_FUNCTION_ID: string
 }
+
+declare module 'vue-confetti' {
+  export interface ConfettiStartOptions {
+    particles?: { type?: string; size?: number; colors?: string[] }[]
+    defaultType?: string
+    defaultColors?: string[]
+    defaultSize?: number
+    defaultDropRate?: number
+    particlesPerFrame?: number
+    windSpeedMax?: number
+  }
+  export class Confetti {
+    start(options?: ConfettiStartOptions): void
+    stop(): void
+    remove(): void
+  }
+}

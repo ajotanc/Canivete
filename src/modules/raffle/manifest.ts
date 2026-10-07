@@ -1,4 +1,5 @@
 import { Dices } from '@lucide/vue'
+import PreviewRaffle from './components/PreviewRaffle.vue'
 import type { ToolManifest } from '@/core/modules/types'
 
 const manifest: ToolManifest = {
@@ -6,6 +7,8 @@ const manifest: ToolManifest = {
   title: 'Sorteador de nomes',
   description: 'Sorteie um ou vários nomes, com animação, histórico e link verificável.',
   icon: Dices,
+  color: 'cobalt',
+  preview: PreviewRaffle,
   category: 'Sorteios',
   usesBackend: true,
   routes: [

@@ -1,4 +1,5 @@
 import { Gift } from '@lucide/vue'
+import PreviewSanta from './components/PreviewSanta.vue'
 import type { ToolManifest } from '@/core/modules/types'
 
 const manifest: ToolManifest = {
@@ -6,7 +7,8 @@ const manifest: ToolManifest = {
   title: 'Amigo secreto',
   description: 'Crie um grupo, cadastre as pessoas e sorteie. Cada uma vê só quem tirou.',
   icon: Gift,
-  accent: 'secondary',
+  color: 'berry',
+  preview: PreviewSanta,
   category: 'Sorteios',
   usesBackend: true,
   routes: [

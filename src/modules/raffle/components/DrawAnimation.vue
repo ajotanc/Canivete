@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Trophy } from '@lucide/vue'
 import { onBeforeUnmount, ref, watch } from 'vue'
 
 const props = defineProps<{ names: string[]; winners: string[]; durationMs?: number }>()
@@ -43,14 +44,32 @@ onBeforeUnmount(stop)
 </script>
 
 <template>
-  <ul class="space-y-2" aria-live="polite">
+  <ol
+    class="overflow-hidden rounded-2xl border border-primary/20 bg-primary p-2 shadow-[0_16px_32px_-20px_color-mix(in_oklab,var(--primary),transparent_20%)]"
+    aria-live="polite"
+    aria-label="Resultado do sorteio"
+  >
     <li
       v-for="(name, index) in displayed"
       :key="index"
-      class="rounded-lg border px-4 py-3 text-center text-2xl font-bold transition-all duration-300"
-      :class="revealed ? 'scale-105 border-primary bg-primary/10 text-primary' : 'animate-pulse text-muted-foreground'"
+      class="relative overflow-hidden rounded-xl border px-4 py-4 transition-colors duration-300 motion-reduce:transition-none"
+      :class="revealed ? 'border-transparent bg-card text-card-foreground shadow-sm animate-in zoom-in-95 fade-in duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:animate-none' : 'border-primary-foreground/25 bg-primary-foreground/10 text-primary-foreground'"
     >
-      {{ name }}
+      <div class="flex items-center gap-3">
+        <div
+          class="flex size-10 shrink-0 items-center justify-center rounded-lg"
+          :class="revealed ? 'bg-primary/10 text-primary' : 'bg-primary-foreground/15 text-primary-foreground'"
+        >
+          <Trophy v-if="revealed" class="size-5" aria-hidden="true" />
+          <span v-else class="text-sm font-semibold tabular-nums">{{ index + 1 }}</span>
+        </div>
+        <div class="min-w-0">
+          <p class="text-xs font-medium uppercase tracking-[0.14em]" :class="revealed ? 'text-muted-foreground' : 'text-primary-foreground/75'">
+            {{ winners.length === 1 ? (revealed ? 'Nome sorteado' : 'Sorteando') : (revealed ? `${index + 1}º sorteado` : 'Sorteando') }}
+          </p>
+          <p class="truncate text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">{{ name }}</p>
+        </div>
+      </div>
     </li>
-  </ul>
+  </ol>
 </template>

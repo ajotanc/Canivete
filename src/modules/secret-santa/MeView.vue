@@ -1,16 +1,28 @@
 <script setup lang="ts">
-import { Eye, EyeOff, LayoutDashboard } from '@lucide/vue'
-import { onMounted, ref } from 'vue'
+import { ArrowLeft, CalendarDays, Coins, Gift, Lock, TriangleAlert, Users } from '@lucide/vue'
+import { onMounted, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
+import FactTile from '@/components/FactTile.vue'
+import PageHeader from '@/components/PageHeader.vue'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import TagInput from '@/components/TagInput.vue'
+import { triggerConfetti } from '@/core/effects/confetti'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Spinner } from '@/components/ui/spinner'
 import BoardPanel from './components/BoardPanel.vue'
 import GiftTag from './components/GiftTag.vue'
 import QuestionsPanel from './components/QuestionsPanel.vue'
 import { useReveal } from './composables/useReveal'
-import { listMyGroups, revealMatch, SantaApiError, updateWishlist, type RevealResult } from './lib/api'
+import WishlistEditor from './components/WishlistEditor.vue'
+import WishlistView from './components/WishlistView.vue'
+import { applyGroupColor } from './lib/groupColor'
+import { markRevealed, getGroup, listMyGroups, revealMatch, SantaApiError, updateWishlist, type RevealResult, type WishItem } from './lib/api'
+import { formatMoney } from '@/lib/money'
+import { eventCountdown, formatEventDate } from './lib/event'
 import { adminPath, invitePath } from './lib/links'
 import { clearCredentials, loadCredentials } from './lib/session'
 
@@ -22,23 +34,48 @@ type State = 'loading' | 'ready' | 'error'
 const state = ref<State>('loading')
 const errorMessage = ref('')
 const result = ref<RevealResult | null>(null)
-const wishlist = ref<string[]>([])
+const wishlist = ref<WishItem[]>([])
 /** O dono do grupo (conta logada) vê o botão de voltar ao painel. */
 const isOrganizer = ref(false)
 const saving = ref(false)
-const { revealed, reveal, hide } = useReveal()
+const { revealed, reveal } = useReveal()
 
 const credentials = loadCredentials(groupId)
+
+/** O nome já apareceu na roleta: aí sim solta confetes e libera a lista de desejos. */
+const landed = ref(false)
+/** Nomes do grupo (menos o seu) que passam na roleta antes do sorteado. */
+const pool = ref<string[]>([])
+/** Dados do grupo para o cabeçalho (nome, valor e data da troca). */
+const groupInfo = ref<{ name: string; budget: number | null; eventDate: string; participantCount: number } | null>(null)
+
+function onLanded() {
+  landed.value = true
+  if (credentials) void markRevealed({ groupId, ...credentials }).catch(() => {})
+  navigator.vibrate?.([40, 60, 40])
+  triggerConfetti({ durationMs: 3500, colors: ['#C2255C', '#FF7AA2', '#F2B600', '#2457F5', '#FFFFFF'] })
+}
+
+watch(revealed, (isRevealed) => {
+  if (!isRevealed) landed.value = false
+})
 
 onMounted(async () => {
   // Sem credenciais na sessão (aba nova ou recarregada sem storage): volta para a tela de entrada.
   if (!credentials) {
-    await router.replace(invitePath(groupId))
+    await router.replace({ path: invitePath(groupId), query: route.query })
     return
   }
   try {
     result.value = await revealMatch({ groupId, ...credentials })
     wishlist.value = result.value.wishlist
+    getGroup(groupId)
+      .then((group) => {
+        applyGroupColor(group.color)
+        pool.value = group.members.map((m) => m.name).filter((n) => n !== credentials.name)
+        groupInfo.value = { name: group.name, budget: group.budget, eventDate: group.eventDate, participantCount: group.participantCount }
+      })
+      .catch(() => {})
     state.value = 'ready'
     listMyGroups()
       .then(({ groups }) => {
@@ -71,65 +108,120 @@ async function onSave() {
 </script>
 
 <template>
-  <section class="mx-auto w-full max-w-md space-y-8">
-    <p v-if="state === 'loading'" class="py-12 text-center text-muted-foreground">Abrindo seu painel...</p>
-
-    <div v-else-if="state === 'error'" class="space-y-4 py-12">
-      <h1 class="font-display text-3xl leading-tight">Não foi possível abrir seu painel</h1>
-      <p class="text-muted-foreground">{{ errorMessage }}</p>
-      <Button class="h-11" size="lg" @click="$router.go(0)">Tentar de novo</Button>
+  <section class="mx-auto w-full max-w-5xl space-y-8">
+    <div v-if="state === 'loading'" class="space-y-4" role="status" aria-label="Abrindo seu painel">
+      <Skeleton class="h-9 w-1/2" />
+      <Skeleton class="h-64 w-full max-w-sm" />
     </div>
+
+    <Empty v-else-if="state === 'error'" class="rounded-xl border border-dashed bg-card/50 py-12">
+      <EmptyHeader>
+        <EmptyMedia variant="icon"><TriangleAlert aria-hidden="true" /></EmptyMedia>
+        <EmptyTitle>Não foi possível abrir seu painel</EmptyTitle>
+        <EmptyDescription>{{ errorMessage }}</EmptyDescription>
+      </EmptyHeader>
+      <Button size="lg" @click="$router.go(0)">Tentar de novo</Button>
+    </Empty>
 
     <template v-else-if="result">
       <template v-if="result.status === 'drawn'">
-        <header class="space-y-1">
-          <h1 class="font-display text-3xl leading-tight">Você tirou</h1>
-          <p class="text-muted-foreground">Toque em revelar. O nome some sozinho depois de 15 segundos.</p>
-        </header>
-        <GiftTag :name="result.receiver.name" :revealed="revealed" />
-        <div class="flex justify-center">
-          <Button class="h-11" v-if="!revealed" size="lg" @click="reveal">
-            <Eye class="size-4" aria-hidden="true" />
-            Revelar
-          </Button>
-          <Button class="h-11" v-else size="lg" variant="outline" @click="hide">
-            <EyeOff class="size-4" aria-hidden="true" />
-            Esconder
-          </Button>
+        <PageHeader filled size="lg" :icon="Gift" :title="groupInfo?.name ?? 'Seu amigo secreto'" description="Arraste o lacre para abrir sua carta. O nome some sozinho depois de 15 segundos.">
+          <template v-if="isOrganizer" #back>
+            <Button as-child variant="ghost" size="sm">
+              <RouterLink :to="adminPath(groupId)"><ArrowLeft aria-hidden="true" />Painel do organizador</RouterLink>
+            </Button>
+          </template>
+          <template #badge>
+            <Badge variant="glass" class="gap-1.5 rounded-md py-1"><Lock aria-hidden="true" />Só você vê isto</Badge>
+          </template>
+        <dl v-if="groupInfo" class="grid grid-cols-2 gap-3 pt-2">
+          <FactTile :icon="Users" label="Participantes">{{ groupInfo.participantCount }} {{ groupInfo.participantCount === 1 ? 'pessoa' : 'pessoas' }}</FactTile>
+          <FactTile v-if="groupInfo.budget !== null" :icon="Coins" label="Valor sugerido">{{ formatMoney(groupInfo.budget) }}</FactTile>
+          <FactTile v-if="groupInfo.eventDate" :icon="CalendarDays" :label="eventCountdown(groupInfo.eventDate)" tone="paper" class="col-span-2">{{ formatEventDate(groupInfo.eventDate) }}</FactTile>
+        </dl>
+        </PageHeader>
+
+        <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+          <div class="space-y-6">
+            <GiftTag
+              :name="result.receiver.name"
+              :revealed="revealed"
+              :names="pool"
+              @landed="onLanded"
+              @reveal="reveal"
+            />
+
+            <Card v-if="landed" class="animate-in fade-in slide-in-from-bottom-3 duration-500 motion-reduce:animate-none">
+              <CardHeader>
+                <CardTitle class="text-lg">O que {{ result.receiver.name }} gostaria de ganhar</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <WishlistView v-if="result.receiver.wishlist.length > 0" :items="result.receiver.wishlist" />
+                <p v-else class="text-sm text-muted-foreground">Ainda não escreveu nada.</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle class="text-lg">Minha lista de presentes</CardTitle>
+                <CardDescription>Quem tirou você vê a versão mais nova.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form class="space-y-4" @submit.prevent="onSave">
+                  <WishlistEditor v-model="wishlist" />
+                  <Button type="submit" size="lg" class="w-full" :disabled="saving">
+                    <Spinner v-if="saving" />
+                    {{ saving ? 'Salvando...' : 'Salvar lista' }}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div class="space-y-6">
+            <QuestionsPanel v-if="credentials" :credentials="{ groupId, ...credentials }" :receiver-name="landed ? result.receiver.name : 'quem você tirou'" />
+            <BoardPanel v-if="credentials" :credentials="{ groupId, ...credentials }" />
+          </div>
         </div>
-        <div v-if="revealed" class="space-y-2">
-          <h2 class="font-display text-xl">O que {{ result.receiver.name }} gostaria de ganhar</h2>
-          <ul v-if="result.receiver.wishlist.length > 0" class="flex flex-wrap gap-2">
-            <li v-for="item in result.receiver.wishlist" :key="item" class="rounded-full bg-secondary/20 px-3 py-1 text-sm">
-              {{ item }}
-            </li>
-          </ul>
-          <p v-else class="rounded-lg bg-card p-4 text-muted-foreground">Ainda não escreveu nada.</p>
-        </div>
-        <QuestionsPanel v-if="credentials" :credentials="{ groupId, ...credentials }" :receiver-name="result.receiver.name" />
       </template>
 
       <template v-else>
-        <header class="space-y-1">
-          <h1 class="font-display text-3xl leading-tight">Tudo certo, {{ credentials?.name }}</h1>
-          <p class="text-muted-foreground">O sorteio ainda não aconteceu. Quando o organizador sortear, volte aqui para ver quem você tirou.</p>
-        </header>
-        <form class="space-y-3" @submit.prevent="onSave">
-          <Label for="my-wishlist">O que você gostaria de ganhar</Label>
-          <TagInput id="my-wishlist" v-model="wishlist" placeholder="Digite um item e aperte Enter" />
-          <Button type="submit" size="lg" class="w-full h-11" :disabled="saving">{{ saving ? 'Salvando...' : 'Salvar lista' }}</Button>
-        </form>
-        <Button class="h-11" as-child variant="ghost"><RouterLink :to="invitePath(groupId)">Voltar ao grupo</RouterLink></Button>
+        <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
+          <div class="space-y-6">
+            <PageHeader filled size="lg" :icon="Gift" :title="groupInfo?.name ?? 'Seu amigo secreto'" :description="`Tudo certo, ${credentials?.name}. O sorteio ainda não aconteceu: quando o organizador sortear, volte aqui para ver quem você tirou.`">
+          <template v-if="isOrganizer" #back>
+            <Button as-child variant="ghost" size="sm">
+              <RouterLink :to="adminPath(groupId)"><ArrowLeft aria-hidden="true" />Painel do organizador</RouterLink>
+            </Button>
+          </template>
+            <dl v-if="groupInfo" class="grid grid-cols-2 gap-3 pt-2">
+              <FactTile :icon="Users" label="Participantes">{{ groupInfo.participantCount }} {{ groupInfo.participantCount === 1 ? 'pessoa' : 'pessoas' }}</FactTile>
+              <FactTile v-if="groupInfo.budget !== null" :icon="Coins" label="Valor sugerido">{{ formatMoney(groupInfo.budget) }}</FactTile>
+              <FactTile v-if="groupInfo.eventDate" :icon="CalendarDays" :label="eventCountdown(groupInfo.eventDate)" tone="paper" class="col-span-2">{{ formatEventDate(groupInfo.eventDate) }}</FactTile>
+            </dl>
+            </PageHeader>
+            <Card>
+              <CardContent>
+                <form class="space-y-4" @submit.prevent="onSave">
+                  <Field>
+                    <FieldLabel>O que você gostaria de ganhar</FieldLabel>
+                    <WishlistEditor v-model="wishlist" />
+                    <FieldDescription>Quem tirar você vai ver essa lista. Se tiver o link do produto, ligue o interruptor e cole.</FieldDescription>
+                  </Field>
+                  <Button type="submit" size="lg" class="w-full" :disabled="saving">
+                    <Spinner v-if="saving" />
+                    {{ saving ? 'Salvando...' : 'Salvar lista' }}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+            <Button as-child variant="ghost"><RouterLink :to="invitePath(groupId)">Voltar ao grupo</RouterLink></Button>
+          </div>
+          <BoardPanel v-if="credentials" :credentials="{ groupId, ...credentials }" />
+        </div>
       </template>
 
-      <BoardPanel v-if="credentials" :credentials="{ groupId, ...credentials }" />
 
-      <Button v-if="isOrganizer" class="h-11 w-full" as-child variant="outline" size="lg">
-        <RouterLink :to="adminPath(groupId)">
-          <LayoutDashboard class="size-4" aria-hidden="true" />
-          Voltar ao painel do organizador
-        </RouterLink>
-      </Button>
     </template>
   </section>
 </template>
