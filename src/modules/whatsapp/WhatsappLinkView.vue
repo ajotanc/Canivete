@@ -62,10 +62,10 @@ onBeforeUnmount(() => clearTimeout(copiedTimer))
           <FieldGroup>
             <Field :data-invalid="phone.error ? true : undefined">
               <FieldLabel for="phone">Telefone</FieldLabel>
-              <Input id="phone" v-model="phoneText" type="tel" inputmode="tel" autocomplete="off" placeholder="(11) 91234-5678" :aria-invalid="phone.error ? true : undefined" />
+              <Input id="phone" v-model="phoneText" v-maska data-maska="['(##) ####-####', '(##) #####-####']" type="tel" inputmode="tel" autocomplete="off" placeholder="(11) 91234-5678" :aria-invalid="phone.error ? true : undefined" />
               <FieldError v-if="phone.error">{{ phone.error }}</FieldError>
               <FieldDescription v-else-if="phone.valid">Vai abrir {{ phone.display }}.</FieldDescription>
-              <FieldDescription v-else>Com DDD. Sem código do país, usamos o Brasil (+55). Para outro país, comece com +.</FieldDescription>
+              <FieldDescription v-else>Número brasileiro, com DDD.</FieldDescription>
             </Field>
 
             <Field>

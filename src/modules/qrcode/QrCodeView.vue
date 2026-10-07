@@ -55,7 +55,7 @@ function onColor(next: unknown) {
   <section class="space-y-8">
     <PageHeader filled :icon="QrCode" title="Gerador de QR Code" description="Transforme um link, um texto, o Wi-Fi ou um cartão de contato em QR Code e baixe a imagem.">
       <FactList>
-        <FactTile :icon="Link2" label="Conteúdo">Link, Wi-Fi, contato</FactTile>
+        <FactTile :icon="Link2" label="Tipos">Link e mais</FactTile>
         <FactTile :icon="QrCode" label="Imagem">PNG e SVG</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
@@ -130,7 +130,7 @@ function onColor(next: unknown) {
                 </Field>
                 <Field>
                   <FieldLabel for="contact-phone">Telefone (opcional)</FieldLabel>
-                  <Input id="contact-phone" v-model="contact.phone" type="tel" inputmode="tel" autocomplete="off" placeholder="+55 11 91234-5678" />
+                  <Input id="contact-phone" v-model="contact.phone" v-maska data-maska="['(##) ####-####', '(##) #####-####']" type="tel" inputmode="tel" autocomplete="off" placeholder="(11) 91234-5678" />
                 </Field>
                 <Field>
                   <FieldLabel for="contact-email">E-mail (opcional)</FieldLabel>
