@@ -50,10 +50,9 @@ onBeforeUnmount(() => clearTimeout(timer))
       @focus="($event.target as HTMLInputElement).select()"
     />
     <InputGroupAddon align="inline-end">
-      <InputGroupButton variant="secondary" size="sm" :disabled="!value" :aria-label="`Copiar ${label.toLowerCase()}`" @click="copy">
+      <InputGroupButton variant="ghost" size="icon-sm" :disabled="!value" :aria-label="`Copiar ${label.toLowerCase()}`" @click="copy">
         <Check v-if="copied" aria-hidden="true" />
         <Copy v-else aria-hidden="true" />
-        {{ copied ? 'Copiado' : 'Copiar' }}
       </InputGroupButton>
     </InputGroupAddon>
   </InputGroup>
