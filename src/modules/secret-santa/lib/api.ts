@@ -99,6 +99,8 @@ export interface ParticipantSummary {
   name: string
   isOrganizer: boolean
   hasPin: boolean
+  /** Já abriu a carta e viu quem tirou. Ausente quando a Function publicada é antiga. */
+  revealed?: boolean
 }
 
 /** Um presente da lista; `url` é o link do produto, quando a pessoa tem. */
@@ -149,6 +151,19 @@ export function createGroup(
 
 export function getGroup(groupId: string, execute?: Execute) {
   return callSanta<GroupInfo>('getGroup', { groupId }, execute)
+}
+
+/** Corrige nome, valor sugerido (em reais, ou null) e data da troca (AAAA-MM-DD, ou vazio). */
+export function updateGroup(
+  input: { groupId: string; name: string; budget: number | null; eventDate: string },
+  execute?: Execute,
+) {
+  return callSanta<{ name: string; budget: number | null; eventDate: string }>('updateGroup', { ...input }, execute)
+}
+
+/** Corrige o nome de uma pessoa; pares, PIN e regras de exclusão continuam valendo. */
+export function renameParticipant(input: { groupId: string; name: string; newName: string }, execute?: Execute) {
+  return callSanta<{ name: string }>('renameParticipant', { ...input }, execute)
 }
 
 /** Primeiro acesso: a pessoa escolhe o próprio nome e cria o PIN. */

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { Spinner } from '@/components/ui/spinner'
+import { useRefreshOnFocus } from '../composables/useRefreshOnFocus'
 import { answerQuestion, askQuestion, listQuestions, SantaApiError, type Credentials, type QuestionItem } from '../lib/api'
 
 const props = defineProps<{ credentials: Credentials; receiverName: string }>()
@@ -19,17 +20,19 @@ const asking = ref(false)
 const drafts = ref<Record<string, string>>({})
 const answeringId = ref<string | null>(null)
 
-async function load() {
+/** `silent`: atualização em segundo plano, que não incomoda com aviso de erro. */
+async function load(silent = false) {
   try {
     const result = await listQuestions(props.credentials)
     received.value = result.received
     sent.value = result.sent
   } catch (e) {
-    toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível carregar as perguntas.')
+    if (!silent) toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível carregar as perguntas.')
   }
 }
 
-onMounted(load)
+onMounted(() => load())
+useRefreshOnFocus(() => load(true))
 
 async function onAsk() {
   const text = question.value.trim()

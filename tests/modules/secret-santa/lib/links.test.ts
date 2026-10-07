@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { inviteUrl, whatsappUrl } from '@/modules/secret-santa/lib/links'
+import { inviteUrl, whatsappDrawnUrl, whatsappPendingUrl, whatsappUrl } from '@/modules/secret-santa/lib/links'
 
 describe('links', () => {
   it('monta o link de convite', () => {
@@ -15,6 +15,20 @@ describe('links', () => {
     expect(url.startsWith('https://wa.me/?text=')).toBe(true)
     const text = decodeURIComponent(url.slice('https://wa.me/?text='.length))
     expect(text).toContain('Família & Cia')
+    expect(text).toContain('https://x.com/secret-santa/g/abc')
+  })
+
+  it('monta o aviso de sorteio feito, com o link e sem citar pares', () => {
+    const url = whatsappDrawnUrl('Turma', 'https://x.com/secret-santa/g/abc')
+    const text = decodeURIComponent(url.slice('https://wa.me/?text='.length))
+    expect(text).toContain('Turma')
+    expect(text).toContain('https://x.com/secret-santa/g/abc')
+  })
+
+  it('monta um aviso único para quem ainda não criou o PIN', () => {
+    const url = whatsappPendingUrl('Turma', ['Ana', 'Bia'], 'https://x.com/secret-santa/g/abc')
+    const text = decodeURIComponent(url.slice('https://wa.me/?text='.length))
+    expect(text).toContain('Ana, Bia')
     expect(text).toContain('https://x.com/secret-santa/g/abc')
   })
 })

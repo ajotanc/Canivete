@@ -49,6 +49,10 @@ export async function handleAction(db: SantaDb, body: unknown, deps: HandlerDeps
       return createGroup(db, input, deps)
     case 'getGroup':
       return getGroup(db, input)
+    case 'updateGroup':
+      return updateGroup(db, input, deps)
+    case 'renameParticipant':
+      return renameParticipant(db, input, deps)
     case 'addParticipant':
       return addParticipant(db, input, deps)
     case 'setupPin':
@@ -177,6 +181,41 @@ async function getGroup(db: SantaDb, input: Input) {
   }
 }
 
+/** O organizador corrige nome, valor sugerido e data da troca, antes ou depois do sorteio. */
+async function updateGroup(db: SantaDb, input: Input, deps: HandlerDeps) {
+  const group = await requireGroup(db, input.groupId)
+  requireOrganizer(group, deps)
+  const patch = {
+    name: parseGroupName(input.name),
+    budget: parseBudget(input.budget),
+    eventDate: parseEventDate(input.eventDate),
+  }
+  await db.updateGroup(group.id, patch)
+  return patch
+}
+
+/**
+ * O organizador corrige o nome de uma pessoa (ex.: "Joao" para "João"), antes ou depois do sorteio.
+ * O id não muda, então pares, regras de exclusão, PIN e recados continuam valendo.
+ */
+async function renameParticipant(db: SantaDb, input: Input, deps: HandlerDeps) {
+  const group = await requireGroup(db, input.groupId)
+  requireOrganizer(group, deps)
+
+  const key = toNameKey(typeof input.name === 'string' ? input.name : '')
+  const participants = await db.listParticipants(group.id)
+  const target = participants.find((p) => p.nameKey === key)
+  if (!target) throw new SantaError('INVALID_INPUT', 'Participante não encontrado.')
+
+  const name = parsePersonName(input.newName)
+  const nameKey = toNameKey(name)
+  if (participants.some((p) => p.id !== target.id && p.nameKey === nameKey)) {
+    throw new SantaError('NAME_TAKEN', 'Já existe alguém com esse nome neste grupo. Use outro nome.')
+  }
+  await db.updateParticipant(target.id, { name, nameKey })
+  return { name }
+}
+
 /** O organizador cadastra uma pessoa pelo nome; ela cria o PIN no primeiro acesso. */
 async function addParticipant(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
@@ -263,6 +302,7 @@ async function listParticipants(db: SantaDb, input: Input, deps: HandlerDeps) {
       name: p.name,
       isOrganizer: p.isOrganizer,
       hasPin: p.pinHash !== null,
+      revealed: p.revealed,
     })),
   }
 }

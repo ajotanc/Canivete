@@ -11,6 +11,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/u
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { Spinner } from '@/components/ui/spinner'
+import { useRefreshOnFocus } from '../composables/useRefreshOnFocus'
 import { deletePost, listPosts, postMessage, SantaApiError, type BoardPost, type Credentials } from '../lib/api'
 
 /** Sem nome e PIN (painel do organizador), o mural é só para ler e moderar. */
@@ -21,15 +22,17 @@ const posts = ref<BoardPost[]>([])
 const text = ref('')
 const sending = ref(false)
 
-async function load() {
+/** `silent`: atualização em segundo plano, que não incomoda com aviso de erro. */
+async function load(silent = false) {
   try {
     posts.value = (await listPosts(props.credentials)).posts
   } catch (e) {
-    toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível carregar o mural.')
+    if (!silent) toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível carregar o mural.')
   }
 }
 
-onMounted(load)
+onMounted(() => load())
+useRefreshOnFocus(() => load(true))
 
 async function onPost() {
   const value = text.value.trim()

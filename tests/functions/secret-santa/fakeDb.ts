@@ -33,6 +33,10 @@ export function createFakeDb() {
     async listGroupsByOwner(ownerId) {
       return [...groups.values()].filter((g) => g.ownerId === ownerId)
     },
+    async updateGroup(id, patch) {
+      const group = groups.get(id)
+      if (group) Object.assign(group, patch)
+    },
     async setGroupColor(id, color) {
       const group = groups.get(id)
       if (group) group.color = color

@@ -202,9 +202,9 @@ describe('listParticipants e removeParticipant (organizador)', () => {
     }
     expect(result.status).toBe('open')
     expect(result.participants).toEqual([
-      { name: 'Lia', isOrganizer: true, hasPin: true },
-      { name: 'Ana', isOrganizer: false, hasPin: true },
-      { name: 'Bia', isOrganizer: false, hasPin: false },
+      { name: 'Lia', isOrganizer: true, hasPin: true, revealed: false },
+      { name: 'Ana', isOrganizer: false, hasPin: true, revealed: false },
+      { name: 'Bia', isOrganizer: false, hasPin: false, revealed: false },
     ])
     expect(JSON.stringify(result)).not.toContain('segredo')
     expect(JSON.stringify(result)).not.toContain('scrypt')
@@ -224,6 +224,71 @@ describe('listParticipants e removeParticipant (organizador)', () => {
     expect(
       await errorCode(handleAction(db, { action: 'removeParticipant', groupId, name: 'Ana' }, OWNER)),
     ).toBe('GROUP_CLOSED')
+  })
+})
+
+describe('updateGroup (organizador)', () => {
+  it('corrige nome, valor e data, antes e depois do sorteio', async () => {
+    const { db, groupId } = await newGroup(createFakeDb(), { budget: 50, eventDate: '2026-12-24' })
+    const next = { action: 'updateGroup', groupId, name: ' Família Silva ', budget: '80,5', eventDate: '2026-12-25' }
+    expect(await handleAction(db, next, OWNER)).toEqual({ name: 'Família Silva', budget: 80.5, eventDate: '2026-12-25' })
+    expect(db.groups.get(groupId)).toMatchObject({ name: 'Família Silva', budget: 80.5, eventDate: '2026-12-25' })
+
+    await db.setGroupStatus(groupId, 'drawn')
+    await handleAction(db, { ...next, budget: null, eventDate: '' }, OWNER)
+    expect(db.groups.get(groupId)).toMatchObject({ budget: null, eventDate: '' })
+  })
+
+  it('recusa dados inválidos e quem não é o organizador', async () => {
+    const { db, groupId } = await newGroup()
+    const base = { action: 'updateGroup', groupId, name: 'Turma', budget: null, eventDate: '' }
+    expect(await errorCode(handleAction(db, { ...base, name: '' }, OWNER))).toBe('INVALID_INPUT')
+    expect(await errorCode(handleAction(db, { ...base, eventDate: '2026-02-30' }, OWNER))).toBe('INVALID_INPUT')
+    expect(await errorCode(handleAction(db, { ...base, budget: -1 }, OWNER))).toBe('INVALID_INPUT')
+    for (const caller of [undefined, STRANGER]) {
+      expect(await errorCode(handleAction(db, base, caller))).toBe('FORBIDDEN')
+    }
+    expect(db.groups.get(groupId)!.name).toBe('Família')
+  })
+})
+
+describe('renameParticipant (organizador)', () => {
+  it('troca o nome mantendo id, PIN e regras de exclusão', async () => {
+    const { db, groupId } = await newGroup()
+    await handleAction(db, { action: 'addParticipant', groupId, name: 'Joao' }, OWNER)
+    await handleAction(db, { action: 'addParticipant', groupId, name: 'Ana' }, OWNER)
+    await handleAction(db, { action: 'setExclusions', groupId, exclusions: [['Joao', 'Ana']] }, OWNER)
+    const [before] = await db.listParticipants(groupId)
+
+    expect(await handleAction(db, { action: 'renameParticipant', groupId, name: ' JOAO ', newName: ' João ' }, OWNER)).toEqual({
+      name: 'João',
+    })
+    const [after] = await db.listParticipants(groupId)
+    expect(after).toMatchObject({ id: before.id, name: 'João', nameKey: 'joão' })
+    const listed = (await handleAction(db, { action: 'listParticipants', groupId }, OWNER)) as { exclusions: string[][] }
+    expect(listed.exclusions).toEqual([['João', 'Ana']])
+  })
+
+  it('funciona depois do sorteio e aceita só trocar a caixa do próprio nome', async () => {
+    const { db, groupId } = await newGroup()
+    await handleAction(db, { action: 'addParticipant', groupId, name: 'ana' }, OWNER)
+    await db.setGroupStatus(groupId, 'drawn')
+    await handleAction(db, { action: 'renameParticipant', groupId, name: 'ana', newName: 'Ana' }, OWNER)
+    expect((await db.listParticipants(groupId))[0].name).toBe('Ana')
+  })
+
+  it('recusa nome repetido, inválido, pessoa inexistente e quem não é o organizador', async () => {
+    const { db, groupId } = await newGroup()
+    await handleAction(db, { action: 'addParticipant', groupId, name: 'Ana' }, OWNER)
+    await handleAction(db, { action: 'addParticipant', groupId, name: 'Bia' }, OWNER)
+    const rename = (name: string, newName: unknown, caller: unknown = OWNER) =>
+      errorCode(handleAction(db, { action: 'renameParticipant', groupId, name, newName }, caller as typeof OWNER))
+    expect(await rename('Bia', ' ANA ')).toBe('NAME_TAKEN')
+    expect(await rename('Bia', '')).toBe('INVALID_INPUT')
+    expect(await rename('Bia', 'x'.repeat(61))).toBe('INVALID_INPUT')
+    expect(await rename('Zé', 'Zeca')).toBe('INVALID_INPUT')
+    expect(await rename('Bia', 'Bianca', STRANGER)).toBe('FORBIDDEN')
+    expect((await db.listParticipants(groupId)).map((p) => p.name)).toEqual(['Ana', 'Bia'])
   })
 })
 

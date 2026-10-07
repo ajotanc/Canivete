@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import { ArrowLeft, CalendarDays, Coins, Gift, Lock, TriangleAlert, Users } from '@lucide/vue'
-import { onMounted, ref, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { Lock, TriangleAlert } from '@lucide/vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
-import FactTile from '@/components/FactTile.vue'
-import PageHeader from '@/components/PageHeader.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { triggerConfetti } from '@/core/effects/confetti'
@@ -15,15 +13,15 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import BoardPanel from './components/BoardPanel.vue'
 import GiftTag from './components/GiftTag.vue'
+import MeHeader from './components/MeHeader.vue'
 import QuestionsPanel from './components/QuestionsPanel.vue'
 import { useReveal } from './composables/useReveal'
+import { useUnsavedGuard } from './composables/useUnsavedGuard'
 import WishlistEditor from './components/WishlistEditor.vue'
 import WishlistView from './components/WishlistView.vue'
 import { applyGroupColor } from './lib/groupColor'
 import { markRevealed, getGroup, listMyGroups, revealMatch, SantaApiError, updateWishlist, type RevealResult, type WishItem } from './lib/api'
-import { formatMoney } from '@/lib/money'
-import { eventCountdown, formatEventDate } from './lib/event'
-import { adminPath, invitePath } from './lib/links'
+import { invitePath } from './lib/links'
 import { clearCredentials, loadCredentials } from './lib/session'
 
 const route = useRoute()
@@ -41,6 +39,20 @@ const saving = ref(false)
 const { revealed, reveal } = useReveal()
 
 const credentials = loadCredentials(groupId)
+
+/** Compara a lista pelo que importa: linhas vazias e espaços nas pontas não contam como alteração. */
+const snapshot = (items: WishItem[]) =>
+  JSON.stringify(items.filter((i) => i.text.trim()).map((i) => ({ text: i.text.trim(), url: i.url?.trim() || undefined })))
+/** Última versão da lista que o servidor tem. */
+const savedSnapshot = ref('[]')
+const dirty = computed(() => snapshot(wishlist.value) !== savedSnapshot.value)
+useUnsavedGuard(dirty)
+
+async function onLogout() {
+  // A lista com alterações pendentes é perguntada pelo guarda de saída da rota.
+  clearCredentials(groupId)
+  await router.replace(invitePath(groupId))
+}
 
 /** O nome já apareceu na roleta: aí sim solta confetes e libera a lista de desejos. */
 const landed = ref(false)
@@ -69,6 +81,7 @@ onMounted(async () => {
   try {
     result.value = await revealMatch({ groupId, ...credentials })
     wishlist.value = result.value.wishlist
+    savedSnapshot.value = snapshot(wishlist.value)
     getGroup(groupId)
       .then((group) => {
         applyGroupColor(group.color)
@@ -98,6 +111,7 @@ async function onSave() {
   saving.value = true
   try {
     await updateWishlist({ groupId, ...credentials, wishlist: wishlist.value })
+    savedSnapshot.value = snapshot(wishlist.value)
     toast.success('Lista de desejos salva.')
   } catch (e) {
     toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível salvar.')
@@ -125,21 +139,17 @@ async function onSave() {
 
     <template v-else-if="result">
       <template v-if="result.status === 'drawn'">
-        <PageHeader filled size="lg" :icon="Gift" :title="groupInfo?.name ?? 'Seu amigo secreto'" description="Arraste o lacre para abrir sua carta. O nome some sozinho depois de 15 segundos.">
-          <template v-if="isOrganizer" #back>
-            <Button as-child variant="ghost" size="sm">
-              <RouterLink :to="adminPath(groupId)"><ArrowLeft aria-hidden="true" />Painel do organizador</RouterLink>
-            </Button>
-          </template>
+        <MeHeader
+          :group-id="groupId"
+          :group="groupInfo"
+          :is-organizer="isOrganizer"
+          description="Arraste o lacre para abrir sua carta. O nome some sozinho depois de 15 segundos."
+          @logout="onLogout"
+        >
           <template #badge>
             <Badge variant="glass" class="gap-1.5 rounded-md py-1"><Lock aria-hidden="true" />Só você vê isto</Badge>
           </template>
-        <dl v-if="groupInfo" class="grid grid-cols-2 gap-3 pt-2">
-          <FactTile :icon="Users" label="Participantes">{{ groupInfo.participantCount }} {{ groupInfo.participantCount === 1 ? 'pessoa' : 'pessoas' }}</FactTile>
-          <FactTile v-if="groupInfo.budget !== null" :icon="Coins" label="Valor sugerido">{{ formatMoney(groupInfo.budget) }}</FactTile>
-          <FactTile v-if="groupInfo.eventDate" :icon="CalendarDays" :label="eventCountdown(groupInfo.eventDate)" tone="paper" class="col-span-2">{{ formatEventDate(groupInfo.eventDate) }}</FactTile>
-        </dl>
-        </PageHeader>
+        </MeHeader>
 
         <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
           <div class="space-y-6">
@@ -169,7 +179,8 @@ async function onSave() {
               <CardContent>
                 <form class="space-y-4" @submit.prevent="onSave">
                   <WishlistEditor v-model="wishlist" />
-                  <Button type="submit" size="lg" class="w-full" :disabled="saving">
+                  <p v-if="dirty" class="text-center text-sm font-medium text-warning" role="status">Alterações não salvas</p>
+                  <Button type="submit" size="lg" class="w-full" :disabled="saving || !dirty">
                     <Spinner v-if="saving" />
                     {{ saving ? 'Salvando...' : 'Salvar lista' }}
                   </Button>
@@ -188,18 +199,13 @@ async function onSave() {
       <template v-else>
         <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
           <div class="space-y-6">
-            <PageHeader filled size="lg" :icon="Gift" :title="groupInfo?.name ?? 'Seu amigo secreto'" :description="`Tudo certo, ${credentials?.name}. O sorteio ainda não aconteceu: quando o organizador sortear, volte aqui para ver quem você tirou.`">
-          <template v-if="isOrganizer" #back>
-            <Button as-child variant="ghost" size="sm">
-              <RouterLink :to="adminPath(groupId)"><ArrowLeft aria-hidden="true" />Painel do organizador</RouterLink>
-            </Button>
-          </template>
-            <dl v-if="groupInfo" class="grid grid-cols-2 gap-3 pt-2">
-              <FactTile :icon="Users" label="Participantes">{{ groupInfo.participantCount }} {{ groupInfo.participantCount === 1 ? 'pessoa' : 'pessoas' }}</FactTile>
-              <FactTile v-if="groupInfo.budget !== null" :icon="Coins" label="Valor sugerido">{{ formatMoney(groupInfo.budget) }}</FactTile>
-              <FactTile v-if="groupInfo.eventDate" :icon="CalendarDays" :label="eventCountdown(groupInfo.eventDate)" tone="paper" class="col-span-2">{{ formatEventDate(groupInfo.eventDate) }}</FactTile>
-            </dl>
-            </PageHeader>
+            <MeHeader
+              :group-id="groupId"
+              :group="groupInfo"
+              :is-organizer="isOrganizer"
+              :description="`Tudo certo, ${credentials?.name}. O sorteio ainda não aconteceu: quando o organizador sortear, volte aqui para ver quem você tirou.`"
+              @logout="onLogout"
+            />
             <Card>
               <CardContent>
                 <form class="space-y-4" @submit.prevent="onSave">
@@ -208,14 +214,14 @@ async function onSave() {
                     <WishlistEditor v-model="wishlist" />
                     <FieldDescription>Quem tirar você vai ver essa lista. Se tiver o link do produto, ligue o interruptor e cole.</FieldDescription>
                   </Field>
-                  <Button type="submit" size="lg" class="w-full" :disabled="saving">
+                  <p v-if="dirty" class="text-center text-sm font-medium text-warning" role="status">Alterações não salvas</p>
+                  <Button type="submit" size="lg" class="w-full" :disabled="saving || !dirty">
                     <Spinner v-if="saving" />
                     {{ saving ? 'Salvando...' : 'Salvar lista' }}
                   </Button>
                 </form>
               </CardContent>
             </Card>
-            <Button as-child variant="ghost"><RouterLink :to="invitePath(groupId)">Voltar ao grupo</RouterLink></Button>
           </div>
           <BoardPanel v-if="credentials" :credentials="{ groupId, ...credentials }" />
         </div>

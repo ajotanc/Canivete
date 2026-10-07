@@ -15,6 +15,18 @@ export function whatsappReminderUrl(groupName: string, personName: string, invit
   return `https://wa.me/?text=${encodeURIComponent(text)}`
 }
 
+/** Um aviso só para o grupo, citando quem ainda não criou o PIN (o WhatsApp não manda em lote). */
+export function whatsappPendingUrl(groupName: string, names: string[], inviteLink: string): string {
+  const text = `Oi, pessoal! Ainda falta criar o PIN no amigo secreto "${groupName}": ${names.join(', ')}. Entre, escolha seu nome e crie o PIN: ${inviteLink}`
+  return `https://wa.me/?text=${encodeURIComponent(text)}`
+}
+
+/** Aviso de que o sorteio saiu; não cita pares, só leva cada pessoa a abrir a própria carta. */
+export function whatsappDrawnUrl(groupName: string, inviteLink: string): string {
+  const text = `Saiu o sorteio do amigo secreto "${groupName}"! Entre, escolha seu nome e abra a sua carta: ${inviteLink}`
+  return `https://wa.me/?text=${encodeURIComponent(text)}`
+}
+
 export function whatsappUrl(groupName: string, inviteLink: string): string {
   const text = `Amigo secreto "${groupName}": entre, escolha seu nome e crie seu PIN: ${inviteLink}`
   return `https://wa.me/?text=${encodeURIComponent(text)}`

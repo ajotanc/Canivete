@@ -5,9 +5,11 @@ import {
   postMessage,
   callSanta,
   createGroup,
+  renameParticipant,
   revealMatch,
   SantaApiError,
   setupPin,
+  updateGroup,
   type Execute,
 } from '@/modules/secret-santa/lib/api'
 
@@ -106,6 +108,22 @@ describe('funções tipadas', () => {
     expect(sent).toEqual([
       { action: 'askQuestion', ...credentials, question: 'Chocolate ou vinho?' },
       { action: 'postMessage', ...credentials, text: 'Oi' },
+    ])
+  })
+})
+
+describe('updateGroup e renameParticipant', () => {
+  it('enviam a ação certa com os dados', async () => {
+    const sent: unknown[] = []
+    const execute: Execute = async (body) => {
+      sent.push(JSON.parse(body))
+      return { responseStatusCode: 200, responseBody: JSON.stringify({ ok: true, data: {} }) }
+    }
+    await updateGroup({ groupId: 'g1', name: 'Turma', budget: 50, eventDate: '2026-12-24' }, execute)
+    await renameParticipant({ groupId: 'g1', name: 'Joao', newName: 'João' }, execute)
+    expect(sent).toEqual([
+      { action: 'updateGroup', groupId: 'g1', name: 'Turma', budget: 50, eventDate: '2026-12-24' },
+      { action: 'renameParticipant', groupId: 'g1', name: 'Joao', newName: 'João' },
     ])
   })
 })

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CalendarDays, ChevronRight, Coins, Gift, KeyRound, SearchX, TriangleAlert, Users } from '@lucide/vue'
+import { CalendarDays, ChevronRight, Coins, Gift, KeyRound, Search, SearchX, TriangleAlert, Users } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -11,16 +11,18 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
-import { Item, ItemActions, ItemContent, ItemGroup, ItemTitle } from '@/components/ui/item'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { formatMoney } from '@/lib/money'
+import AddToCalendar from './components/AddToCalendar.vue'
 import WishlistEditor from './components/WishlistEditor.vue'
 import { applyGroupColor } from './lib/groupColor'
 import { getGroup, revealMatch, SantaApiError, setupPin, type GroupInfo, type WishItem } from './lib/api'
 import { eventCountdown, formatEventDate } from './lib/event'
 import { mePath } from './lib/links'
-import { saveCredentials } from './lib/session'
+import { isPin, PIN_LENGTH } from './lib/pin'
+import { loadCredentials, saveCredentials } from './lib/session'
 
 const route = useRoute()
 const router = useRouter()
@@ -39,15 +41,30 @@ const wishlist = ref<WishItem[]>([])
 const submitting = ref(false)
 const formError = ref('')
 
-const PIN_PATTERN = /^\d{4,6}$/
 /** Primeiro nome de quem escolheu, para falar de forma mais próxima. */
 const firstName = computed(() => (selected.value ?? '').split(' ')[0])
+
+/** Lista longa ganha um filtro por nome; "João" e "joao" se encontram. */
+const SEARCH_FROM = 8
+const query = ref('')
+const plain = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+const visibleMembers = computed(() => {
+  const needle = plain(query.value.trim())
+  return (group.value?.members ?? []).filter((m) => plain(m.name).includes(needle))
+})
+
+/** Quem já entrou nesta aba (e voltou do painel) continua de onde parou, sem escolher o nome de novo. */
+const returning = computed(() => {
+  const saved = loadCredentials(groupId)
+  const person = group.value?.members.find((m) => m.name === saved?.name)
+  return person && person.hasPin ? person.name : null
+})
 
 const member = computed(() => group.value?.members.find((m) => m.name === selected.value) ?? null)
 /** Primeiro acesso: a pessoa ainda não criou o PIN. */
 const isFirstAccess = computed(() => member.value !== null && !member.value.hasPin)
 const canSubmit = computed(() => {
-  if (submitting.value || !PIN_PATTERN.test(pin.value)) return false
+  if (submitting.value || !isPin(pin.value)) return false
   return !isFirstAccess.value || pin.value === pinConfirm.value
 })
 
@@ -151,19 +168,30 @@ async function onSubmit() {
           <FactTile v-if="group.budget !== null" :icon="Coins" label="Valor sugerido">{{ formatMoney(group.budget) }}</FactTile>
           <FactTile v-if="group.eventDate" :icon="CalendarDays" :label="eventCountdown(group.eventDate)" tone="paper" class="col-span-2">{{ formatEventDate(group.eventDate) }}</FactTile>
         </dl>
+        <AddToCalendar v-if="group.eventDate" class="-ml-3 self-start" :group-id="groupId" :group-name="group.name" :event-date="group.eventDate" />
       </PageHeader>
 
       <!-- Passo 1: quem é você -->
       <div v-if="!selected" class="space-y-4">
-        <h2 class="text-xl">Quem é você?</h2>
+        <Button v-if="returning" as-child size="lg" class="w-full">
+          <RouterLink :to="mePath(groupId)"><Gift aria-hidden="true" />Continuar como {{ returning }}</RouterLink>
+        </Button>
+        <h2 class="text-xl">{{ returning ? 'Ou entre como outra pessoa' : 'Quem é você?' }}</h2>
         <Empty v-if="group.members.length === 0" class="rounded-xl border border-dashed bg-card/50">
           <EmptyHeader>
             <EmptyTitle>Ninguém foi adicionado ainda</EmptyTitle>
             <EmptyDescription>O organizador ainda não cadastrou as pessoas. Volte mais tarde.</EmptyDescription>
           </EmptyHeader>
         </Empty>
-        <ul v-else class="grid gap-3 sm:grid-cols-2">
-          <li v-for="person in group.members" :key="person.name">
+        <InputGroup v-if="group.members.length >= SEARCH_FROM" class="h-11 bg-card">
+          <InputGroupAddon><Search aria-hidden="true" /></InputGroupAddon>
+          <InputGroupInput v-model="query" type="search" autocomplete="off" placeholder="Buscar seu nome" aria-label="Buscar seu nome" />
+        </InputGroup>
+        <p v-if="group.members.length > 0 && visibleMembers.length === 0" class="text-sm text-muted-foreground" role="status">
+          Ninguém com esse nome. Confira como o organizador escreveu o seu.
+        </p>
+        <ul v-else-if="group.members.length > 0" class="grid gap-3 sm:grid-cols-2">
+          <li v-for="person in visibleMembers" :key="person.name">
             <button
               type="button"
               class="flex w-full items-center gap-3 rounded-2xl border bg-card p-3 text-left shadow-sm outline-none transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/60 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
@@ -184,7 +212,7 @@ async function onSubmit() {
         <div class="bg-primary/10 px-6 pb-6 pt-8 text-center">
           <h2 class="text-balance text-2xl sm:text-3xl">Olá, {{ firstName }}!</h2>
           <p class="mt-1 text-pretty text-muted-foreground">
-            {{ isFirstAccess ? 'Crie um PIN de 4 números para abrir o seu amigo secreto.' : 'Digite o seu PIN para abrir o seu amigo secreto.' }}
+            {{ isFirstAccess ? `Crie um PIN de ${PIN_LENGTH} números para abrir o seu amigo secreto.` : 'Digite o seu PIN para abrir o seu amigo secreto.' }}
           </p>
         </div>
         <CardContent class="p-6">
@@ -192,12 +220,12 @@ async function onSubmit() {
             <FieldGroup v-if="isFirstAccess">
               <Field class="items-center">
                 <FieldLabel for="pin" class="justify-center">Crie um PIN</FieldLabel>
-                <PinField id="pin" v-model="pin" label="Crie um PIN" centered large />
+                <PinField id="pin" v-model="pin" :length="PIN_LENGTH" label="Crie um PIN" centered large />
               </Field>
               <Field class="items-center">
                 <FieldLabel for="pin-confirm" class="justify-center">Repita o PIN</FieldLabel>
-                <PinField id="pin-confirm" v-model="pinConfirm" label="Repita o PIN" centered large />
-                <FieldError v-if="pinConfirm && PIN_PATTERN.test(pin) && pin !== pinConfirm">Os PINs não são iguais.</FieldError>
+                <PinField id="pin-confirm" v-model="pinConfirm" :length="PIN_LENGTH" label="Repita o PIN" centered large />
+                <FieldError v-if="pinConfirm && isPin(pin) && pin !== pinConfirm">Os PINs não são iguais.</FieldError>
               </Field>
               <Alert>
                 <KeyRound aria-hidden="true" />
@@ -211,7 +239,7 @@ async function onSubmit() {
 
             <Field v-else class="items-center">
               <FieldLabel for="pin" class="justify-center">Seu PIN</FieldLabel>
-              <PinField id="pin" v-model="pin" label="Seu PIN" centered large />
+              <PinField id="pin" v-model="pin" :length="PIN_LENGTH" label="Seu PIN" centered large />
             </Field>
 
             <FieldError v-if="formError" class="text-center">{{ formError }}</FieldError>

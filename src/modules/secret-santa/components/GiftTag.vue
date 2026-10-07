@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ChevronsRight, Heart, LockKeyhole, Sparkles } from '@lucide/vue'
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { onBeforeUnmount, ref, useId, watch } from 'vue'
 
 /** Carta selada: envelope e conteúdo ocupam a mesma área fixa, sem sobrepor o restante da página. */
 const props = defineProps<{ name: string; revealed: boolean; names?: string[] }>()
 const emit = defineEmits<{ landed: []; reveal: [] }>()
 
+const uid = useId()
 const opened = ref(props.revealed)
 const progress = ref(0)
 const dragging = ref(false)
@@ -119,6 +120,7 @@ onBeforeUnmount(() => {
                 :class="[dragging ? 'scale-105' : 'transition-[left,transform] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]', returning ? 'motion-safe:animate-[seal-stamp_700ms_cubic-bezier(0.16,1,0.3,1)_200ms_both]' : progress === 0 && !opened ? 'motion-safe:animate-[seal-nudge_2.4s_ease-in-out_infinite]' : '']"
                 :style="{ left: `calc(${progress} * (100% - 56px) + 6px)` }"
                 aria-label="Arraste o lacre para abrir a carta"
+                :aria-describedby="`${uid}-hint`"
                 @pointerdown.prevent="beginPull"
                 @pointermove.prevent="pull"
                 @pointerup="releasePull"
@@ -131,6 +133,7 @@ onBeforeUnmount(() => {
               </button>
             </div>
             <p class="mt-3 text-xs font-medium text-primary-foreground/80">Arraste o lacre para abrir</p>
+            <span :id="`${uid}-hint`" class="sr-only">Sem arrastar: pressione Enter ou Espaço para abrir, ou a seta para a direita para avançar aos poucos.</span>
           </div>
         </div>
       </section>

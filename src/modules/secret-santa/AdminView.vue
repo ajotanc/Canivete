@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, CalendarDays, Check, Clock, Copy, Dices, Gift, KeyRound, Link2, Lock, LogOut, Palette, RotateCcw, RefreshCw, SearchX, Trash2, TriangleAlert, UserPlus, Users } from '@lucide/vue'
+import { ArrowLeft, CalendarDays, Check, Clock, Copy, Dices, EllipsisVertical, Gift, KeyRound, Link2, Lock, LogOut, Palette, Pencil, RotateCcw, RefreshCw, SearchX, Trash2, TriangleAlert, UserPlus, Users } from '@lucide/vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -22,17 +22,20 @@ import PageHeader from '@/components/PageHeader.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
-import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { loadUser, logout, useAuth } from '@/core/services/auth'
 import AuthForm from './components/AuthForm.vue'
+import { useRefreshOnFocus } from './composables/useRefreshOnFocus'
 import {
   addParticipant,
   deleteGroup,
@@ -40,18 +43,20 @@ import {
   getGroup,
   listParticipants,
   removeParticipant,
+  renameParticipant,
   resetDraw,
   resetPin,
   GROUP_COLORS,
   SantaApiError,
   setColor,
   setSlug,
+  updateGroup,
   type ParticipantSummary,
 } from './lib/api'
+import { formatMoney, parseMoney } from '@/lib/money'
 import { eventCountdown, formatEventDate } from './lib/event'
 import { slugifyInput, trimSlug } from './lib/slug'
-import { adminPath, inviteUrl, mePath, whatsappReminderUrl, whatsappUrl } from './lib/links'
-import { loadCredentials, saveCredentials } from './lib/session'
+import { inviteUrl, mePath, whatsappDrawnUrl, whatsappPendingUrl, whatsappReminderUrl, whatsappUrl } from './lib/links'
 
 const route = useRoute()
 const router = useRouter()
@@ -72,9 +77,19 @@ const savingColor = ref(false)
 const participants = ref<ParticipantSummary[]>([])
 const exclusions = ref<[string, string][]>([])
 const groupName = ref('')
+const budget = ref<number | null>(null)
 const slug = ref<string | null>(null)
 const slugDraft = ref('')
 const eventDate = ref('')
+/** Campos do formulário "Dados do grupo"; só são preenchidos na primeira carga para não apagar o que a pessoa digita. */
+const editName = ref('')
+const editBudget = ref('')
+const editDate = ref('')
+let editLoaded = false
+const savingGroup = ref(false)
+const renameTarget = ref<string | null>(null)
+const renameDraft = ref('')
+const renaming = ref(false)
 const savingSlug = ref(false)
 const confirmOpen = ref(false)
 const drawing = ref(false)
@@ -94,9 +109,29 @@ const invite = computed(() => inviteUrl(window.location.origin, groupId.value, s
 const hasMyself = computed(() => participants.value.some((p) => p.isOrganizer))
 const myName = computed(() => participants.value.find((p) => p.isOrganizer)?.name ?? '')
 const canDraw = computed(() => status.value === 'open' && participants.value.length >= 3)
-const pendingCount = computed(() => participants.value.filter((p) => !p.hasPin).length)
+const pending = computed(() => participants.value.filter((p) => !p.hasPin))
+const pendingCount = computed(() => pending.value.length)
+const revealedCount = computed(() => participants.value.filter((p) => p.revealed).length)
+/** Antes do sorteio acompanha os PINs; depois dele, quem já abriu a carta. */
+/** Uma Function antiga não manda `revealed`: nesse caso não dá para afirmar quem abriu a carta. */
+const knowsReveals = computed(() => participants.value.every((p) => typeof p.revealed === 'boolean'))
+const progress = computed(() =>
+  status.value === 'drawn' && knowsReveals.value
+    ? { done: revealedCount.value, label: 'já abriram a carta' }
+    : { done: participants.value.length - pendingCount.value, label: 'já criaram o PIN' },
+)
 
-async function refresh() {
+/** Linha de situação de cada pessoa na lista. */
+function personState(person: ParticipantSummary) {
+  if (!person.hasPin) return { icon: Clock, text: 'Ainda não acessou', ok: false }
+  if (status.value !== 'drawn' || !knowsReveals.value) return { icon: Check, text: 'PIN criado', ok: true }
+  return person.revealed
+    ? { icon: Check, text: 'Já viu quem tirou', ok: true }
+    : { icon: Clock, text: 'Ainda não abriu a carta', ok: false }
+}
+
+/** `silent`: atualização em segundo plano (ao voltar para a aba); se falhar, mantém a tela como está. */
+async function refresh(silent = false) {
   try {
     const [result, group] = await Promise.all([
       listParticipants({ groupId: groupId.value }),
@@ -108,6 +143,13 @@ async function refresh() {
     applyGroupColor(group.color)
     groupName.value = group.name
     eventDate.value = group.eventDate
+    budget.value = group.budget
+    if (!editLoaded) {
+      editName.value = group.name
+      editBudget.value = formatMoney(group.budget)
+      editDate.value = group.eventDate
+      editLoaded = true
+    }
     slug.value = group.slug
     // O texto do link já vem sugerido a partir do nome do grupo; o organizador só confirma ou troca.
     slugDraft.value ||= group.slug ?? trimSlug(slugifyInput(group.name))
@@ -117,6 +159,7 @@ async function refresh() {
     anyRevealed.value = result.anyRevealed
     state.value = 'ready'
   } catch (e) {
+    if (silent) return
     if (e instanceof SantaApiError && e.code === 'FORBIDDEN') state.value = 'forbidden'
     else if (e instanceof SantaApiError && e.code === 'GROUP_NOT_FOUND') state.value = 'not-found'
     else {
@@ -134,6 +177,9 @@ onMounted(async () => {
   }
   await refresh()
 })
+
+// Quem abriu o painel numa aba antiga vê a situação de PINs e cartas atualizada ao voltar.
+useRefreshOnFocus(() => (state.value === 'ready' ? refresh(true) : undefined))
 
 async function onLoggedIn() {
   state.value = 'loading'
@@ -169,6 +215,62 @@ async function onAdd() {
     adding.value = false
     // Mantém o foco no campo para cadastrar a próxima pessoa em sequência.
     ;(newNameInput.value?.$el as HTMLInputElement | undefined)?.focus()
+  }
+}
+
+function startRename(name: string) {
+  renameTarget.value = name
+  renameDraft.value = name
+}
+
+async function onRename() {
+  const from = renameTarget.value
+  const to = renameDraft.value.trim()
+  if (!from || !to) return
+  if (to === from) {
+    renameTarget.value = null
+    return
+  }
+  renaming.value = true
+  try {
+    const result = await renameParticipant({ groupId: groupId.value, name: from, newName: to })
+    toast.success(`${from} agora é ${result.name}.`)
+    renameTarget.value = null
+    await refresh()
+  } catch (e) {
+    toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível trocar o nome.')
+  } finally {
+    renaming.value = false
+  }
+}
+
+const groupDataChanged = computed(
+  () =>
+    editName.value.trim() !== groupName.value ||
+    parseMoney(editBudget.value) !== budget.value ||
+    editDate.value !== eventDate.value,
+)
+
+async function onSaveGroup() {
+  savingGroup.value = true
+  try {
+    const saved = await updateGroup({
+      groupId: groupId.value,
+      name: editName.value,
+      budget: parseMoney(editBudget.value),
+      eventDate: editDate.value,
+    })
+    groupName.value = saved.name
+    budget.value = saved.budget
+    eventDate.value = saved.eventDate
+    editName.value = saved.name
+    editBudget.value = formatMoney(saved.budget)
+    editDate.value = saved.eventDate
+    toast.success('Dados do grupo salvos.')
+  } catch (e) {
+    toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível salvar os dados do grupo.')
+  } finally {
+    savingGroup.value = false
   }
 }
 
@@ -335,7 +437,7 @@ async function onDraw() {
         <EmptyTitle>Não foi possível abrir o painel</EmptyTitle>
         <EmptyDescription>{{ errorMessage }}</EmptyDescription>
       </EmptyHeader>
-      <Button size="lg" @click="refresh">Tentar de novo</Button>
+      <Button size="lg" @click="refresh()">Tentar de novo</Button>
     </Empty>
 
     <template v-else>
@@ -377,11 +479,17 @@ async function onDraw() {
           <CardHeader>
             <CardTitle class="text-lg">Pessoas ({{ participants.length }})</CardTitle>
             <CardDescription v-if="participants.length > 0">
-              {{ participants.length - pendingCount }} de {{ participants.length }} já criaram o PIN.
+              {{ progress.done }} de {{ participants.length }} {{ progress.label }}.
             </CardDescription>
           </CardHeader>
           <CardContent class="space-y-5">
-            <Progress v-if="participants.length > 0" :model-value="((participants.length - pendingCount) / participants.length) * 100" aria-label="Pessoas que já criaram o PIN" class="h-1.5" />
+            <Progress v-if="participants.length > 0" :model-value="(progress.done / participants.length) * 100" :aria-label="`Pessoas que ${progress.label}`" class="h-1.5" />
+            <Button v-if="pendingCount > 1" as-child variant="outline" size="sm" class="w-full sm:w-auto">
+              <a :href="whatsappPendingUrl(groupName, pending.map((p) => p.name), invite)" target="_blank" rel="noopener noreferrer">
+                <WhatsappIcon class="size-4 text-[#25D366]" />
+                Lembrar as {{ pendingCount }} pessoas sem PIN
+              </a>
+            </Button>
 
             <form v-if="status === 'open'" @submit.prevent="onAdd">
               <InputGroup class="h-11 bg-card">
@@ -410,52 +518,54 @@ async function onDraw() {
                 <EmptyDescription>Digite o nome da primeira pessoa acima. São necessárias pelo menos 3 para sortear.</EmptyDescription>
               </EmptyHeader>
             </Empty>
-            <TooltipProvider v-else :delay-duration="300">
-              <ItemGroup class="gap-2">
-                <Item v-for="person in participants" :key="person.name" variant="muted" size="sm">
-                  <ItemContent>
-                    <ItemTitle>
-                      {{ person.name }}
-                      <Badge v-if="person.isOrganizer" variant="outline" class="rounded-md font-normal">você</Badge>
-                    </ItemTitle>
-                    <ItemDescription class="flex items-center gap-1.5" :class="person.hasPin ? 'text-success' : 'text-warning'">
-                      <component :is="person.hasPin ? Check : Clock" class="size-3.5" aria-hidden="true" />
-                      {{ person.hasPin ? 'PIN criado' : 'Ainda não acessou' }}
-                    </ItemDescription>
-                  </ItemContent>
-                  <ItemActions>
-                    <Tooltip v-if="!person.hasPin">
-                      <TooltipTrigger as-child>
-                        <Button as-child variant="ghost" size="icon">
-                          <a :href="whatsappReminderUrl(groupName, person.name, invite)" target="_blank" rel="noopener noreferrer" :aria-label="`Lembrar ${person.name} pelo WhatsApp`">
-                            <WhatsappIcon class="size-4 text-[#25D366]" />
-                          </a>
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Lembrar pelo WhatsApp</TooltipContent>
-                    </Tooltip>
-                    <Tooltip v-if="person.hasPin">
-                      <TooltipTrigger as-child>
-                        <Button variant="ghost" size="icon" :aria-label="`Zerar PIN de ${person.name}`" @click="resetTarget = person.name">
-                          <KeyRound class="size-4" aria-hidden="true" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Zerar PIN</TooltipContent>
-                    </Tooltip>
-                    <Tooltip v-if="status === 'open'">
-                      <TooltipTrigger as-child>
-                        <Button variant="ghost" size="icon" class="text-destructive hover:bg-destructive/10 hover:text-destructive" :aria-label="`Remover ${person.name}`" @click="removeTarget = person.name">
-                          <Trash2 class="size-4" aria-hidden="true" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Remover</TooltipContent>
-                    </Tooltip>
-                  </ItemActions>
-                </Item>
-              </ItemGroup>
-            </TooltipProvider>
+            <ItemGroup v-else class="gap-2">
+              <Item v-for="person in participants" :key="person.name" variant="muted" size="sm">
+                <ItemContent>
+                  <ItemTitle>
+                    {{ person.name }}
+                    <Badge v-if="person.isOrganizer" variant="outline" class="rounded-md font-normal">você</Badge>
+                  </ItemTitle>
+                  <ItemDescription class="flex items-center gap-1.5" :class="personState(person).ok ? 'text-success' : 'text-warning'">
+                    <component :is="personState(person).icon" class="size-3.5" aria-hidden="true" />
+                    {{ personState(person).text }}
+                  </ItemDescription>
+                </ItemContent>
+                <ItemActions>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                      <Button variant="ghost" size="icon" :aria-label="`Ações de ${person.name}`">
+                        <EllipsisVertical class="size-4" aria-hidden="true" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" class="min-w-48">
+                      <DropdownMenuItem @select="startRename(person.name)">
+                        <Pencil aria-hidden="true" />
+                        Renomear
+                      </DropdownMenuItem>
+                      <DropdownMenuItem v-if="!person.hasPin" as-child>
+                        <a :href="whatsappReminderUrl(groupName, person.name, invite)" target="_blank" rel="noopener noreferrer">
+                          <WhatsappIcon class="size-4 text-[#25D366]" />
+                          Lembrar pelo WhatsApp
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem v-if="person.hasPin" @select="resetTarget = person.name">
+                        <KeyRound aria-hidden="true" />
+                        Zerar PIN
+                      </DropdownMenuItem>
+                      <template v-if="status === 'open'">
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem variant="destructive" @select="removeTarget = person.name">
+                          <Trash2 aria-hidden="true" />
+                          Remover
+                        </DropdownMenuItem>
+                      </template>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </ItemActions>
+              </Item>
+            </ItemGroup>
 
-            <Button variant="ghost" size="sm" @click="refresh">
+            <Button variant="ghost" size="sm" @click="refresh()">
               <RefreshCw aria-hidden="true" />
               Atualizar lista
             </Button>
@@ -507,6 +617,119 @@ async function onDraw() {
             </CardContent>
           </Card>
 
+          <!-- Sorteio -->
+          <Card v-if="status === 'open'">
+            <CardHeader>
+              <CardTitle class="text-lg">Sorteio</CardTitle>
+              <CardDescription>Depois de sortear não dá para mudar as pessoas.</CardDescription>
+            </CardHeader>
+            <CardContent class="space-y-3">
+              <Button size="lg" class="w-full" :disabled="!canDraw" @click="confirmOpen = true">
+                <Dices aria-hidden="true" />
+                Sortear
+              </Button>
+              <p v-if="!canDraw" class="text-sm text-muted-foreground">São necessárias pelo menos 3 pessoas para sortear.</p>
+              <p v-else-if="pendingCount > 0" class="text-sm text-muted-foreground">
+                {{ pendingCount === 1 ? '1 pessoa ainda não criou' : `${pendingCount} pessoas ainda não criaram` }} o PIN. Dá para
+                sortear assim mesmo: quem não criou cria depois e vê quem tirou.
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card v-else>
+            <CardHeader>
+              <CardTitle class="text-lg">O sorteio foi feito</CardTitle>
+              <CardDescription>Avise o grupo para cada pessoa abrir a sua carta.</CardDescription>
+            </CardHeader>
+            <CardContent class="space-y-3">
+              <Button as-child size="lg" class="w-full bg-success text-white hover:bg-success/90">
+                <a :href="whatsappDrawnUrl(groupName, invite)" target="_blank" rel="noopener noreferrer">
+                  <WhatsappIcon class="size-4" />
+                  Avisar o grupo pelo WhatsApp
+                </a>
+              </Button>
+              <Button v-if="hasMyself" as-child variant="outline" size="lg" class="w-full">
+                <RouterLink :to="{ path: mePath(String(route.params.id)), query: { pessoa: myName } }">
+                  <Gift aria-hidden="true" />
+                  Ver meu amigo
+                </RouterLink>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <!-- Refazer o sorteio -->
+          <Card v-if="status === 'drawn'">
+            <CardHeader>
+              <CardTitle class="text-lg">Refazer o sorteio</CardTitle>
+              <CardDescription>
+                {{ anyRevealed ? 'Alguém já abriu a carta e viu quem tirou. Agora não dá mais para refazer.' : 'Enquanto ninguém abrir a carta, dá para desfazer o sorteio e sortear de novo.' }}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" size="lg" class="w-full" :disabled="anyRevealed" @click="resetDrawOpen = true">
+                <RotateCcw aria-hidden="true" />
+                Refazer o sorteio
+              </Button>
+            </CardContent>
+          </Card>
+
+          <!-- Minha lista de presentes -->
+          <Card v-if="hasMyself && status === 'open'">
+            <CardHeader>
+              <CardTitle class="text-lg">Minha lista de presentes</CardTitle>
+              <CardDescription>Escreva o que você gostaria de ganhar e, se tiver, o link do produto.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button as-child variant="outline" size="lg" class="w-full">
+                <RouterLink :to="{ path: mePath(String(route.params.id)), query: { pessoa: myName } }">
+                  <Gift aria-hidden="true" />
+                  Editar minha lista
+                </RouterLink>
+              </Button>
+            </CardContent>
+          </Card>
+
+          <ExclusionsCard
+            v-if="status === 'open' && participants.length >= 3"
+            :group-id="groupId"
+            :names="participants.map((p) => p.name)"
+            :exclusions="exclusions"
+            @changed="refresh()"
+          />
+
+          <!-- Mural -->
+          <BoardPanel :credentials="{ groupId }" />
+
+          <!-- Dados do grupo -->
+          <Card>
+            <CardHeader>
+              <CardTitle class="text-lg">Dados do grupo</CardTitle>
+              <CardDescription>Dá para corrigir o nome, o valor e a data da troca a qualquer momento.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form @submit.prevent="onSaveGroup">
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel for="edit-name">Nome do grupo</FieldLabel>
+                    <Input id="edit-name" v-model="editName" maxlength="80" autocomplete="off" />
+                  </Field>
+                  <Field>
+                    <FieldLabel for="edit-budget">Valor sugerido</FieldLabel>
+                    <Input id="edit-budget" v-model="editBudget" v-money maxlength="20" placeholder="R$ 50,00" inputmode="numeric" />
+                  </Field>
+                  <Field>
+                    <FieldLabel for="edit-date">Data da troca</FieldLabel>
+                    <Input id="edit-date" v-model="editDate" type="date" />
+                  </Field>
+                  <Button type="submit" size="lg" class="w-full" :disabled="savingGroup || !editName.trim() || !groupDataChanged">
+                    <Spinner v-if="savingGroup" />
+                    {{ savingGroup ? 'Salvando...' : 'Salvar dados' }}
+                  </Button>
+                </FieldGroup>
+              </form>
+            </CardContent>
+          </Card>
+
           <!-- Cor do grupo -->
           <Card>
             <CardHeader>
@@ -552,82 +775,6 @@ async function onDraw() {
             </CardContent>
           </Card>
 
-          <BoardPanel :credentials="{ groupId }" />
-
-          <ExclusionsCard
-            v-if="status === 'open' && participants.length >= 3"
-            :group-id="groupId"
-            :names="participants.map((p) => p.name)"
-            :exclusions="exclusions"
-            @changed="refresh"
-          />
-
-          <!-- Minha lista de presentes -->
-          <Card v-if="hasMyself && status === 'open'">
-            <CardHeader>
-              <CardTitle class="text-lg">Minha lista de presentes</CardTitle>
-              <CardDescription>Escreva o que você gostaria de ganhar e, se tiver, o link do produto.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button as-child variant="outline" size="lg" class="w-full">
-                <RouterLink :to="{ path: mePath(String(route.params.id)), query: { pessoa: myName } }">
-                  <Gift aria-hidden="true" />
-                  Editar minha lista
-                </RouterLink>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <!-- Sorteio -->
-          <Card v-if="status === 'open'">
-            <CardHeader>
-              <CardTitle class="text-lg">Sorteio</CardTitle>
-              <CardDescription>Depois de sortear não dá para mudar as pessoas.</CardDescription>
-            </CardHeader>
-            <CardContent class="space-y-3">
-              <Button size="lg" class="w-full" :disabled="!canDraw" @click="confirmOpen = true">
-                <Dices aria-hidden="true" />
-                Sortear
-              </Button>
-              <p v-if="!canDraw" class="text-sm text-muted-foreground">São necessárias pelo menos 3 pessoas para sortear.</p>
-              <p v-else-if="pendingCount > 0" class="text-sm text-muted-foreground">
-                {{ pendingCount === 1 ? '1 pessoa ainda não criou' : `${pendingCount} pessoas ainda não criaram` }} o PIN. Dá para
-                sortear assim mesmo: quem não criou cria depois e vê quem tirou.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card v-else-if="hasMyself">
-            <CardHeader>
-              <CardTitle class="text-lg">O sorteio foi feito</CardTitle>
-              <CardDescription>Veja quem você tirou.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button as-child size="lg" class="w-full">
-                <RouterLink :to="{ path: mePath(String(route.params.id)), query: { pessoa: myName } }">
-                  <Gift aria-hidden="true" />
-                  Ver meu amigo
-                </RouterLink>
-              </Button>
-            </CardContent>
-          </Card>
-
-          <!-- Refazer o sorteio -->
-          <Card v-if="status === 'drawn'">
-            <CardHeader>
-              <CardTitle class="text-lg">Refazer o sorteio</CardTitle>
-              <CardDescription>
-                {{ anyRevealed ? 'Alguém já abriu a carta e viu quem tirou. Agora não dá mais para refazer.' : 'Enquanto ninguém abrir a carta, dá para desfazer o sorteio e sortear de novo.' }}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" size="lg" class="w-full" :disabled="anyRevealed" @click="resetDrawOpen = true">
-                <RotateCcw aria-hidden="true" />
-                Refazer o sorteio
-              </Button>
-            </CardContent>
-          </Card>
-
           <!-- Excluir -->
           <Card class="border-destructive/40">
             <CardHeader>
@@ -643,6 +790,31 @@ async function onDraw() {
           </Card>
         </div>
       </div>
+
+      <Dialog :open="renameTarget !== null" @update:open="(open: boolean) => !open && (renameTarget = null)">
+        <DialogContent>
+          <form class="space-y-4" @submit.prevent="onRename">
+            <DialogHeader>
+              <DialogTitle>Renomear {{ renameTarget }}</DialogTitle>
+              <DialogDescription>
+                O PIN, o par do sorteio e as regras de exclusão continuam valendo.
+                {{ status === 'drawn' ? 'Quem já abriu a tela entra de novo escolhendo o nome novo.' : '' }}
+              </DialogDescription>
+            </DialogHeader>
+            <Field>
+              <FieldLabel for="rename-input">Novo nome</FieldLabel>
+              <Input id="rename-input" v-model="renameDraft" maxlength="60" autocomplete="off" />
+            </Field>
+            <DialogFooter>
+              <Button type="button" variant="outline" @click="renameTarget = null">Cancelar</Button>
+              <Button type="submit" :disabled="renaming || !renameDraft.trim()">
+                <Spinner v-if="renaming" />
+                {{ renaming ? 'Salvando...' : 'Salvar nome' }}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDelete
         v-model:open="resetDrawOpen"
@@ -686,7 +858,7 @@ async function onDraw() {
           <AlertDialogHeader>
             <AlertDialogTitle>Sortear agora?</AlertDialogTitle>
             <AlertDialogDescription>
-              Depois do sorteio não dá para adicionar nem remover pessoas, nem mudar a lista de desejos. Não dá para desfazer.
+              Depois do sorteio não dá para adicionar nem remover pessoas. Se ninguém tiver aberto a carta ainda, dá para desfazer e sortear de novo.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

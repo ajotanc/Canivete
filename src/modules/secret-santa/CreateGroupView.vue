@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ArrowLeft, ChevronRight, Gift, KeyRound, ListChecks, Lock, LogOut } from '@lucide/vue'
+import dayjs from 'dayjs'
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -22,9 +23,12 @@ import { parseMoney } from '@/lib/money'
 import WishlistEditor from './components/WishlistEditor.vue'
 import { createGroup, listMyGroups, SantaApiError, type MyGroup, type WishItem } from './lib/api'
 import { adminPath } from './lib/links'
+import { isPin, PIN_LENGTH } from './lib/pin'
 import { saveCredentials } from './lib/session'
 
 const router = useRouter()
+/** A data da troca não pode estar no passado (AAAA-MM-DD, no fuso de quem está criando). */
+const today = dayjs().format('YYYY-MM-DD')
 const { user, ready } = useAuth()
 
 const step = ref(1)
@@ -72,7 +76,7 @@ async function onLogout() {
 const stepTitles = ['Como vai se chamar o grupo?', 'Valor e data (opcionais)', 'Você também participa?']
 const canContinue = computed(() => {
   if (step.value === 1) return name.value.trim().length > 0
-  if (step.value === 3 && participates.value) return myName.value.trim().length > 0 && /^\d{4,6}$/.test(myPin.value)
+  if (step.value === 3 && participates.value) return myName.value.trim().length > 0 && isPin(myPin.value)
   return true
 })
 
@@ -109,7 +113,7 @@ function onNext() {
     <PageHeader filled :icon="Gift" title="Amigo secreto" description="Crie o grupo, cadastre as pessoas e sorteie. Cada uma vê só quem tirou.">
       <dl class="grid grid-cols-2 gap-3 pt-2">
         <FactTile :icon="ListChecks" label="Grupo">3 passos</FactTile>
-        <FactTile :icon="KeyRound" label="PIN">4 números</FactTile>
+        <FactTile :icon="KeyRound" label="PIN">{{ PIN_LENGTH }} números</FactTile>
         <FactTile :icon="Lock" label="Privacidade" tone="paper" class="col-span-2">Só você vê o seu par</FactTile>
       </dl>
     </PageHeader>
@@ -176,7 +180,7 @@ function onNext() {
               </Field>
               <Field>
                 <FieldLabel for="event-date">Data da troca</FieldLabel>
-                <Input id="event-date" v-model="eventDate" type="date" />
+                <Input id="event-date" v-model="eventDate" type="date" :min="today" />
               </Field>
             </FieldGroup>
 
@@ -191,8 +195,8 @@ function onNext() {
                   <Input id="my-name" v-model="myName" maxlength="60" autocomplete="off" data-1p-ignore data-lpignore="true" />
                 </Field>
                 <Field>
-                  <FieldLabel for="my-pin">PIN de 4 números</FieldLabel>
-                  <PinField id="my-pin" v-model="myPin" label="PIN" />
+                  <FieldLabel for="my-pin">PIN de {{ PIN_LENGTH }} números</FieldLabel>
+                  <PinField id="my-pin" v-model="myPin" :length="PIN_LENGTH" label="PIN" />
                   <FieldDescription>Você usa o PIN para ver quem tirou. Anote, não dá para recuperar.</FieldDescription>
                 </Field>
                 <Field>

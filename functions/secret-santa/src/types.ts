@@ -62,6 +62,8 @@ export interface SantaDb {
   getGroup(id: string): Promise<GroupRow | null>
   listGroupsByOwner(ownerId: string): Promise<GroupRow[]>
   setGroupStatus(id: string, status: GroupStatus): Promise<void>
+  /** Troca nome, valor sugerido e data da troca. */
+  updateGroup(id: string, patch: Pick<GroupRow, 'name' | 'budget' | 'eventDate'>): Promise<void>
   /** Troca o texto do link (não é único). */
   setGroupSlug(id: string, slug: string): Promise<void>
   setGroupExclusions(id: string, exclusions: string[]): Promise<void>

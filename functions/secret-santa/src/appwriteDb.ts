@@ -108,6 +108,9 @@ export function createAppwriteDb(env: Env): SantaDb {
     async setGroupStatus(id, status) {
       await tables.updateRow({ databaseId, tableId: groupsTableId, rowId: id, data: { status } })
     },
+    async updateGroup(id, patch) {
+      await tables.updateRow({ databaseId, tableId: groupsTableId, rowId: id, data: patch })
+    },
     async setGroupColor(id, color) {
       await tables.updateRow({ databaseId, tableId: groupsTableId, rowId: id, data: { color } })
     },
@@ -143,7 +146,15 @@ export function createAppwriteDb(env: Env): SantaDb {
       return result.rows.map(toParticipant)
     },
     async updateParticipant(id, patch) {
-      await tables.updateRow({ databaseId, tableId: participantsTableId, rowId: id, data: patch })
+      try {
+        await tables.updateRow({ databaseId, tableId: participantsTableId, rowId: id, data: patch })
+      } catch (error) {
+        // Renomear para um nome que já existe no grupo bate no índice único (groupId, nameKey).
+        if ((error as { code?: number }).code === 409) {
+          throw new SantaError('NAME_TAKEN', 'Já existe alguém com esse nome neste grupo. Use outro nome.')
+        }
+        throw error
+      }
     },
     async deleteGroup(id) {
       // Apaga em lotes até não sobrar nada; o grupo vai por último, assim dá para tentar de novo se algo falhar.
