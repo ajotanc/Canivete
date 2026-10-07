@@ -3,6 +3,7 @@ import { Check, Copy, Dices, Link, ListChecks, ShieldCheck, Trash2, Zap } from '
 import { ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import ConfirmDelete from '@/components/ConfirmDelete.vue'
+import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -68,11 +69,11 @@ async function onCopy() {
 <template>
   <section class="space-y-8">
     <PageHeader filled :icon="Dices" title="Sorteador de nomes" description="Cole a lista, escolha quantos vencedores e sorteie.">
-      <dl class="grid grid-cols-2 gap-3 pt-2 sm:grid-cols-3">
+      <FactList>
         <FactTile :icon="ListChecks" label="Na lista">{{ parsed.names.length }} {{ parsed.names.length === 1 ? 'nome' : 'nomes' }}</FactTile>
         <FactTile :icon="ShieldCheck" label="Resultado">Verificável</FactTile>
-        <FactTile :icon="Zap" label="Para usar" tone="paper" class="col-span-2 sm:col-span-1">Sem cadastro</FactTile>
-      </dl>
+        <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
+      </FactList>
     </PageHeader>
 
     <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">

@@ -4,6 +4,7 @@ import { ArrowLeft, CalendarIcon, ChevronRight, Gift, KeyRound, ListChecks, Lock
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
+import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PinField from '@/components/PinField.vue'
@@ -128,11 +129,11 @@ function onNext() {
 <template>
   <section class="mx-auto w-full max-w-xl space-y-8">
     <PageHeader filled :icon="Gift" title="Amigo secreto" description="Crie o grupo, cadastre as pessoas e sorteie. Cada uma vê só quem tirou.">
-      <dl class="grid grid-cols-2 gap-3 pt-2">
+      <FactList>
         <FactTile :icon="ListChecks" label="Grupo">{{ stepTitles.length }} passos</FactTile>
         <FactTile :icon="KeyRound" label="PIN">{{ PIN_LENGTH }} números</FactTile>
-        <FactTile :icon="Lock" label="Privacidade" tone="paper" class="col-span-2">Só você vê o seu par</FactTile>
-      </dl>
+        <FactTile :icon="Lock" label="Privacidade" tone="paper">Só você vê o seu par</FactTile>
+      </FactList>
     </PageHeader>
 
     <div v-if="!ready" class="flex items-center gap-2 py-8 text-muted-foreground">

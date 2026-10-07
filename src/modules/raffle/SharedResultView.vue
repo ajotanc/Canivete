@@ -2,6 +2,7 @@
 import { AlertTriangle, Dices, SearchX, ShieldCheck, Trophy, TriangleAlert, Users } from '@lucide/vue'
 import { onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Badge } from '@/components/ui/badge'
@@ -71,11 +72,12 @@ function formatDate(iso: string): string {
         <template v-if="verified" #badge>
           <Badge variant="glass" class="gap-1.5 rounded-md py-1"><ShieldCheck aria-hidden="true" />Registro verificado</Badge>
         </template>
-        <dl class="grid grid-cols-2 gap-3 pt-2">
+        <FactList>
           <FactTile :icon="Users" label="Participantes">{{ raffle.participants.length }} {{ raffle.participants.length === 1 ? 'nome' : 'nomes' }}</FactTile>
           <FactTile :icon="Trophy" label="Sorteados">{{ raffle.winners.length }} {{ raffle.winners.length === 1 ? 'vencedor' : 'vencedores' }}</FactTile>
-          <FactTile v-if="verified" :icon="ShieldCheck" label="Registro" tone="paper" class="col-span-2">Não foi alterado depois de criado</FactTile>
-        </dl>
+          <FactTile v-if="verified" :icon="ShieldCheck" label="Registro" tone="paper">Não foi alterado depois de criado</FactTile>
+          <FactTile v-else :icon="AlertTriangle" label="Registro" tone="paper">Não confere com o original</FactTile>
+        </FactList>
       </PageHeader>
       <div
         v-if="!verified"

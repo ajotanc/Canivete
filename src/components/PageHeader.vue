@@ -29,12 +29,12 @@ withDefaults(
 </script>
 
 <template>
-  <header :class="cn('space-y-4', filled && 'rounded-3xl bg-primary p-6 text-primary-foreground sm:p-8 [&_[data-slot=button]:hover]:bg-primary-foreground/15 [&_[data-slot=button]:hover]:text-primary-foreground', $props.class)">
+  <header :class="cn('space-y-3 sm:space-y-4', filled && 'rounded-3xl bg-primary p-5 text-primary-foreground sm:p-8 [&_[data-slot=button]:hover]:bg-primary-foreground/15 [&_[data-slot=button]:hover]:text-primary-foreground', $props.class)">
     <div v-if="$slots.back || $slots.actions" class="flex min-h-11 items-center justify-between gap-3">
       <div class="-ml-3"><slot name="back" /></div>
       <div class="-mr-3"><slot name="actions" /></div>
     </div>
-    <div class="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+    <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
       <span
         v-if="icon"
         :class="cn('flex size-14 shrink-0 items-center justify-center rounded-md', filled ? 'bg-primary-foreground/15' : 'bg-primary/10 text-primary')"
@@ -43,13 +43,13 @@ withDefaults(
       </span>
       <slot name="media" />
       <div class="min-w-0 flex-1 space-y-2">
-        <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div class="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-3">
           <h1 :class="size === 'lg' ? 'text-4xl leading-[1.05] tracking-[-0.03em] sm:text-5xl' : 'text-3xl leading-tight sm:text-4xl'">
             {{ title }}
           </h1>
           <slot name="badge" />
         </div>
-        <p v-if="description" :class="cn('max-w-3xl text-balance text-lg', filled ? 'text-primary-foreground/90' : 'text-muted-foreground')">{{ description }}</p>
+        <p v-if="description" :class="cn('max-w-3xl text-balance text-base sm:text-lg', filled ? 'text-primary-foreground/90' : 'text-muted-foreground')">{{ description }}</p>
       </div>
     </div>
     <!-- Conteúdo extra (caixas de fatos, selos) ocupa a largura toda, abaixo do título -->

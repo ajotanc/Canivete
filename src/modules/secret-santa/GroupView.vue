@@ -3,6 +3,7 @@ import { CalendarDays, ChevronRight, Coins, Gift, KeyRound, Search, SearchX, Tri
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
+import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PinField from '@/components/PinField.vue'
@@ -163,11 +164,11 @@ async function onSubmit() {
             : 'O sorteio já foi feito. Escolha seu nome para ver quem você tirou.'
         "
       >
-        <dl class="grid grid-cols-2 gap-3 pt-2">
+        <FactList>
           <FactTile :icon="Users" label="Participantes">{{ group.participantCount }} {{ group.participantCount === 1 ? 'pessoa' : 'pessoas' }}</FactTile>
-          <FactTile v-if="group.budget !== null" :icon="Coins" label="Valor sugerido">{{ formatMoney(group.budget) }}</FactTile>
-          <FactTile v-if="group.eventDate" :icon="CalendarDays" :label="eventCountdown(group.eventDate)" tone="paper" class="col-span-2">{{ formatEventDate(group.eventDate) }}</FactTile>
-        </dl>
+          <FactTile :icon="Coins" label="Valor sugerido">{{ group.budget !== null ? formatMoney(group.budget) : 'A definir' }}</FactTile>
+          <FactTile :icon="CalendarDays" :label="group.eventDate ? eventCountdown(group.eventDate) : 'Data da troca'" tone="paper">{{ group.eventDate ? formatEventDate(group.eventDate) : 'A combinar' }}</FactTile>
+        </FactList>
         <AddToCalendar v-if="group.eventDate" class="-ml-3 self-start" :group-id="groupId" :group-name="group.name" :event-date="group.eventDate" />
       </PageHeader>
 

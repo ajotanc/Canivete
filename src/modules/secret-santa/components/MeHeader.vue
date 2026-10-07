@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowLeft, CalendarDays, Coins, Gift, LayoutDashboard, LogOut, Users } from '@lucide/vue'
 import { RouterLink } from 'vue-router'
+import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Button } from '@/components/ui/button'
@@ -35,11 +36,11 @@ defineEmits<{ logout: [] }>()
       </Button>
     </template>
     <template #badge><slot name="badge" /></template>
-    <dl v-if="group" class="grid grid-cols-2 gap-3 pt-2">
+    <FactList v-if="group">
       <FactTile :icon="Users" label="Participantes">{{ group.participantCount }} {{ group.participantCount === 1 ? 'pessoa' : 'pessoas' }}</FactTile>
-      <FactTile v-if="group.budget !== null" :icon="Coins" label="Valor sugerido">{{ formatMoney(group.budget) }}</FactTile>
-      <FactTile v-if="group.eventDate" :icon="CalendarDays" :label="eventCountdown(group.eventDate)" tone="paper" class="col-span-2">{{ formatEventDate(group.eventDate) }}</FactTile>
-    </dl>
+      <FactTile :icon="Coins" label="Valor sugerido">{{ group.budget !== null ? formatMoney(group.budget) : 'A definir' }}</FactTile>
+      <FactTile :icon="CalendarDays" :label="group.eventDate ? eventCountdown(group.eventDate) : 'Data da troca'" tone="paper">{{ group.eventDate ? formatEventDate(group.eventDate) : 'A combinar' }}</FactTile>
+    </FactList>
     <!-- Atalhos em linha própria: no celular "Voltar", "Painel" e "Sair" juntos não cabem lado a lado. -->
     <div v-if="isOrganizer || group?.eventDate" class="-ml-3 flex flex-wrap gap-2">
       <Button v-if="isOrganizer" as-child variant="ghost" size="sm">

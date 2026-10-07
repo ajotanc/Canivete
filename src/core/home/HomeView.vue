@@ -2,6 +2,7 @@
 import { ArrowRight, Download, Search, SearchX, Wrench, Zap } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Badge } from '@/components/ui/badge'
@@ -39,11 +40,11 @@ function clearFilters() {
       title="Ferramentas para o dia a dia"
       description="Abra, resolva e compartilhe o resultado. Sem cadastro para usar."
     >
-      <dl class="grid grid-cols-2 gap-3 pt-2 sm:grid-cols-3">
+      <FactList>
         <FactTile :icon="Wrench" label="Ferramentas">{{ tools.length }}</FactTile>
         <FactTile :icon="Download" label="Instalável">Como app</FactTile>
-        <FactTile :icon="Zap" label="Para usar" tone="paper" class="col-span-2 sm:col-span-1">Sem cadastro</FactTile>
-      </dl>
+        <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
+      </FactList>
     </PageHeader>
 
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">

@@ -18,6 +18,7 @@ import { applyGroupColor, COLOR_LABELS, colorLabel, colorProblem, isHexColor } f
 import ConfirmDelete from '@/components/ConfirmDelete.vue'
 import BoardPanel from './components/BoardPanel.vue'
 import ExclusionsCard from './components/ExclusionsCard.vue'
+import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Badge } from '@/components/ui/badge'
@@ -481,12 +482,12 @@ async function onDraw() {
         <template #badge>
           <Badge variant="glass" class="rounded-md">{{ status === 'drawn' ? 'Sorteado' : 'Aberto' }}</Badge>
         </template>
-        <dl class="grid grid-cols-2 gap-3 pt-2">
+        <FactList>
           <FactTile :icon="Users" label="Participantes">{{ participants.length }} {{ participants.length === 1 ? 'pessoa' : 'pessoas' }}</FactTile>
           <FactTile :icon="KeyRound" label="PIN criado">{{ participants.length - pendingCount }} de {{ participants.length }}</FactTile>
-          <FactTile v-if="eventDate" :icon="CalendarDays" :label="eventCountdown(eventDate)" tone="paper" class="col-span-2">{{ formatEventDate(eventDate) }}</FactTile>
-          <FactTile v-else :icon="Gift" label="Sorteio" tone="paper" class="col-span-2">{{ status === 'drawn' ? 'Já foi feito' : 'Ainda não foi feito' }}</FactTile>
-        </dl>
+          <FactTile v-if="eventDate" :icon="CalendarDays" :label="eventCountdown(eventDate)" tone="paper">{{ formatEventDate(eventDate) }}</FactTile>
+          <FactTile v-else :icon="Gift" label="Sorteio" tone="paper">{{ status === 'drawn' ? 'Já foi feito' : 'Ainda não foi feito' }}</FactTile>
+        </FactList>
       </PageHeader>
 
       <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,23rem)]">

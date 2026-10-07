@@ -19,7 +19,7 @@ withDefaults(
 </script>
 
 <template>
-  <div :class="cn('flex items-center gap-3 rounded-xl p-3', tone === 'paper' ? 'bg-card text-card-foreground shadow-sm' : 'bg-primary-foreground/15', $props.class)">
+  <div :class="cn('flex items-center gap-2.5 rounded-xl p-2.5 sm:gap-3 sm:p-3', tone === 'paper' ? 'col-span-2 bg-card text-card-foreground shadow-sm sm:col-span-1' : 'bg-primary-foreground/15', $props.class)">
     <component :is="icon" class="size-5 shrink-0" aria-hidden="true" />
     <div class="min-w-0">
       <dt :class="cn('text-xs', tone === 'paper' ? 'text-muted-foreground' : 'text-primary-foreground/90')">{{ label }}</dt>
