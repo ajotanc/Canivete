@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ArrowRight, Download, LayoutGrid, MessageCircle, Search, SearchX, TerminalSquare, Dices, Wrench, Zap } from '@lucide/vue'
-import type { Component } from 'vue'
+import { ArrowRight, Download, Search, SearchX, Wrench, Zap } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import FactList from '@/components/FactList.vue'
@@ -10,11 +9,9 @@ import { Badge } from '@/components/ui/badge'
 import EmptyState from '@/components/EmptyState.vue'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { filterTools } from '@/core/home/filterTools'
 import { tools } from '@/core/modules/registry'
-
-/** Ícone de cada categoria no filtro; categorias novas caem no ícone genérico. */
-const CATEGORY_ICONS: Record<string, Component> = { Comunicação: MessageCircle, Desenvolvimento: TerminalSquare, Sorteios: Dices }
 
 const query = ref('')
 /** 'all' mostra tudo; qualquer outro valor é o nome de uma categoria. */
@@ -23,10 +20,13 @@ const category = ref('all')
 const categories = computed(() => [...new Set(tools.map((tool) => tool.category))].sort())
 const visibleTools = computed(() => filterTools(tools, query.value, category.value === 'all' ? null : category.value))
 
-/** "Todas" mais uma opção por categoria, cada uma com quantas ferramentas tem. */
+/** "Todas" mais uma opção por categoria, com quantas ferramentas tem e as cores de cabo delas (até três). */
 const options = computed(() => [
-  { value: 'all', label: 'Todas', count: tools.length, icon: LayoutGrid },
-  ...categories.value.map((name) => ({ value: name, label: name, count: tools.filter((tool) => tool.category === name).length, icon: CATEGORY_ICONS[name] ?? LayoutGrid })),
+  { value: 'all', label: 'Todas', count: tools.length, colors: [...new Set(tools.map((tool) => tool.color ?? 'cobalt'))].slice(0, 3) },
+  ...categories.value.map((name) => {
+    const inside = tools.filter((tool) => tool.category === name)
+    return { value: name, label: name, count: inside.length, colors: [...new Set(inside.map((tool) => tool.color ?? 'cobalt'))].slice(0, 3) }
+  }),
 ])
 
 function clearFilters() {
@@ -51,29 +51,48 @@ function clearFilters() {
       </FactList>
     </PageHeader>
 
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-      <InputGroup class="bg-card sm:max-w-sm">
+    <div class="flex items-center gap-2 sm:gap-3">
+      <InputGroup class="min-w-0 flex-1 bg-card sm:max-w-sm sm:flex-none">
         <InputGroupAddon>
           <Search aria-hidden="true" />
         </InputGroupAddon>
-        <InputGroupInput v-model="query" type="search" aria-label="Buscar ferramenta" placeholder="Buscar ferramenta" />
+        <InputGroupInput v-model="query" type="search" aria-label="Buscar ferramenta" placeholder="Buscar" />
         <InputGroupAddon align="inline-end" class="max-sm:hidden">
           <Kbd>/</Kbd>
         </InputGroupAddon>
       </InputGroup>
-      <div role="group" aria-label="Filtrar por categoria" class="grid grid-cols-2 gap-1 rounded-2xl border bg-muted/60 p-1 sm:flex sm:w-fit">
+      <!-- Celular: um seletor compacto ao lado da busca (sem rolagem nem quebra de linha) -->
+      <Select v-model="category">
+        <SelectTrigger aria-label="Filtrar por categoria" class="h-11 w-36 shrink-0 gap-2 bg-card sm:hidden">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="option in options" :key="option.value" :value="option.value">
+            <span class="flex items-center gap-2">
+              <span class="flex -space-x-1" aria-hidden="true"><span v-for="color in option.colors" :key="color" :data-tool="color" class="size-2.5 rounded-full bg-tool ring-2 ring-popover" /></span>
+              {{ option.label }}
+              <span class="text-xs tabular-nums text-muted-foreground">{{ option.count }}</span>
+            </span>
+          </SelectItem>
+        </SelectContent>
+      </Select>
+
+      <!-- Computador: pílulas de tinta; os pontinhos são as cores de cabo das ferramentas de cada categoria -->
+      <div role="group" aria-label="Filtrar por categoria" class="hidden flex-wrap gap-2 sm:flex">
         <button
           v-for="option in options"
           :key="option.value"
           type="button"
           :aria-pressed="category === option.value"
-          class="group flex h-11 items-center gap-1.5 rounded-xl px-2.5 text-sm font-medium sm:gap-2 sm:px-3 outline-none transition-[background-color,box-shadow,color] focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
-          :class="category === option.value ? 'bg-card text-foreground shadow-sm ring-1 ring-border' : 'text-muted-foreground hover:bg-card/60 hover:text-foreground'"
+          class="inline-flex h-10 items-center gap-2 rounded-full border px-3.5 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+          :class="category === option.value ? 'border-foreground bg-foreground text-background' : 'bg-card text-foreground hover:border-foreground/40'"
           @click="category = option.value"
         >
-          <component :is="option.icon" class="size-4 shrink-0" :class="category === option.value ? 'text-primary' : ''" aria-hidden="true" />
-          <span class="min-w-0 flex-1 truncate text-left">{{ option.label }}</span>
-          <span class="hidden rounded-md px-1.5 py-0.5 text-xs tabular-nums sm:inline" :class="category === option.value ? 'bg-primary/10 text-primary' : 'bg-foreground/5'">{{ option.count }}</span>
+          <span class="flex -space-x-1" aria-hidden="true">
+            <span v-for="color in option.colors" :key="color" :data-tool="color" class="size-2.5 rounded-full bg-tool ring-2" :class="category === option.value ? 'ring-foreground' : 'ring-card'" />
+          </span>
+          {{ option.label }}
+          <span class="text-xs tabular-nums opacity-60">{{ option.count }}</span>
         </button>
       </div>
     </div>
