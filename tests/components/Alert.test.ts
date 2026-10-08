@@ -10,6 +10,7 @@ describe('Alert', () => {
       const classes = alertVariants({ variant: variant as keyof typeof colors })
       expect(classes).toContain(`text-${color}`)
       expect(classes).toContain(`border-${color}/30`)
+      expect(classes).toContain(`bg-${color}/10`)
     }
   })
 
