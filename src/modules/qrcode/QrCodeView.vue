@@ -20,6 +20,7 @@ type Kind = 'text' | 'wifi' | 'contact'
 const DEFAULT_COLOR = '#111111'
 
 const COLORS = [
+  { label: 'Preto', value: DEFAULT_COLOR },
   { label: 'Azul', value: '#1d4ed8' },
   { label: 'Verde', value: '#15803d' },
   { label: 'Vinho', value: '#9f1239' },
@@ -31,7 +32,7 @@ const MIN_CONTRAST = 3
 const kind = ref<Kind>('text')
 const dark = ref<string>(DEFAULT_COLOR)
 const customColor = ref('#7c3aed')
-const isCustom = computed(() => dark.value !== DEFAULT_COLOR && !COLORS.some((color) => color.value === dark.value))
+const isCustom = computed(() => !COLORS.some((color) => color.value === dark.value))
 
 /** Contraste (WCAG) da cor escolhida contra o branco. */
 function contrastWithWhite(hex: string): number {
