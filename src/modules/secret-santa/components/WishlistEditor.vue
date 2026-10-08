@@ -3,7 +3,7 @@ import { Link2, Plus, Trash2 } from '@lucide/vue'
 import { nextTick, ref, watch } from 'vue'
 import ConfirmDelete from '@/components/ConfirmDelete.vue'
 import { Button } from '@/components/ui/button'
-import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
+import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { LIMITS } from '../constants'
 import type { WishItem } from '../lib/api'
 
@@ -86,22 +86,22 @@ function remove() {
             placeholder="Ex.: meias de lã"
             :aria-label="`Presente ${index + 1}`"
           />
-          <InputGroupAddon align="inline-end">
-            <InputGroupButton
+          <InputGroupAddon align="inline-end" class="gap-0 pr-1">
+            <Button
               type="button"
               variant="ghost"
-              size="icon-sm"
-              class="rounded-none"
+              size="icon"
+              class="size-9"
               :class="row.hasLink ? 'text-primary' : 'text-muted-foreground'"
               :aria-pressed="row.hasLink"
               :aria-label="row.hasLink ? `Tirar o link de ${row.text || 'presente ' + (index + 1)}` : `Adicionar link de ${row.text || 'presente ' + (index + 1)}`"
               @click="row.hasLink = !row.hasLink"
             >
               <Link2 aria-hidden="true" />
-            </InputGroupButton>
-            <InputGroupButton type="button" variant="ghost" size="icon-sm" class="text-destructive hover:text-destructive" :aria-label="`Remover ${row.text || 'presente ' + (index + 1)}`" @click="askRemove(index)">
+            </Button>
+            <Button type="button" variant="ghost" size="icon" class="size-9 text-destructive hover:text-destructive" :aria-label="`Remover ${row.text || 'presente ' + (index + 1)}`" @click="askRemove(index)">
               <Trash2 aria-hidden="true" />
-            </InputGroupButton>
+            </Button>
           </InputGroupAddon>
         </InputGroup>
 
@@ -126,7 +126,7 @@ function remove() {
       </li>
     </ul>
 
-    <Button type="button" variant="ghost" size="lg" class="w-full" :disabled="rows.length >= max" @click="add">
+    <Button type="button" variant="outline" size="lg" class="w-full" :disabled="rows.length >= max" @click="add">
       <Plus aria-hidden="true" />
       {{ rows.length >= max ? `Limite de ${max} presentes` : 'Adicionar presente' }}
     </Button>
