@@ -106,7 +106,8 @@ function remove() {
         </InputGroup>
 
         <div class="grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none" :class="row.hasLink ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
-          <div class="overflow-hidden" :inert="!row.hasLink">
+          <!-- O respiro de 1 (p-1/-m-1) evita que o overflow corte o contorno de foco do campo. -->
+          <div class="-m-1 overflow-hidden p-1" :inert="!row.hasLink">
             <InputGroup class="h-11 bg-card has-[[data-slot=input-group-control]:focus-visible]:border-foreground/50 has-[[data-slot=input-group-control]:focus-visible]:ring-foreground/10">
               <InputGroupAddon><Link2 aria-hidden="true" /></InputGroupAddon>
               <InputGroupInput
