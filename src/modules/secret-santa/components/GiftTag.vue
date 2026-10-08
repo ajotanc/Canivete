@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ChevronsRight, Heart, LockKeyhole, Sparkles } from '@lucide/vue'
 import { onBeforeUnmount, ref, useId, watch } from 'vue'
+import { play } from '@/core/effects/sound'
 
 /** Carta selada: envelope e conteúdo ocupam a mesma área fixa, sem sobrepor o restante da página. */
 const props = defineProps<{ name: string; revealed: boolean; names?: string[] }>()
@@ -23,6 +24,7 @@ function open() {
   dragging.value = false
   progress.value = 1
   opened.value = true
+  play('unseal')
   emit('reveal')
   clearTimeout(landedTimer)
   landedTimer = setTimeout(() => emit('landed'), 360)

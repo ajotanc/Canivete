@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { Moon, Search, Sun } from '@lucide/vue'
+import { Moon, Search, Sun, Volume2, VolumeX } from '@lucide/vue'
 import { computed, ref, watchEffect } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { soundEnabled, toggleSound } from '@/core/effects/sound'
 import CommandPalette from '@/core/layout/CommandPalette.vue'
 import { tools } from '@/core/modules/registry'
 import { useTheme } from '@/core/theme/useTheme'
@@ -50,6 +51,15 @@ watchEffect(() => {
             <Search class="size-5" aria-hidden="true" />
           </Button>
           <TooltipProvider :delay-duration="300">
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button variant="ghost" size="icon" class="hover:bg-transparent dark:hover:bg-transparent" :aria-label="soundEnabled ? 'Desligar o som' : 'Ligar o som'" :aria-pressed="soundEnabled" @click="toggleSound">
+                  <Volume2 v-if="soundEnabled" class="size-5" aria-hidden="true" />
+                  <VolumeX v-else class="size-5" aria-hidden="true" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{{ soundEnabled ? 'Som ligado' : 'Som desligado' }}</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger as-child>
                 <Button variant="ghost" size="icon" class="hover:bg-transparent dark:hover:bg-transparent" :aria-label="isDark ? 'Usar tema claro' : 'Usar tema escuro'" @click="toggle">

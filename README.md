@@ -55,6 +55,10 @@ npm run build
 
 A consulta de CEP é a única que chama um serviço externo (`viacep.com.br`, direto do navegador); as outras rodam só no aparelho.
 
+## Som
+
+Os efeitos sonoros (roleta, dados, moeda, carta do amigo secreto) são sintetizados na hora pelo Web Audio, em `src/core/effects/sound.ts`; não há arquivos de áudio. O botão de som no cabeçalho liga e desliga, e a escolha fica no `localStorage` (`canivete:sound`). Para criar um efeito novo, acrescente o nome em `SoundName` e a receita em `SOUNDS`.
+
 ## Convenções
 
 Código (nomes de arquivos, funções, variáveis, tipos, rotas) em inglês. Textos de interface, mensagens, comentários e blocos de documentação em português. Estilo 100% Tailwind; `style` inline só para valores dinâmicos.

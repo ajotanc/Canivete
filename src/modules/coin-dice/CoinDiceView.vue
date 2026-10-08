@@ -2,6 +2,7 @@
 import { Coins, Dices, RotateCcw, Zap } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref } from 'vue'
 import EmptyState from '@/components/EmptyState.vue'
+import { play } from '@/core/effects/sound'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import NumberInput from '@/components/NumberInput.vue'
@@ -27,7 +28,9 @@ async function flip() {
   if (flipping.value || !coin.value) return
   const side = flipCoin()
   flipping.value = true
+  play('toss')
   await coin.value.toss(side)
+  play('land')
   coinSide.value = side
   tally.value = { ...tally.value, [side]: tally.value[side] + 1 }
   flipping.value = false
@@ -52,6 +55,7 @@ const count = computed(() => Math.min(MAX_DICE, Math.max(1, Math.floor(Number(di
 function roll() {
   if (rolling.value) return
   const result = rollDice(count.value, sides.value)
+  play('dice')
   last.value = result
   rollId.value++
   rolling.value = true

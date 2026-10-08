@@ -2,6 +2,7 @@
 import { CircleDot, Dices, RotateCw, Trophy, Zap } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { triggerConfetti } from '@/core/effects/confetti'
+import { play } from '@/core/effects/sound'
 import EmptyState from '@/components/EmptyState.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
@@ -68,6 +69,7 @@ function watchTicks(total: number): void {
     if (slice !== last) {
       last = slice
       pointer.value?.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(-26deg)', offset: 0.35 }, { transform: 'rotate(0deg)' }], { duration: 120 })
+      play('tick')
       navigator.vibrate?.(5)
     }
     frame = requestAnimationFrame(loop)
@@ -87,6 +89,7 @@ async function spin() {
   winner.value = null
   winnerIndex.value = null
   spinning.value = true
+  play('whoosh')
   if (!reducedMotion() && wheel.value) {
     watchTicks(list.length)
     await wheel.value.animate([{ transform: `rotate(${from}deg)` }, { transform: `rotate(${to}deg)` }], { duration: SPIN_MS, easing: 'cubic-bezier(0.1, 0.55, 0.05, 1)' }).finished.catch(() => undefined)
@@ -96,6 +99,7 @@ async function spin() {
   winner.value = list[index]
   winnerIndex.value = index
   history.value = [list[index], ...history.value].slice(0, 8)
+  play('win')
   if (!reducedMotion()) triggerConfetti({ colors: PALETTE.map((name) => getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim()).filter(Boolean), durationMs: 1800 })
   if (removeWinner.value && options.value.length > MIN_OPTIONS - 1) {
     // Tira a fatia sorteada depois de um instante, para dar tempo de ver onde a roleta parou.
