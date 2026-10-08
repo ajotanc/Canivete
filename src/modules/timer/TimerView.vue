@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { BellRing, Flag, Pause, Play, RotateCcw, Timer, Zap, Coffee, Brain, Hourglass } from '@lucide/vue'
-import { useIntervalFn } from '@vueuse/core'
+import { useIntervalFn, useStorage } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import EmptyState from '@/components/EmptyState.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
+import NumberInput from '@/components/NumberInput.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { beep } from './lib/beep'
 import { askNotifyPermission, notify, notifyState, type NotifyState } from './lib/notify'
-import { DEFAULT_POMODORO, elapsed, formatClock, formatCountdown, idle, isRunning, nextPhase, pause, phaseMinutes, remainingMs, start, type PomodoroPhase, type Run } from './lib/clock'
+import { DEFAULT_POMODORO, elapsed, formatClock, formatCountdown, idle, isRunning, nextPhase, pause, phaseMinutes, remainingMs, start, type PomodoroConfig, type PomodoroPhase, type Run } from './lib/clock'
 
 const tab = ref('stopwatch')
 /** Horário atual, atualizado vinte vezes por segundo para os centésimos do cronômetro. */
@@ -41,14 +41,14 @@ const lapRows = computed(() => laps.value.map((total, index) => ({ number: laps.
 
 // Timer
 const PRESETS = [1, 5, 10, 15, 30] as const
-const minutesText = ref('5')
-const secondsText = ref('0')
+const minutes = ref(5)
+const seconds = ref(0)
 const timerRun = ref<Run>(idle())
 /** Duração em curso; só muda ao iniciar, para editar os campos não mexer na contagem. */
 const timerDuration = ref(0)
 const finished = ref(false)
 
-const configuredMs = computed(() => (Number.parseInt(minutesText.value, 10) || 0) * 60_000 + (Number.parseInt(secondsText.value, 10) || 0) * 1000)
+const configuredMs = computed(() => (Number(minutes.value) || 0) * 60_000 + (Number(seconds.value) || 0) * 1000)
 const timerActive = computed(() => timerDuration.value > 0)
 const timerLeft = computed(() => (timerActive.value ? remainingMs(timerDuration.value, timerRun.value, now.value) : configuredMs.value))
 
@@ -69,17 +69,26 @@ function resetTimer() {
   timerDuration.value = 0
   finished.value = false
 }
-function usePreset(minutes: number) {
+function usePreset(amount: number) {
   resetTimer()
-  minutesText.value = String(minutes)
-  secondsText.value = '0'
+  minutes.value = amount
+  seconds.value = 0
 }
 
 // Pomodoro
 const phase = ref<PomodoroPhase>('focus')
 const completedFocus = ref(0)
 const pomodoroRun = ref<Run>(idle())
-const phaseDuration = computed(() => phaseMinutes(phase.value, DEFAULT_POMODORO) * 60_000)
+/** Tempos escolhidos, guardados no aparelho. Campo vazio ou fora da faixa volta ao padrão. */
+const stored = useStorage('canivete:pomodoro', { ...DEFAULT_POMODORO }, undefined, { mergeDefaults: true })
+const config = computed<PomodoroConfig>(() => {
+  const pick = (key: keyof PomodoroConfig, max: number) => {
+    const value = Number(stored.value[key])
+    return Number.isInteger(value) && value >= 1 && value <= max ? value : DEFAULT_POMODORO[key]
+  }
+  return { focusMinutes: pick('focusMinutes', 180), shortBreakMinutes: pick('shortBreakMinutes', 60), longBreakMinutes: pick('longBreakMinutes', 120), cyclesBeforeLong: pick('cyclesBeforeLong', 12) }
+})
+const phaseDuration = computed(() => phaseMinutes(phase.value, config.value) * 60_000)
 const pomodoroLeft = computed(() => remainingMs(phaseDuration.value, pomodoroRun.value, now.value))
 const PHASES: Record<PomodoroPhase, { label: string; icon: typeof Brain }> = {
   focus: { label: 'Foco', icon: Brain },
@@ -111,7 +120,7 @@ watch(now, (current) => {
   }
   if (isRunning(pomodoroRun.value) && remainingMs(phaseDuration.value, pomodoroRun.value, current) === 0) {
     if (phase.value === 'focus') completedFocus.value++
-    phase.value = nextPhase(phase.value, completedFocus.value, DEFAULT_POMODORO)
+    phase.value = nextPhase(phase.value, completedFocus.value, config.value)
     pomodoroRun.value = start(idle(), current)
     beep()
     const message = phase.value === 'focus' ? 'Hora de voltar ao foco.' : 'Hora de uma pausa.'
@@ -170,15 +179,15 @@ watch(now, (current) => {
             <div class="mx-auto grid max-w-xs grid-cols-2 gap-3">
               <Field>
                 <FieldLabel for="minutes">Minutos</FieldLabel>
-                <Input id="minutes" v-model="minutesText" v-maska data-maska="###" inputmode="numeric" :disabled="timerActive" class="tabular-nums" />
+                <NumberInput id="minutes" v-model="minutes" :min="0" :max="999" :disabled="timerActive" class="w-full" />
               </Field>
               <Field>
                 <FieldLabel for="seconds">Segundos</FieldLabel>
-                <Input id="seconds" v-model="secondsText" v-maska data-maska="##" inputmode="numeric" :disabled="timerActive" class="tabular-nums" />
+                <NumberInput id="seconds" v-model="seconds" :min="0" :max="59" :disabled="timerActive" class="w-full" />
               </Field>
             </div>
             <div class="flex flex-wrap justify-center gap-2">
-              <Button v-for="minutes in PRESETS" :key="minutes" size="sm" variant="outline" class="tabular-nums" @click="usePreset(minutes)">{{ minutes }} min</Button>
+              <Button v-for="preset in PRESETS" :key="preset" size="sm" variant="outline" class="tabular-nums" @click="usePreset(preset)">{{ preset }} min</Button>
             </div>
             <div class="flex flex-wrap justify-center gap-3">
               <Button size="lg" class="min-w-32" :disabled="!timerActive && configuredMs <= 0" @click="toggleTimer">
@@ -198,7 +207,7 @@ watch(now, (current) => {
                 {{ PHASES[phase].label }}
               </p>
               <p class="mt-3 text-6xl font-semibold tabular-nums sm:text-7xl" role="timer" aria-label="Pomodoro">{{ formatCountdown(pomodoroLeft) }}</p>
-              <p class="mt-2 text-sm text-muted-foreground">{{ completedFocus }} {{ completedFocus === 1 ? 'foco concluído' : 'focos concluídos' }}. Foco de 25 min, pausa de 5 e, a cada 4 focos, pausa de 15.</p>
+              <p class="mt-2 text-sm text-muted-foreground">{{ completedFocus }} {{ completedFocus === 1 ? 'foco concluído' : 'focos concluídos' }}. Foco de {{ config.focusMinutes }} min, pausa de {{ config.shortBreakMinutes }} e, a cada {{ config.cyclesBeforeLong }} focos, pausa de {{ config.longBreakMinutes }}.</p>
             </div>
             <p v-if="notifications === 'denied'" class="text-center text-sm text-muted-foreground">Os avisos do navegador estão bloqueados para este site. Libere nas configurações do site para ser avisado no fim de cada fase.</p>
             <p v-else-if="notifications === 'unsupported'" class="text-center text-sm text-muted-foreground">Este navegador não mostra avisos; você ainda ouve o bipe com a página aberta.</p>
@@ -209,6 +218,31 @@ watch(now, (current) => {
                 {{ isRunning(pomodoroRun) ? 'Pausar' : pomodoroRun.elapsedBefore > 0 ? 'Continuar' : 'Iniciar' }}
               </Button>
               <Button size="lg" variant="outline" @click="resetPomodoro"><RotateCcw aria-hidden="true" />Zerar</Button>
+            </div>
+            <div class="space-y-3 border-t pt-6">
+              <div class="flex items-center justify-between gap-3">
+                <h3 class="text-base font-semibold">Tempos</h3>
+                <Button type="button" variant="ghost" size="sm" :disabled="isRunning(pomodoroRun)" @click="Object.assign(stored, DEFAULT_POMODORO)">Usar o padrão</Button>
+              </div>
+              <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <Field>
+                  <FieldLabel for="focus-minutes">Foco (min)</FieldLabel>
+                  <NumberInput id="focus-minutes" v-model="stored.focusMinutes" :min="1" :max="180" :disabled="isRunning(pomodoroRun)" class="w-full" />
+                </Field>
+                <Field>
+                  <FieldLabel for="short-break-minutes">Pausa curta (min)</FieldLabel>
+                  <NumberInput id="short-break-minutes" v-model="stored.shortBreakMinutes" :min="1" :max="60" :disabled="isRunning(pomodoroRun)" class="w-full" />
+                </Field>
+                <Field>
+                  <FieldLabel for="long-break-minutes">Pausa longa (min)</FieldLabel>
+                  <NumberInput id="long-break-minutes" v-model="stored.longBreakMinutes" :min="1" :max="120" :disabled="isRunning(pomodoroRun)" class="w-full" />
+                </Field>
+                <Field>
+                  <FieldLabel for="cycles-before-long">Focos até a longa</FieldLabel>
+                  <NumberInput id="cycles-before-long" v-model="stored.cyclesBeforeLong" :min="1" :max="12" :disabled="isRunning(pomodoroRun)" class="w-full" />
+                </Field>
+              </div>
+              <p class="text-sm text-muted-foreground">Os tempos ficam salvos neste aparelho. Mudar com o relógio pausado vale na hora.</p>
             </div>
           </TabsContent>
         </Tabs>

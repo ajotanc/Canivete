@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { getLocalTimeZone, today, type DateValue } from '@internationalized/date'
-import { ArrowLeft, CalendarIcon, ChevronRight, Gift, KeyRound, ListChecks, Lock, LogOut } from '@lucide/vue'
+import { ArrowLeft, ChevronRight, Gift, KeyRound, ListChecks, Lock, LogOut } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -10,13 +9,11 @@ import PageHeader from '@/components/PageHeader.vue'
 import PinField from '@/components/PinField.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Calendar } from '@/components/ui/calendar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/components/ui/input-group'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
 import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
 import HeaderSkeleton from '@/components/skeletons/HeaderSkeleton.vue'
@@ -25,10 +22,9 @@ import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { loadUser, logout, useAuth } from '@/core/services/auth'
 import AuthForm from './components/AuthForm.vue'
-import { dateValueToIso, eventYearRange, formatDateValue, isoToDateValue } from '@/lib/date'
+import DateField from '@/components/DateField.vue'
+import { DATE_PICKER } from '@/core/config'
 import { parseMoney } from '@/lib/money'
-import { makeRoomBelow } from '@/lib/scroll'
-import { cn } from '@/lib/utils'
 import WishlistEditor from './components/WishlistEditor.vue'
 import { createGroup, listMyGroups, SantaApiError, type MyGroup, type WishItem } from './lib/api'
 import { adminPath } from './lib/links'
@@ -37,24 +33,12 @@ import { isPin } from './lib/pin'
 import { saveCredentials } from './lib/session'
 
 const router = useRouter()
-/** A data da troca não pode estar no passado. */
-const minDate = today(getLocalTimeZone())
 const { user, ready } = useAuth()
 
 const step = ref(1)
 const name = ref('')
 const budget = ref('')
 const eventDate = ref('')
-const eventDateOpen = ref(false)
-const eventYears = computed(() => eventYearRange(eventDateValue.value))
-/** O Calendar usa `DateValue`; o grupo guarda a data como texto AAAA-MM-DD. */
-const eventDateValue = computed<DateValue | undefined>({
-  get: () => isoToDateValue(eventDate.value),
-  set: (value) => {
-    eventDate.value = dateValueToIso(value)
-    eventDateOpen.value = false
-  },
-})
 const participates = ref(true)
 const myName = ref('')
 const myPin = ref('')
@@ -201,20 +185,7 @@ function onNext() {
               </Field>
               <Field>
                 <FieldLabel for="event-date">Data da troca</FieldLabel>
-                <Popover v-model:open="eventDateOpen">
-                  <PopoverTrigger as-child>
-                    <Button id="event-date" type="button" variant="outline" @click.capture="makeRoomBelow" :class="cn('w-full justify-start text-left font-normal', !eventDateValue && 'text-muted-foreground')">
-                      <CalendarIcon aria-hidden="true" />
-                      {{ eventDateValue ? formatDateValue(eventDateValue) : 'Escolha a data' }}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent class="w-(--reka-popover-trigger-width) max-w-[22rem] p-0">
-                    <Calendar v-model="eventDateValue" :default-placeholder="eventDateValue ?? minDate" :min-value="minDate" :year-range="eventYears" locale="pt-BR" weekday-format="short" layout="month-and-year" initial-focus />
-                    <div class="border-t p-1">
-                      <Button type="button" variant="ghost" size="sm" class="w-full" @click="eventDateValue = minDate">Hoje</Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
+                <DateField id="event-date" v-model="eventDate" min-today :past="0" :future="DATE_PICKER.yearsAhead" />
               </Field>
             </FieldGroup>
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Input } from '@/components/ui/input'
-import { parseColor, toHex } from '../lib/color'
+import { parseColor, toHex } from '@/lib/color'
 
 /**
  * Campo de cor: texto livre (HEX, rgb() ou hsl()) e, ao lado, uma amostra que abre o seletor de cor do aparelho.

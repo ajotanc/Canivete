@@ -5,13 +5,13 @@ import { toast } from 'vue-sonner'
 import ConfirmDelete from '@/components/ConfirmDelete.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
+import NumberInput from '@/components/NumberInput.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldContent, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
-import { NumberField, NumberFieldContent, NumberFieldDecrement, NumberFieldIncrement, NumberFieldInput } from '@/components/ui/number-field'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import DrawAnimation from './components/DrawAnimation.vue'
@@ -97,13 +97,7 @@ async function onCopy() {
                   <FieldLabel for="winner-count">Vencedores</FieldLabel>
                   <FieldDescription>Quantos nomes saem do sorteio.</FieldDescription>
                 </FieldContent>
-                <NumberField id="winner-count" v-model="winnerCount" :min="1" class="w-32">
-                  <NumberFieldContent>
-                    <NumberFieldDecrement />
-                    <NumberFieldInput class="h-11" />
-                    <NumberFieldIncrement />
-                  </NumberFieldContent>
-                </NumberField>
+                <NumberInput id="winner-count" v-model="winnerCount" :min="1" />
               </Field>
               <Field orientation="horizontal">
                 <FieldContent>

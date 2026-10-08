@@ -9,8 +9,8 @@ import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldLabel } from '@/components/ui/field'
-import ColorField from './components/ColorField.vue'
-import { parseColor, readableOn, shades, toHex, toHslString, toRgbString, wcag, type Rgb } from './lib/color'
+import ColorField from '@/components/ColorField.vue'
+import { parseColor, readableOn, shades, toHex, toHslString, toRgbString, wcag, type Rgb } from '@/lib/color'
 
 const text = ref('#2F5BEA')
 const color = computed(() => parseColor(text.value))

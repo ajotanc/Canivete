@@ -8,6 +8,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { LENGTH_DEFAULT, LENGTH_MAX, LENGTH_MIN, WORDS_DEFAULT, WORDS_MAX, WORDS_MIN } from './constants'
@@ -84,7 +85,7 @@ function onMode(next: unknown) {
                   <FieldLabel for="length">Tamanho</FieldLabel>
                   <span class="font-semibold tabular-nums">{{ options.length }}</span>
                 </div>
-                <input id="length" v-model.number="options.length" type="range" :min="LENGTH_MIN" :max="LENGTH_MAX" class="h-6 w-full accent-primary" />
+                <Slider id="length" thumb-label="Tamanho" :model-value="[options.length]" :min="LENGTH_MIN" :max="LENGTH_MAX" :step="1" @update:model-value="options.length = $event?.[0] ?? options.length" />
               </Field>
               <Field v-for="toggle in toggles" :key="toggle.key" orientation="horizontal">
                 <FieldContent>
@@ -107,7 +108,7 @@ function onMode(next: unknown) {
                   <FieldLabel for="words">Palavras</FieldLabel>
                   <span class="font-semibold tabular-nums">{{ words }}</span>
                 </div>
-                <input id="words" v-model.number="words" type="range" :min="WORDS_MIN" :max="WORDS_MAX" class="h-6 w-full accent-primary" />
+                <Slider id="words" thumb-label="Palavras" :model-value="[words]" :min="WORDS_MIN" :max="WORDS_MAX" :step="1" @update:model-value="words = $event?.[0] ?? words" />
               </Field>
               <Field orientation="horizontal">
                 <FieldContent>

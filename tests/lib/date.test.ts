@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getLocalTimeZone, today } from '@internationalized/date'
-import { dateValueToIso, eventYearRange, formatDateNumeric, formatDateValue, isoToDateValue } from '@/lib/date'
-import { DATE_PICKER } from '@/core/config'
+import { dateValueToIso, formatDateNumeric, isoToDateValue, isoToNumeric, numericToIso } from '@/lib/date'
 
 describe('isoToDateValue e dateValueToIso', () => {
   it('convertem nos dois sentidos', () => {
@@ -18,33 +16,33 @@ describe('isoToDateValue e dateValueToIso', () => {
   })
 })
 
-describe('formatDateValue', () => {
-  it('escreve a data por extenso em português', () => {
-    expect(formatDateValue(isoToDateValue('2026-12-24')!)).toBe('24 de dezembro de 2026')
-  })
-})
-
-describe('eventYearRange', () => {
-  const thisYear = today(getLocalTimeZone()).year
-  const years = (selected?: string) => eventYearRange(selected ? isoToDateValue(selected) : undefined).map((d) => d.year)
-
-  it('vai do ano atual até alguns anos à frente, sem décadas para trás', () => {
-    expect(years()).toEqual(Array.from({ length: DATE_PICKER.yearsAhead + 1 }, (_, i) => thisYear + i))
-  })
-
-  it('amplia a faixa quando a data salva está fora dela', () => {
-    expect(years(`${thisYear - 3}-12-24`)[0]).toBe(thisYear - 3)
-    expect(years(`${thisYear + 6}-12-24`).at(-1)).toBe(thisYear + 6)
-  })
-
-  it('mantém a faixa quando a data salva está dentro dela', () => {
-    expect(years(`${thisYear + 1}-06-01`)).toEqual(years())
-  })
-})
-
 describe('formatDateNumeric', () => {
   it('formata como dd/mm/aaaa, com zero à esquerda', () => {
     expect(formatDateNumeric(isoToDateValue('2026-03-05')!)).toBe('05/03/2026')
     expect(formatDateNumeric(isoToDateValue('2026-12-24')!)).toBe('24/12/2026')
+  })
+})
+
+describe('isoToNumeric e numericToIso', () => {
+  it('convertem nos dois sentidos', () => {
+    expect(isoToNumeric('2026-03-05')).toBe('05/03/2026')
+    expect(numericToIso('05/03/2026')).toBe('2026-03-05')
+    expect(isoToNumeric('')).toBe('')
+    expect(isoToNumeric('lixo')).toBe('')
+  })
+
+  it('texto incompleto, com formato errado ou com dia que não existe devolve null', () => {
+    expect(numericToIso('')).toBeNull()
+    expect(numericToIso('05/03/20')).toBeNull()
+    expect(numericToIso('2026-03-05')).toBeNull()
+    expect(numericToIso('31/02/2026')).toBeNull()
+    expect(numericToIso('00/10/2026')).toBeNull()
+    expect(numericToIso('10/13/2026')).toBeNull()
+    expect(numericToIso('10/10/0026')).toBeNull()
+  })
+
+  it('aceita 29/02 só em ano bissexto', () => {
+    expect(numericToIso('29/02/2028')).toBe('2028-02-29')
+    expect(numericToIso('29/02/2026')).toBeNull()
   })
 })

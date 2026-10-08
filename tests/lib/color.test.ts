@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { contrastRatio, hslToRgb, luminance, parseColor, readableOn, rgbToHsl, shades, toHex, toHslString, toRgbString, wcag } from '@/modules/colors/lib/color'
+import { contrastRatio, hslToRgb, luminance, parseColor, readableOn, rgbToHsl, shades, toHex, toHslString, toRgbString, wcag } from '@/lib/color'
 
 const black = { r: 0, g: 0, b: 0 }
 const white = { r: 255, g: 255, b: 255 }
