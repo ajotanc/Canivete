@@ -48,6 +48,10 @@ npm run build
 | Lorem ipsum (parágrafos, frases ou palavras; latim ou português; HTML) | `lorem` | não |
 | Comprimir imagem (reduz peso e largura; aceita JPEG, PNG, WebP, GIF, BMP, AVIF e SVG; saída JPEG, WebP ou PNG) | `image` | não |
 | Cara ou coroa e dados (D4 a D100) | `coin-dice` | não |
+| Roleta (2 a 24 opções, com opção de tirar cada sorteada) | `wheel` | não |
+| Calculadora de horas (entre horários, somar e subtrair, hora de saída) | `hours` | não |
+| Decodificador de JWT (cabeçalho, conteúdo, validade e assinatura HS256/384/512) | `jwt` | não |
+| Comparador de texto (diff por linha e por palavra) | `diff` | não |
 
 A consulta de CEP é a única que chama um serviço externo (`viacep.com.br`, direto do navegador); as outras rodam só no aparelho.
 
