@@ -29,12 +29,12 @@ withDefaults(
 </script>
 
 <template>
-  <header :class="cn('@container space-y-3 sm:space-y-4', filled && 'rounded-3xl bg-primary p-5 text-primary-foreground sm:p-8 [&_[data-slot=button]:hover]:bg-transparent [&_[data-slot=button]:hover]:text-primary-foreground', $props.class)">
+  <header :class="cn('space-y-3 sm:space-y-4', filled && 'rounded-3xl bg-primary p-5 text-primary-foreground sm:p-8 [&_[data-slot=button]:hover]:bg-transparent [&_[data-slot=button]:hover]:text-primary-foreground', $props.class)">
     <div v-if="$slots.back || $slots.actions" class="flex min-h-11 items-center justify-between gap-3">
       <div class="-ml-3"><slot name="back" /></div>
       <div class="-mr-3"><slot name="actions" /></div>
     </div>
-    <div class="flex flex-col items-start gap-3 @xl:flex-row @xl:items-center @xl:gap-4">
+    <div class="flex flex-col items-start gap-3 sm:gap-4">
       <span
         v-if="icon"
         :class="cn('flex size-14 shrink-0 items-center justify-center rounded-chip border', filled ? 'border-primary-foreground/20 bg-primary-foreground/15' : 'border-primary/20 bg-primary/10 text-primary')"
@@ -43,7 +43,7 @@ withDefaults(
       </span>
       <slot name="media" />
       <div class="min-w-0 flex-1 space-y-2">
-        <div class="flex flex-col items-start gap-2 @xl:flex-row @xl:flex-wrap @xl:items-center @xl:gap-x-3">
+        <div class="flex flex-col items-start gap-2">
           <h1 :class="size === 'lg' ? 'text-4xl leading-[1.05] tracking-[-0.03em] sm:text-5xl' : 'text-3xl leading-tight sm:text-4xl'">
             {{ title }}
           </h1>
