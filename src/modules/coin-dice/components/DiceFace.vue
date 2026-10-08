@@ -13,7 +13,7 @@ const props = defineProps<{ sides: number; value: number; rollKey: number; rolli
 
 const ROLL_MS = 900
 /** Metade da aresta do cubo (px): as faces ficam a essa distância do centro. */
-const HALF = 56
+const HALF = 50
 const RADIUS = 62
 const RADIUS_PAIR = 50
 
@@ -84,7 +84,7 @@ const label = computed(() => (isPair.value ? 'd%' : `d${props.sides}`))
 </script>
 
 <template>
-  <div ref="lift" :class="isCube ? 'size-28 [perspective:800px]' : ''" role="img" :aria-label="`Dado ${label}: ${value}`">
+  <div ref="lift" :class="isCube ? 'size-[6.25rem] [perspective:800px]' : ''" role="img" :aria-label="`Dado ${label}: ${value}`">
     <!-- d6: cubo -->
     <div v-if="isCube" ref="body" class="relative size-full [transform-style:preserve-3d]" :style="{ transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)` }">
       <div

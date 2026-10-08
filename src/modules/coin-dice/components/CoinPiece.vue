@@ -28,6 +28,8 @@ const RELIEF = [
 const lift = ref<HTMLElement>()
 const coin = ref<HTMLElement>()
 const shadow = ref<HTMLElement>()
+const glintHeads = ref<HTMLElement>()
+const glintTails = ref<HTMLElement>()
 /** Lado que está para cima agora. */
 const resting = ref<CoinSide>('heads')
 
@@ -53,6 +55,12 @@ async function toss(side: CoinSide): Promise<void> {
         { transform: 'translateY(0) rotateZ(0deg)' },
       ],
       duration,
+    ),
+    // Um brilho passa pelas duas faces enquanto a moeda gira.
+    ...[glintHeads.value, glintTails.value].flatMap((glint) =>
+      glint
+        ? [glint.animate([{ opacity: 0 }, { opacity: 1, offset: 0.3 }, { opacity: 0.2, offset: 0.55 }, { opacity: 1, offset: 0.8 }, { opacity: 0 }], duration), glint.firstElementChild!.animate([{ transform: 'translateX(-60%) skewX(-12deg)' }, { transform: 'translateX(60%) skewX(-12deg)' }], { ...duration, easing: 'ease-in-out' })]
+        : [],
     ),
     shadow.value.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0.55)', opacity: 0.5, offset: 0.45 }, { transform: 'scale(1)', opacity: 1 }], duration),
   ]
@@ -84,21 +92,35 @@ const leaves = computed<Leaf[]>(() => {
 })
 
 /** Ramo (arco) por onde as folhas crescem, um de cada lado. */
-const branches = ['M 50 82 A 32 32 0 0 1 21 36', 'M 50 82 A 32 32 0 0 0 79 36']
+const branches = ['M 50 83 A 33 33 0 0 1 20 36', 'M 50 83 A 33 33 0 0 0 80 36']
 
-/** Estrela de cinco pontas, de raio externo 17 e interno 7.2, com uma ponta para cima. */
-const star = Array.from({ length: 10 }, (_, index) => {
-  const radius = index % 2 === 0 ? 17 : 7.2
-  const angle = ((-90 + index * 36) * Math.PI) / 180
-  return `${(50 + radius * Math.cos(angle)).toFixed(2)},${(50 + radius * Math.sin(angle)).toFixed(2)}`
-}).join(' ')
+const point = (radius: number, degrees: number): [number, number] => [50 + radius * Math.cos((degrees * Math.PI) / 180), 50 + radius * Math.sin((degrees * Math.PI) / 180)]
+const fixed = (value: number): string => value.toFixed(2)
+
+/**
+ * Estrela de oito pontas lapidada como uma joia: cada ponta se divide em duas facetas, uma clara e uma escura.
+ * Cada faceta é um triângulo do centro até a ponta e o vale vizinho.
+ */
+const starFacets = Array.from({ length: 16 }, (_, index) => {
+  const tip = Math.floor(index / 2)
+  const light = index % 2 === 0
+  const [tx, ty] = point(22, -90 + tip * 45)
+  const [vx, vy] = point(8.6, -90 + tip * 45 + (light ? -22.5 : 22.5))
+  return { points: `50,50 ${fixed(vx)},${fixed(vy)} ${fixed(tx)},${fixed(ty)}`, light }
+})
+
+/** Contas (pérolas) do aro da borda. */
+const beads = Array.from({ length: 64 }, (_, index) => point(46, (index * 360) / 64))
+
+/** Círculos concêntricos finos no campo, como o acabamento de máquina de uma moeda de verdade. */
+const guilloche = Array.from({ length: 14 }, (_, index) => 6 + index * 2.6)
 
 /** Raios finos em volta da estrela, alternando curtos e longos. */
-const rays = Array.from({ length: 24 }, (_, index) => {
-  const angle = (index * 15 * Math.PI) / 180
-  const inner = 21
-  const outer = index % 2 === 0 ? 29 : 25
-  return { x1: 50 + inner * Math.cos(angle), y1: 50 + inner * Math.sin(angle), x2: 50 + outer * Math.cos(angle), y2: 50 + outer * Math.sin(angle) }
+const rays = Array.from({ length: 32 }, (_, index) => {
+  const degrees = index * (360 / 32) + 5.6
+  const [x1, y1] = point(25, degrees)
+  const [x2, y2] = point(index % 2 === 0 ? 30.5 : 28, degrees)
+  return { x1, y1, x2, y2 }
 })
 </script>
 
@@ -108,62 +130,83 @@ const rays = Array.from({ length: 24 }, (_, index) => {
     <svg width="0" height="0" class="absolute" aria-hidden="true">
       <defs>
         <radialGradient id="coin-gold" cx="0.3" cy="0.25" r="1">
-          <stop offset="0" stop-color="#fff3bd" />
-          <stop offset="0.35" stop-color="#f1c453" />
-          <stop offset="0.7" stop-color="#c88f2b" />
-          <stop offset="1" stop-color="#8a5a12" />
+          <stop offset="0" stop-color="#fff6c8" />
+          <stop offset="0.3" stop-color="#f4cf63" />
+          <stop offset="0.65" stop-color="#cc922d" />
+          <stop offset="1" stop-color="#7d520f" />
         </radialGradient>
-        <linearGradient id="coin-field" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#e9b94a" />
-          <stop offset="0.5" stop-color="#d09a32" />
-          <stop offset="1" stop-color="#b17a1f" />
+        <radialGradient id="coin-field" cx="0.38" cy="0.3" r="0.85">
+          <stop offset="0" stop-color="#f9e08d" />
+          <stop offset="0.55" stop-color="#e0b04a" />
+          <stop offset="1" stop-color="#b98427" />
+        </radialGradient>
+        <linearGradient id="coin-bead" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#fff3bd" />
+          <stop offset="1" stop-color="#9a6a19" />
         </linearGradient>
         <linearGradient id="coin-shine" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#fff" stop-opacity="0.55" />
+          <stop offset="0" stop-color="#fff" stop-opacity="0.6" />
           <stop offset="0.5" stop-color="#fff" stop-opacity="0" />
         </linearGradient>
         <filter id="coin-relief" x="-10%" y="-10%" width="120%" height="120%">
           <feDropShadow dx="-0.5" dy="-0.5" stdDeviation="0.25" flood-color="#fff6c8" flood-opacity="0.9" />
           <feDropShadow dx="0.7" dy="0.9" stdDeviation="0.45" flood-color="#4a2f05" flood-opacity="0.75" />
         </filter>
+        <path id="coin-text-top" d="M 12.5 50 A 37.5 37.5 0 0 1 87.5 50" />
 
         <!-- Louro: nas duas faces -->
         <g id="coin-laurel">
           <path v-for="branch in branches" :key="branch" :d="branch" fill="none" stroke="url(#coin-gold)" stroke-width="1.2" stroke-linecap="round" />
-          <path v-for="(leaf, index) in leaves" :key="index" d="M 0 -5.6 C 3.2 -2.8 3.2 2.8 0 5.6 C -3.2 2.8 -3.2 -2.8 0 -5.6 Z" fill="url(#coin-gold)" :transform="`translate(${leaf.x} ${leaf.y}) rotate(${leaf.rotate})`" />
-        </g>
-        <!-- Cara: estrela radiante -->
-        <g id="coin-relief-heads">
-          <use href="#coin-laurel" />
-          <line v-for="(ray, index) in rays" :key="`ray-${index}`" :x1="ray.x1" :y1="ray.y1" :x2="ray.x2" :y2="ray.y2" stroke="url(#coin-gold)" stroke-width="1.1" stroke-linecap="round" />
-          <polygon :points="star" fill="url(#coin-gold)" stroke="#8a5a12" stroke-width="0.7" stroke-linejoin="round" />
-          <circle cx="50" cy="50" r="3.2" fill="#fff3bd" stroke="#8a5a12" stroke-width="0.6" />
-        </g>
-        <!-- Coroa: coroa real com joias -->
-        <g id="coin-relief-tails">
-          <use href="#coin-laurel" />
-          <path d="M 31 63 L 26.5 40 L 38.5 51 L 50 34 L 61.5 51 L 73.5 40 L 69 63 Z" fill="url(#coin-gold)" />
-          <rect x="31" y="63" width="38" height="8" rx="2" fill="url(#coin-gold)" />
-          <path d="M 31 63 L 69 63" stroke="#8a5a12" stroke-width="0.9" />
-          <g fill="#fff3bd" stroke="#8a5a12" stroke-width="0.7">
-            <circle cx="26.5" cy="38.5" r="2.7" />
-            <circle cx="50" cy="32" r="3.1" />
-            <circle cx="73.5" cy="38.5" r="2.7" />
-          </g>
-          <g fill="#c0392b" stroke="#6e4510" stroke-width="0.6">
-            <circle cx="38.5" cy="67" r="1.7" />
-            <circle cx="61.5" cy="67" r="1.7" />
-          </g>
-          <circle cx="50" cy="67" r="2" fill="#2f6fd0" stroke="#6e4510" stroke-width="0.6" />
+          <path v-for="(leaf, index) in leaves" :key="index" d="M 0 -5.4 C 3.1 -2.7 3.1 2.7 0 5.4 C -3.1 2.7 -3.1 -2.7 0 -5.4 Z" fill="url(#coin-gold)" stroke="#8a5a12" stroke-width="0.35" :transform="`translate(${leaf.x} ${leaf.y}) rotate(${leaf.rotate}) scale(0.94)`" />
         </g>
 
-        <!-- Disco de fundo de cada face: anéis e campo, sem o relevo -->
+        <!-- Cara: estrela lapidada com raios e louro -->
+        <g id="coin-relief-heads">
+          <use href="#coin-laurel" />
+          <line v-for="(ray, index) in rays" :key="`ray-${index}`" :x1="ray.x1" :y1="ray.y1" :x2="ray.x2" :y2="ray.y2" stroke="url(#coin-gold)" stroke-width="1" stroke-linecap="round" />
+          <circle cx="50" cy="50" r="23.5" fill="none" stroke="#8a5a12" stroke-width="0.7" />
+          <polygon v-for="(facet, index) in starFacets" :key="index" :points="facet.points" :fill="facet.light ? '#fff0b0' : '#c9902f'" stroke="#7a4e0e" stroke-width="0.55" stroke-linejoin="round" />
+          <circle cx="50" cy="50" r="2.6" fill="#fff6c8" stroke="#7a4e0e" stroke-width="0.6" />
+        </g>
+
+        <!-- Coroa: coroa real com arco, orbe, cruz e joias -->
+        <g id="coin-relief-tails">
+          <use href="#coin-laurel" />
+          <g transform="translate(11 15) scale(0.78)">
+            <path d="M 27 52 Q 36 24 50 25 Q 64 24 73 52" fill="none" stroke="url(#coin-gold)" stroke-width="3.2" stroke-linecap="round" />
+            <path d="M 27 52 Q 36 24 50 25 Q 64 24 73 52" fill="none" stroke="#7a4e0e" stroke-width="0.5" stroke-linecap="round" />
+            <path d="M 29 62 L 25 42 L 35.5 51 L 42 37 L 50 50 L 58 37 L 64.5 51 L 75 42 L 71 62 Z" fill="url(#coin-gold)" stroke="#7a4e0e" stroke-width="0.7" stroke-linejoin="round" />
+            <rect x="29" y="62" width="42" height="9" rx="2.2" fill="url(#coin-gold)" stroke="#7a4e0e" stroke-width="0.7" />
+            <circle cx="50" cy="22" r="3.4" fill="#fff0b0" stroke="#7a4e0e" stroke-width="0.7" />
+            <path d="M 50 8.5 L 50 18 M 45.8 12.5 L 54.2 12.5" stroke="url(#coin-gold)" stroke-width="2.6" stroke-linecap="round" />
+            <path d="M 50 8.5 L 50 18 M 45.8 12.5 L 54.2 12.5" stroke="#7a4e0e" stroke-width="0.4" stroke-linecap="round" />
+            <g fill="#fff0b0" stroke="#7a4e0e" stroke-width="0.6">
+              <circle cx="25" cy="40" r="2.6" />
+              <circle cx="42" cy="35" r="2.4" />
+              <circle cx="58" cy="35" r="2.4" />
+              <circle cx="75" cy="40" r="2.6" />
+            </g>
+            <g stroke="#6e4510" stroke-width="0.55">
+              <circle cx="35" cy="66.5" r="2" fill="#c0392b" />
+              <circle cx="42.5" cy="66.5" r="1.6" fill="#fff6c8" />
+              <circle cx="50" cy="66.5" r="2.2" fill="#2f6fd0" />
+              <circle cx="57.5" cy="66.5" r="1.6" fill="#fff6c8" />
+              <circle cx="65" cy="66.5" r="2" fill="#c0392b" />
+            </g>
+          </g>
+        </g>
+
+        <!-- Detalhes de cada face: aro de contas, campo com acabamento e texto, sem o relevo -->
         <g id="coin-plate">
-          <circle cx="50" cy="50" r="49.5" fill="url(#coin-gold)" />
-          <circle cx="50" cy="50" r="47" fill="none" stroke="#7a4e0e" stroke-width="1.6" stroke-dasharray="0.9 1.5" opacity="0.65" />
-          <circle cx="50" cy="50" r="42.5" fill="url(#coin-field)" stroke="#fff0b0" stroke-opacity="0.8" stroke-width="0.8" />
-          <circle cx="50" cy="50" r="41.5" fill="none" stroke="#7a4e0e" stroke-opacity="0.55" stroke-width="0.8" />
+          <circle cx="50" cy="50" r="42.5" fill="url(#coin-field)" stroke="#fff0b0" stroke-opacity="0.85" stroke-width="0.8" />
+          <circle cx="50" cy="50" r="41.4" fill="none" stroke="#7a4e0e" stroke-opacity="0.6" stroke-width="0.7" />
+          <circle v-for="radius in guilloche" :key="radius" cx="50" cy="50" :r="radius" fill="none" stroke="#7a4e0e" stroke-opacity="0.07" stroke-width="0.6" />
+          <circle v-for="(bead, index) in beads" :key="index" :cx="bead[0]" :cy="bead[1]" r="1.15" fill="url(#coin-bead)" stroke="#6e4510" stroke-width="0.25" />
+          <circle cx="50" cy="50" r="48.6" fill="none" stroke="#6e4510" stroke-opacity="0.7" stroke-width="0.6" />
           <path d="M 12 38 A 42 42 0 0 1 60 8" fill="none" stroke="url(#coin-shine)" stroke-width="3" stroke-linecap="round" />
+        </g>
+        <g id="coin-text-heads" font-family="inherit" font-weight="800" fill="#6e4510" stroke="#fff0b0" stroke-opacity="0.55" stroke-width="0.25" paint-order="stroke">
+          <text font-size="4.3" letter-spacing="1.6" text-anchor="middle"><textPath href="#coin-text-top" startOffset="50%">CARA OU COROA</textPath></text>
         </g>
       </defs>
     </svg>
@@ -178,9 +221,11 @@ const rays = Array.from({ length: 24 }, (_, index) => {
           :style="{ transform: `translateZ(${(layer - (RIM_LAYERS + 1) / 2) * (THICKNESS / RIM_LAYERS)}px)` }"
         />
 
-        <!-- Cara: fundo e relevo em três alturas -->
-        <svg viewBox="0 0 100 100" class="absolute inset-0 size-full [backface-visibility:hidden]" :style="{ transform: `translateZ(${THICKNESS / 2}px)` }" role="img" aria-label="Cara da moeda: estrela">
+        <!-- Cara: disco metálico, detalhes, relevo em três alturas e brilho -->
+        <div class="absolute inset-0 rounded-full [backface-visibility:hidden] [background:conic-gradient(from_30deg,#7d520f,#fbe48f_12%,#c58a2a_25%,#fff3bd_38%,#9a6a19_50%,#f3cf6a_62%,#b47b21_75%,#fff0b0_88%,#7d520f)]" :style="{ transform: `translateZ(${THICKNESS / 2}px)` }" />
+        <svg viewBox="0 0 100 100" class="absolute inset-0 size-full [backface-visibility:hidden]" :style="{ transform: `translateZ(${THICKNESS / 2 + 0.3}px)` }" role="img" aria-label="Cara da moeda: estrela">
           <use href="#coin-plate" />
+          <use href="#coin-text-heads" />
         </svg>
         <svg
           v-for="level in RELIEF"
@@ -192,10 +237,15 @@ const rays = Array.from({ length: 24 }, (_, index) => {
         >
           <use href="#coin-relief-heads" :filter="level.brightness === 1 ? 'url(#coin-relief)' : undefined" />
         </svg>
+        <div ref="glintHeads" class="pointer-events-none absolute inset-0 overflow-hidden rounded-full opacity-0 [backface-visibility:hidden]" :style="{ transform: `translateZ(${THICKNESS / 2 + 3.6}px)` }" aria-hidden="true">
+          <div class="size-full -skew-x-12 bg-[linear-gradient(100deg,transparent_38%,rgb(255_255_255/0.75)_50%,transparent_62%)]" />
+        </div>
 
-        <!-- Coroa: fundo e relevo em três alturas, do lado de trás -->
-        <svg viewBox="0 0 100 100" class="absolute inset-0 size-full [backface-visibility:hidden]" :style="{ transform: `rotateX(180deg) translateZ(${THICKNESS / 2}px)` }" role="img" aria-label="Coroa da moeda">
+        <!-- Coroa: o mesmo, do lado de trás -->
+        <div class="absolute inset-0 rounded-full [backface-visibility:hidden] [background:conic-gradient(from_210deg,#7d520f,#fbe48f_12%,#c58a2a_25%,#fff3bd_38%,#9a6a19_50%,#f3cf6a_62%,#b47b21_75%,#fff0b0_88%,#7d520f)]" :style="{ transform: `rotateX(180deg) translateZ(${THICKNESS / 2}px)` }" />
+        <svg viewBox="0 0 100 100" class="absolute inset-0 size-full [backface-visibility:hidden]" :style="{ transform: `rotateX(180deg) translateZ(${THICKNESS / 2 + 0.3}px)` }" role="img" aria-label="Coroa da moeda">
           <use href="#coin-plate" />
+          <use href="#coin-text-heads" />
         </svg>
         <svg
           v-for="level in RELIEF"
@@ -207,6 +257,9 @@ const rays = Array.from({ length: 24 }, (_, index) => {
         >
           <use href="#coin-relief-tails" :filter="level.brightness === 1 ? 'url(#coin-relief)' : undefined" />
         </svg>
+        <div ref="glintTails" class="pointer-events-none absolute inset-0 overflow-hidden rounded-full opacity-0 [backface-visibility:hidden]" :style="{ transform: `rotateX(180deg) translateZ(${THICKNESS / 2 + 3.6}px)` }" aria-hidden="true">
+          <div class="size-full -skew-x-12 bg-[linear-gradient(100deg,transparent_38%,rgb(255_255_255/0.75)_50%,transparent_62%)]" />
+        </div>
       </div>
     </div>
     <div ref="shadow" class="mt-5 h-3 w-32 rounded-full bg-foreground/20 blur-sm" aria-hidden="true" />
