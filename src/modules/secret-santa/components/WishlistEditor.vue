@@ -78,7 +78,7 @@ function remove() {
 
     <ul v-else class="space-y-3">
       <li v-for="(row, index) in rows" :key="row.key" class="space-y-2">
-        <InputGroup class="h-11 bg-card">
+        <InputGroup class="h-11 bg-card has-[[data-slot=input-group-control]:focus-visible]:border-foreground/50 has-[[data-slot=input-group-control]:focus-visible]:ring-foreground/10">
           <InputGroupInput
             v-model="row.text"
             data-wish-text
@@ -107,7 +107,7 @@ function remove() {
 
         <div class="grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none" :class="row.hasLink ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
           <div class="overflow-hidden" :inert="!row.hasLink">
-            <InputGroup class="h-11 bg-card">
+            <InputGroup class="h-11 bg-card has-[[data-slot=input-group-control]:focus-visible]:border-foreground/50 has-[[data-slot=input-group-control]:focus-visible]:ring-foreground/10">
               <InputGroupAddon><Link2 aria-hidden="true" /></InputGroupAddon>
               <InputGroupInput
                 v-model="row.url"
@@ -125,7 +125,7 @@ function remove() {
       </li>
     </ul>
 
-    <Button type="button" variant="outline" size="lg" class="w-full border-dashed" :disabled="rows.length >= max" @click="add">
+    <Button type="button" variant="ghost" size="lg" class="w-full" :disabled="rows.length >= max" @click="add">
       <Plus aria-hidden="true" />
       {{ rows.length >= max ? `Limite de ${max} presentes` : 'Adicionar presente' }}
     </Button>
