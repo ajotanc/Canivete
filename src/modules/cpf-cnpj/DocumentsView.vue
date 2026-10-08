@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Check, CircleCheck, CircleX, Copy, IdCard, RefreshCw, ScanSearch, ShieldCheck, Sparkles, Zap } from '@lucide/vue'
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import CopyField from '@/components/CopyField.vue'
+import { play } from '@/core/effects/sound'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
@@ -22,6 +23,13 @@ const { type, quantity, formatted, items, generate } = useDocumentGenerator()
 /** Validador: CPF (11) ou CNPJ (14, inclusive alfanumérico); a máscara troca sozinha pelo tamanho. */
 const toCheck = ref('')
 const check = computed(() => checkDocument(toCheck.value))
+// Quando o número fica completo, um som diz se passou ou não; enquanto se digita, silêncio.
+watch(
+  () => [check.value.kind, check.value.valid] as const,
+  ([kind, valid]) => {
+    if (kind) play(valid ? 'success' : 'error')
+  },
+)
 const MASK = {
   mask: ['###.###.###-##', 'NN.NNN.NNN/NNNN-##'],
   tokens: { N: { pattern: /[0-9A-Za-z]/, transform: (char: string) => char.toUpperCase() } },

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { CUBE_FACES, cubeOrientation, pipCells, spinTo } from '../lib/shapes'
 import type { PolyKind } from '../lib/polyhedra'
+import { DICE_ROLL_MS, DICE_TABLE_HITS } from '../lib/roll'
 import DicePolyhedron from './DicePolyhedron.vue'
 
 /**
@@ -11,7 +12,7 @@ import DicePolyhedron from './DicePolyhedron.vue'
  */
 const props = defineProps<{ sides: number; value: number; rollKey: number; rolling: boolean }>()
 
-const ROLL_MS = 900
+const ROLL_MS = DICE_ROLL_MS
 /** Metade da aresta do cubo (px): as faces ficam a essa distância do centro. */
 const HALF = 50
 const RADIUS = 62
@@ -27,11 +28,23 @@ const body = ref<HTMLElement>()
 // Cubo: giro acumulado em cada eixo.
 const rotation = ref(cubeOrientation(props.value))
 
-/** O dado dá um pulinho ao ser jogado. */
+/**
+ * O dado sobe, cai e bate na mesa (em 62% do tempo, ~560 ms), quica de novo e bate outra vez (92%, ~830 ms).
+ * O som de `dice` tem as batidas nesses mesmos instantes.
+ */
 function hop(): void {
   if (!lift.value || reducedMotion()) return
+  const up = 'cubic-bezier(0.2, 0.7, 0.4, 1)'
+  const down = 'cubic-bezier(0.6, 0, 0.8, 0.4)'
   lift.value.animate(
-    [{ transform: 'translateY(0)', easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' }, { transform: 'translateY(-32px)', offset: 0.4, easing: 'cubic-bezier(0.6, 0, 0.8, 0.4)' }, { transform: 'translateY(0)' }],
+    [
+      { transform: 'translateY(0)', easing: up },
+      { transform: 'translateY(-32px)', offset: 0.34, easing: down },
+      { transform: 'translateY(0)', offset: DICE_TABLE_HITS[0], easing: up },
+      { transform: 'translateY(-9px)', offset: (DICE_TABLE_HITS[0] + DICE_TABLE_HITS[1]) / 2, easing: down },
+      { transform: 'translateY(0)', offset: DICE_TABLE_HITS[1] },
+      { transform: 'translateY(0)' },
+    ],
     { duration: ROLL_MS },
   )
 }

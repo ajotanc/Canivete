@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import CoinPiece from './components/CoinPiece.vue'
 import DiceFace from './components/DiceFace.vue'
-import { COIN_LABEL, DIE_SIDES, diceNotation, flipCoin, MAX_DICE, rollDice, type CoinSide, type DiceRoll } from './lib/roll'
+import { COIN_LABEL, DIE_SIDES, diceNotation, flipCoin, MAX_DICE, rollDice, TOSS_LANDS_AT, TOSS_MS, type CoinSide, type DiceRoll } from './lib/roll'
 
 const tab = ref('coin')
 
@@ -22,6 +22,7 @@ const tab = ref('coin')
 const coin = ref<InstanceType<typeof CoinPiece>>()
 const coinSide = ref<CoinSide | null>(null)
 const flipping = ref(false)
+let landTimer: ReturnType<typeof setTimeout> | undefined
 const tally = ref<Record<CoinSide, number>>({ heads: 0, tails: 0 })
 
 async function flip() {
@@ -29,8 +30,10 @@ async function flip() {
   const side = flipCoin()
   flipping.value = true
   play('toss')
+  // O som da queda sai quando a moeda toca a mesa, não quando o movimento todo termina.
+  clearTimeout(landTimer)
+  landTimer = setTimeout(() => play('land'), TOSS_MS * TOSS_LANDS_AT)
   await coin.value.toss(side)
-  play('land')
   coinSide.value = side
   tally.value = { ...tally.value, [side]: tally.value[side] + 1 }
   flipping.value = false
@@ -55,7 +58,7 @@ const count = computed(() => Math.min(MAX_DICE, Math.max(1, Math.floor(Number(di
 function roll() {
   if (rolling.value) return
   const result = rollDice(count.value, sides.value)
-  play('dice')
+  play('dice', count.value)
   last.value = result
   rollId.value++
   rolling.value = true
@@ -73,7 +76,10 @@ function onSides(value: unknown) {
   if ((DIE_SIDES as readonly number[]).includes(amount)) sides.value = amount
 }
 
-onBeforeUnmount(() => clearTimeout(rollTimer))
+onBeforeUnmount(() => {
+  clearTimeout(rollTimer)
+  clearTimeout(landTimer)
+})
 </script>
 
 <template>

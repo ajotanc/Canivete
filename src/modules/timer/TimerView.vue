@@ -4,6 +4,7 @@ import { useIntervalFn, useStorage } from '@vueuse/core'
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import EmptyState from '@/components/EmptyState.vue'
+import { play } from '@/core/effects/sound'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import NumberInput from '@/components/NumberInput.vue'
@@ -13,7 +14,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { beep } from './lib/beep'
 import { askNotifyPermission, notify, notifyState, type NotifyState } from './lib/notify'
 import { DEFAULT_POMODORO, elapsed, formatClock, formatCountdown, idle, isRunning, nextPhase, pause, phaseMinutes, remainingMs, start, type PomodoroConfig, type PomodoroPhase, type Run } from './lib/clock'
 
@@ -28,10 +28,13 @@ const laps = ref<number[]>([])
 const stopwatchMs = computed(() => elapsed(stopwatch.value, now.value))
 
 function toggleStopwatch() {
+  play('tap')
   stopwatch.value = isRunning(stopwatch.value) ? pause(stopwatch.value, Date.now()) : start(stopwatch.value, Date.now())
 }
 function lap() {
-  if (isRunning(stopwatch.value)) laps.value = [stopwatchMs.value, ...laps.value]
+  if (!isRunning(stopwatch.value)) return
+  play('tap')
+  laps.value = [stopwatchMs.value, ...laps.value]
 }
 function resetStopwatch() {
   stopwatch.value = idle()
@@ -54,6 +57,7 @@ const timerActive = computed(() => timerDuration.value > 0)
 const timerLeft = computed(() => (timerActive.value ? remainingMs(timerDuration.value, timerRun.value, now.value) : configuredMs.value))
 
 function toggleTimer() {
+  play('tap')
   finished.value = false
   if (isRunning(timerRun.value)) {
     timerRun.value = pause(timerRun.value, Date.now())
@@ -101,6 +105,7 @@ const PHASES: Record<PomodoroPhase, { label: string; icon: typeof Brain }> = {
 const notifications = ref<NotifyState>(notifyState())
 
 async function togglePomodoro() {
+  play('tap')
   if (!isRunning(pomodoroRun.value) && notifications.value === 'default') notifications.value = await askNotifyPermission()
   pomodoroRun.value = isRunning(pomodoroRun.value) ? pause(pomodoroRun.value, Date.now()) : start(pomodoroRun.value, Date.now())
 }
@@ -116,14 +121,14 @@ watch(now, (current) => {
     timerRun.value = idle()
     timerDuration.value = 0
     finished.value = true
-    beep()
+    play('alarm')
     toast.success('O tempo acabou!')
   }
   if (isRunning(pomodoroRun.value) && remainingMs(phaseDuration.value, pomodoroRun.value, current) === 0) {
     if (phase.value === 'focus') completedFocus.value++
     phase.value = nextPhase(phase.value, completedFocus.value, config.value)
     pomodoroRun.value = start(idle(), current)
-    beep()
+    play('phase')
     const message = phase.value === 'focus' ? 'Hora de voltar ao foco.' : 'Hora de uma pausa.'
     toast.success(message)
     void notify(PHASES[phase.value].label, message)

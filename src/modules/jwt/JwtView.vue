@@ -3,6 +3,7 @@ import { BadgeCheck, CircleAlert, Eraser, FileKey, KeyRound, ShieldAlert, Shield
 import { computed, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import EmptyState from '@/components/EmptyState.vue'
+import { play } from '@/core/effects/sound'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
@@ -37,7 +38,11 @@ watch([decoded, secret], async () => {
   }
   try {
     const outcome = await verifyJwt(decoded.value, secret.value)
-    if (current === run) verification.value = outcome
+    if (current === run) {
+      // Só o acerto toca: errar a chave enquanto se digita não deve apitar a cada letra.
+      if (outcome === 'valid' && verification.value !== 'valid') play('success')
+      verification.value = outcome
+    }
   } catch {
     if (current === run) verification.value = null
   }

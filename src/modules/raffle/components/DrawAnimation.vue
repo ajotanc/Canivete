@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Trophy } from '@lucide/vue'
 import { onBeforeUnmount, ref, watch } from 'vue'
+import { play } from '@/core/effects/sound'
 import { DRAW_ANIMATION } from '../constants'
 
 const props = defineProps<{ names: string[]; winners: string[]; durationMs?: number }>()
@@ -21,6 +22,7 @@ function finish() {
   stop()
   displayed.value = [...props.winners]
   revealed.value = true
+  play('win')
   emit('done')
 }
 
@@ -33,6 +35,7 @@ function start() {
   }
   // Math.random é suficiente aqui: os nomes embaralhados são só efeito visual.
   intervalId = setInterval(() => {
+    play('tick')
     displayed.value = props.winners.map(
       () => props.names[Math.floor(Math.random() * props.names.length)] ?? '',
     )

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { CoinSide } from '../lib/roll'
+import { COIN_TABLE_HITS, TOSS_MS, type CoinSide } from '../lib/roll'
 
 /**
  * Moeda de ouro em 3D de verdade: o disco tem espessura (a borda é feita de camadas serrilhadas) e o desenho de cada face
@@ -8,8 +8,10 @@ import type { CoinSide } from '../lib/roll'
  * `toss` arremessa a moeda para cima, faz ela girar em volta de um eixo inclinado, como os dados, e pousa no lado sorteado.
  * A promessa termina quando ela pousa.
  */
-const TOSS_MS = 1500
 const LIFT_PX = 100
+/** Curvas da subida (começa rápido e desacelera) e da descida (acelera até bater). */
+const UP = 'cubic-bezier(0.2, 0.7, 0.4, 1)'
+const DOWN = 'cubic-bezier(0.6, 0, 0.8, 0.4)'
 /** Espessura da moeda em px: as faces ficam a metade para cada lado do centro. */
 const THICKNESS = 12
 const RIM_LAYERS = 11
@@ -44,13 +46,22 @@ async function toss(side: CoinSide): Promise<void> {
   if (reducedMotion() || !coin.value || !lift.value || !shadow.value) return
 
   const duration = { duration: TOSS_MS }
+  const hits = COIN_TABLE_HITS
   const animations = [
     coin.value.animate([{ transform: orientation(0, from) }, { transform: orientation(360 * TURNS, side) }], { ...duration, easing: 'cubic-bezier(0.3, 0.1, 0.3, 1)' }),
+    // Sobe, cai e bate na mesa em 78% do tempo, e então quica três vezes, cada vez mais baixo e mais rápido, até parar.
+    // O som de `land` bate nesses mesmos instantes.
     lift.value.animate(
       [
-        { transform: 'translateY(0) rotateZ(0deg)', easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' },
-        { transform: `translateY(-${LIFT_PX}px) rotateZ(7deg)`, offset: 0.45, easing: 'cubic-bezier(0.6, 0, 0.8, 0.4)' },
-        { transform: 'translateY(0) rotateZ(0deg)' },
+        { transform: 'translateY(0) rotateZ(0deg)', easing: UP },
+        { transform: `translateY(-${LIFT_PX}px) rotateZ(7deg)`, offset: 0.39, easing: DOWN },
+        { transform: 'translateY(0) rotateZ(0deg)', offset: hits[0], easing: UP },
+        { transform: 'translateY(-16px)', offset: (hits[0] + hits[1]) / 2, easing: DOWN },
+        { transform: 'translateY(0)', offset: hits[1], easing: UP },
+        { transform: 'translateY(-6px)', offset: (hits[1] + hits[2]) / 2, easing: DOWN },
+        { transform: 'translateY(0)', offset: hits[2], easing: UP },
+        { transform: 'translateY(-2px)', offset: (hits[2] + hits[3]) / 2, easing: DOWN },
+        { transform: 'translateY(0)' },
       ],
       duration,
     ),
@@ -60,7 +71,19 @@ async function toss(side: CoinSide): Promise<void> {
         ? [glint.animate([{ opacity: 0 }, { opacity: 1, offset: 0.3 }, { opacity: 0.2, offset: 0.55 }, { opacity: 1, offset: 0.8 }, { opacity: 0 }], duration), glint.firstElementChild!.animate([{ transform: 'translateX(-60%) skewX(-12deg)' }, { transform: 'translateX(60%) skewX(-12deg)' }], { ...duration, easing: 'ease-in-out' })]
         : [],
     ),
-    shadow.value.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0.55)', opacity: 0.5, offset: 0.45 }, { transform: 'scale(1)', opacity: 1 }], duration),
+    shadow.value.animate(
+      [
+        { transform: 'scale(1)', opacity: 1 },
+        { transform: 'scale(0.55)', opacity: 0.5, offset: 0.39 },
+        { transform: 'scale(1)', opacity: 1, offset: 0.78 },
+        { transform: 'scale(0.9)', offset: 0.835 },
+        { transform: 'scale(1)', offset: 0.89 },
+        { transform: 'scale(0.96)', offset: 0.925 },
+        { transform: 'scale(1)', offset: 0.955 },
+        { transform: 'scale(1)' },
+      ],
+      duration,
+    ),
   ]
   await Promise.all(animations.map((animation) => animation.finished.catch(() => undefined)))
 }
