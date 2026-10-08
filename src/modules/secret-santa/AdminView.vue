@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { getLocalTimeZone, today, type DateValue } from '@internationalized/date'
 import { ArrowLeft, CalendarDays, CalendarIcon, Check, Clock, Copy, Dices, EllipsisVertical, Gift, KeyRound, Link2, Lock, LogOut, Palette, Pencil, RotateCcw, RefreshCw, SearchX, Trash2, TriangleAlert, UserPlus, Users } from '@lucide/vue'
+import CardHeading from './components/CardHeading.vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -24,7 +25,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -494,7 +495,7 @@ async function onDraw() {
         <!-- Pessoas -->
         <Card>
           <CardHeader>
-            <CardTitle class="text-lg">Pessoas ({{ participants.length }})</CardTitle>
+            <CardHeading :icon="Users">Pessoas ({{ participants.length }})</CardHeading>
             <CardDescription v-if="participants.length > 0">
               {{ progress.done }} de {{ participants.length }} {{ progress.label }}.
             </CardDescription>
@@ -592,7 +593,7 @@ async function onDraw() {
         <div class="space-y-6">
           <!-- Convite -->
           <Card>
-            <CardHeader><CardTitle class="text-lg">Convite</CardTitle></CardHeader>
+            <CardHeader><CardHeading :icon="Link2">Convite</CardHeading></CardHeader>
             <CardContent class="space-y-4">
               <InputGroup class="h-11 bg-card">
                 <InputGroupInput :model-value="invite" readonly aria-label="Link do convite" />
@@ -637,7 +638,7 @@ async function onDraw() {
           <!-- Sorteio -->
           <Card v-if="status === 'open'">
             <CardHeader>
-              <CardTitle class="text-lg">Sorteio</CardTitle>
+              <CardHeading :icon="Dices">Sorteio</CardHeading>
               <CardDescription>Depois de sortear não dá para mudar as pessoas.</CardDescription>
             </CardHeader>
             <CardContent class="space-y-3">
@@ -655,7 +656,7 @@ async function onDraw() {
 
           <Card v-else>
             <CardHeader>
-              <CardTitle class="text-lg">O sorteio foi feito</CardTitle>
+              <CardHeading :icon="Check">O sorteio foi feito</CardHeading>
               <CardDescription>Avise o grupo para cada pessoa abrir a sua carta.</CardDescription>
             </CardHeader>
             <CardContent class="space-y-3">
@@ -677,7 +678,7 @@ async function onDraw() {
           <!-- Refazer o sorteio -->
           <Card v-if="status === 'drawn'">
             <CardHeader>
-              <CardTitle class="text-lg">Refazer o sorteio</CardTitle>
+              <CardHeading :icon="RefreshCw">Refazer o sorteio</CardHeading>
               <CardDescription>
                 {{ anyRevealed ? 'Alguém já abriu a carta e viu quem tirou. Agora não dá mais para refazer.' : 'Enquanto ninguém abrir a carta, dá para desfazer o sorteio e sortear de novo.' }}
               </CardDescription>
@@ -693,7 +694,7 @@ async function onDraw() {
           <!-- Minha lista de presentes -->
           <Card v-if="hasMyself && status === 'open'">
             <CardHeader>
-              <CardTitle class="text-lg">Minha lista de presentes</CardTitle>
+              <CardHeading :icon="Gift">Minha lista de presentes</CardHeading>
               <CardDescription>Escreva o que você gostaria de ganhar e, se tiver, o link do produto.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -720,7 +721,7 @@ async function onDraw() {
           <!-- Dados do grupo -->
           <Card>
             <CardHeader>
-              <CardTitle class="text-lg">Dados do grupo</CardTitle>
+              <CardHeading :icon="Pencil">Dados do grupo</CardHeading>
               <CardDescription>Dá para corrigir o nome, o valor e a data da troca a qualquer momento.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -763,7 +764,7 @@ async function onDraw() {
           <!-- Cor do grupo -->
           <Card>
             <CardHeader>
-              <CardTitle class="text-lg">Cor do grupo</CardTitle>
+              <CardHeading :icon="Palette">Cor do grupo</CardHeading>
               <CardDescription>Todo mundo que abrir o link vê o grupo nessa cor. Sem escolha, fica framboesa.</CardDescription>
             </CardHeader>
             <CardContent>
@@ -808,7 +809,7 @@ async function onDraw() {
           <!-- Excluir -->
           <Card class="border-destructive/40">
             <CardHeader>
-              <CardTitle class="text-lg text-destructive">Excluir grupo</CardTitle>
+              <CardHeading :icon="Trash2" tone="destructive">Excluir grupo</CardHeading>
               <CardDescription>Apaga o grupo, as pessoas, as perguntas e o mural. Não dá para desfazer.</CardDescription>
             </CardHeader>
             <CardContent>

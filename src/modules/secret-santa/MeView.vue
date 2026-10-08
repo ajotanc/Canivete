@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { Lock, TriangleAlert } from '@lucide/vue'
+import { Gift, Heart, Lock, TriangleAlert } from '@lucide/vue'
+import CardHeading from './components/CardHeading.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { triggerConfetti } from '@/core/effects/confetti'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -166,7 +167,7 @@ async function onSave() {
 
             <Card v-if="landed" class="animate-in fade-in slide-in-from-bottom-3 duration-500 motion-reduce:animate-none">
               <CardHeader>
-                <CardTitle class="text-lg">O que {{ result.receiver.name }} gostaria de ganhar</CardTitle>
+                <CardHeading :icon="Gift">O que {{ result.receiver.name }} gostaria de ganhar</CardHeading>
                 <CardDescription v-if="result.receiver.wishlist.length > 0">
                   {{ result.receiver.wishlist.length }} {{ result.receiver.wishlist.length === 1 ? 'ideia' : 'ideias' }} de presente{{ linkCount > 0 ? `, ${linkCount} com ${linkCount === 1 ? 'link' : 'links'} para comprar` : '' }}.
                 </CardDescription>
@@ -178,7 +179,7 @@ async function onSave() {
 
             <Card>
               <CardHeader>
-                <CardTitle class="text-lg">Minha lista de presentes</CardTitle>
+                <CardHeading :icon="Heart">Minha lista de presentes</CardHeading>
                 <CardDescription>Quem tirou você vê a versão mais nova.</CardDescription>
               </CardHeader>
               <CardContent>

@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { Megaphone, Send, Trash2 } from '@lucide/vue'
+import CardHeading from './CardHeading.vue'
 import dayjs from 'dayjs'
 import 'dayjs/locale/pt-br'
 import { computed, onMounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import ConfirmDelete from '@/components/ConfirmDelete.vue'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
@@ -75,7 +76,7 @@ function when(iso: string): string {
 <template>
   <Card aria-labelledby="board-title">
     <CardHeader>
-      <CardTitle id="board-title" class="flex items-center gap-2 text-lg"><Megaphone class="size-5" aria-hidden="true" />Mural do grupo</CardTitle>
+      <CardHeading id="board-title" :icon="Megaphone">Mural do grupo</CardHeading>
       <CardDescription>Recados para todo mundo. Aqui aparece quem escreveu.</CardDescription>
     </CardHeader>
     <CardContent class="space-y-4">

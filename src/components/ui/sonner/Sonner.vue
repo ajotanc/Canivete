@@ -1,13 +1,21 @@
 <script lang="ts" setup>
 import type { ToasterProps } from "vue-sonner"
 import { CircleCheckIcon, InfoIcon, Loader2Icon, OctagonXIcon, TriangleAlertIcon, XIcon } from "@lucide/vue"
-import { Toaster as Sonner } from "vue-sonner"
+import { onBeforeUnmount, onMounted } from "vue"
+import { toast, Toaster as Sonner } from "vue-sonner"
 import "vue-sonner/style.css"
 import { useTheme } from "@/core/theme/useTheme"
 import { cn } from "@/lib/utils"
 
 const props = defineProps<ToasterProps>()
 const { isDark } = useTheme()
+
+// Tocar em qualquer aviso fecha. O vue-sonner não expõe o id de cada aviso no DOM, então fecha os que estão na tela.
+function dismissOnClick(event: MouseEvent) {
+  if ((event.target as Element | null)?.closest("[data-sonner-toast]")) toast.dismiss()
+}
+onMounted(() => document.addEventListener("click", dismissOnClick))
+onBeforeUnmount(() => document.removeEventListener("click", dismissOnClick))
 </script>
 
 <template>

@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { MessageCircleQuestion, Send } from '@lucide/vue'
+import CardHeading from './CardHeading.vue'
 import { onMounted, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { Spinner } from '@/components/ui/spinner'
@@ -70,10 +71,7 @@ async function onAnswer(item: QuestionItem) {
 <template>
   <Card aria-labelledby="questions-title">
     <CardHeader>
-      <CardTitle id="questions-title" class="flex items-center gap-2 text-lg">
-        <MessageCircleQuestion class="size-5" aria-hidden="true" />
-        Perguntas anônimas
-      </CardTitle>
+      <CardHeading id="questions-title" :icon="MessageCircleQuestion">Perguntas anônimas</CardHeading>
       <CardDescription>
         Pergunte algo a {{ receiverName }} sem se identificar, como "Você prefere chocolate ou vinho?". A resposta aparece só para você.
       </CardDescription>

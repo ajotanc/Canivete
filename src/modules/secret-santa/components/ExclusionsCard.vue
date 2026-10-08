@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Ban, Plus, X } from '@lucide/vue'
+import CardHeading from './CardHeading.vue'
 import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import ConfirmDelete from '@/components/ConfirmDelete.vue'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Spinner } from '@/components/ui/spinner'
@@ -55,7 +56,7 @@ async function remove() {
 <template>
   <Card>
     <CardHeader>
-      <CardTitle class="text-lg">Quem não pode se tirar</CardTitle>
+      <CardHeading :icon="Ban">Quem não pode se tirar</CardHeading>
       <CardDescription>Útil para casais e quem mora junto. A regra vale nos dois sentidos.</CardDescription>
     </CardHeader>
     <CardContent class="space-y-4">
