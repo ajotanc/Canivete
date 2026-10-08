@@ -444,18 +444,18 @@ async function onDraw() {
       <CardContent><AuthForm @done="onLoggedIn" /></CardContent>
     </Card>
 
-    <EmptyState v-else-if="state === 'forbidden'" page :icon="Lock" title="Este grupo é de outra conta" :description="`Só quem criou o grupo administra. Você está como ${user?.email}. Entre com a conta certa para abrir o painel.`">
+    <EmptyState v-else-if="state === 'forbidden'" page :icon="Lock" :description="`Este grupo é de outra conta. Só quem criou o grupo administra. Você está como ${user?.email}. Entre com a conta certa para abrir o painel.`">
       <div class="flex flex-wrap justify-center gap-3">
           <Button size="lg" @click="onLogout">Trocar de conta</Button>
           <Button as-child size="lg" variant="outline"><RouterLink :to="`/secret-santa/g/${groupId}`">Ir para o convite</RouterLink></Button>
         </div>
     </EmptyState>
 
-    <EmptyState v-else-if="state === 'not-found'" page :icon="SearchX" title="Grupo não encontrado" description="Ele pode ter sido excluído ou o link está incompleto.">
+    <EmptyState v-else-if="state === 'not-found'" page :icon="SearchX" description="Grupo não encontrado. Ele pode ter sido excluído ou o link está incompleto.">
       <Button as-child size="lg"><RouterLink to="/secret-santa">Criar um grupo</RouterLink></Button>
     </EmptyState>
 
-    <EmptyState v-else-if="state === 'error'" page :icon="TriangleAlert" title="Não foi possível abrir o painel" :description="`${errorMessage}`">
+    <EmptyState v-else-if="state === 'error'" page :icon="TriangleAlert" :description="`Não foi possível abrir o painel. ${errorMessage}`">
       <Button size="lg" @click="refresh()">Tentar de novo</Button>
     </EmptyState>
 
@@ -534,7 +534,7 @@ async function onDraw() {
               </InputGroup>
             </form>
 
-            <EmptyState v-if="participants.length === 0" :icon="Users" title="Ninguém foi adicionado ainda" :description="`Digite o nome da primeira pessoa acima. São necessárias pelo menos ${MIN_PARTICIPANTS_TO_DRAW} para sortear.`" />
+            <EmptyState v-if="participants.length === 0" :icon="Users" :description="`Ninguém foi adicionado ainda. Digite o nome da primeira pessoa acima. São necessárias pelo menos ${MIN_PARTICIPANTS_TO_DRAW} para sortear.`" />
             <ItemGroup v-else class="gap-2">
               <Item v-for="person in participants" :key="person.name" variant="muted" size="sm">
                 <ItemContent>

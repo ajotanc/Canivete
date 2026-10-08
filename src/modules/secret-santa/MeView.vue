@@ -150,7 +150,7 @@ async function onSave() {
       </div>
     </div>
 
-    <EmptyState v-else-if="state === 'error'" page :icon="TriangleAlert" title="Não foi possível abrir seu painel" :description="`${errorMessage}`">
+    <EmptyState v-else-if="state === 'error'" page :icon="TriangleAlert" :description="`Não foi possível abrir seu painel. ${errorMessage}`">
       <Button size="lg" @click="$router.go(0)">Tentar de novo</Button>
     </EmptyState>
 

@@ -70,7 +70,7 @@ function clearFilters() {
       </ToggleGroup>
     </div>
 
-    <EmptyState v-if="visibleTools.length === 0" :icon="SearchX" title="Nenhuma ferramenta encontrada" description="Tente outra palavra ou mostre todas as categorias.">
+    <EmptyState v-if="visibleTools.length === 0" :icon="SearchX" description="Nenhuma ferramenta encontrada. Tente outra palavra ou mostre todas as categorias.">
       <button type="button" class="text-sm font-medium underline underline-offset-4" @click="clearFilters">Limpar busca</button>
     </EmptyState>
 

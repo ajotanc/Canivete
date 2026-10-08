@@ -140,11 +140,11 @@ async function onSubmit() {
       </div>
     </div>
 
-    <EmptyState v-else-if="state === 'not-found'" page :icon="SearchX" title="Grupo não encontrado" description="Confira se o link do convite está completo.">
+    <EmptyState v-else-if="state === 'not-found'" page :icon="SearchX" description="Grupo não encontrado. Confira se o link do convite está completo.">
       <Button as-child size="lg"><RouterLink to="/secret-santa">Criar um grupo</RouterLink></Button>
     </EmptyState>
 
-    <EmptyState v-else-if="state === 'error'" page :icon="TriangleAlert" title="Não foi possível abrir o grupo" :description="`${errorMessage}`">
+    <EmptyState v-else-if="state === 'error'" page :icon="TriangleAlert" :description="`Não foi possível abrir o grupo. ${errorMessage}`">
       <Button size="lg" @click="$router.go(0)">Tentar de novo</Button>
     </EmptyState>
 
@@ -175,7 +175,7 @@ async function onSubmit() {
       <!-- Passo 1: quem é você -->
       <div v-if="!selected" class="space-y-4">
         <h2 class="text-xl">{{ returning ? 'Ou entre como outra pessoa' : 'Quem é você?' }}</h2>
-        <EmptyState v-if="group.members.length === 0" :icon="Users" title="Ninguém foi adicionado ainda" description="O organizador ainda não cadastrou as pessoas. Volte mais tarde." />
+        <EmptyState v-if="group.members.length === 0" :icon="Users" description="Ninguém foi adicionado ainda. O organizador ainda não cadastrou as pessoas. Volte mais tarde." />
         <InputGroup v-if="group.members.length >= NAME_SEARCH_FROM" class="h-11 bg-card">
           <InputGroupAddon><Search aria-hidden="true" /></InputGroupAddon>
           <InputGroupInput v-model="query" type="search" autocomplete="off" placeholder="Buscar seu nome" aria-label="Buscar seu nome" />

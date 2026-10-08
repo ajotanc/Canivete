@@ -44,5 +44,5 @@ function host(url: string): string {
       </component>
     </li>
   </ul>
-  <EmptyState v-else :icon="Gift" :title="name ? `${name} ainda não escreveu nada` : 'Ainda não escreveu nada'" description="Dá para mandar uma pergunta anônima aqui embaixo e descobrir o que a pessoa gosta." />
+  <EmptyState v-else :icon="Gift" :description="`${name ? name + ' ainda não escreveu nada' : 'Ainda não escreveu nada'}. Dá para mandar uma pergunta anônima aqui embaixo e descobrir o que a pessoa gosta.`" />
 </template>

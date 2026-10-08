@@ -12,7 +12,7 @@ function formatTime(iso: string): string {
 </script>
 
 <template>
-  <EmptyState v-if="rounds.length === 0" :icon="History" title="Nenhum sorteio ainda" description="Os sorteios desta sessão aparecem aqui." />
+  <EmptyState v-if="rounds.length === 0" :icon="History" description="Nenhum sorteio ainda. Os sorteios desta sessão aparecem aqui." />
   <ItemGroup v-else class="gap-2">
     <Item v-for="round in rounds" :key="round.id" variant="muted" size="sm">
       <ItemContent>

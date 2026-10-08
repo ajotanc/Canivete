@@ -7,4 +7,4 @@
 - Quadrado de ícone (chip): `rounded-chip` (raio de 28% do lado, vale para qualquer tamanho) e borda do sistema (`border` com a cor do chip a 20%).
 - Elemento com raio dentro de outro com raio e respiro (padding): raio de dentro = raio de fora - padding - borda (curvas paralelas), por exemplo `rounded-[calc(var(--radius-xl)-5px)]`.
 - Estado vazio, bloqueado ou de erro usa sempre o componente `EmptyState` (borda tracejada, ícone em quadrado, texto curto); nada de bloco tracejado feito à mão.
-- `EmptyState`: sempre com `icon` e `description`; `title` só quando a descrição não basta. Carregamento usa os esqueletos de `components/skeletons` com o formato da página, nunca spinner solto.
+- `EmptyState`: só `icon` e `description` (sem título). Carregamento usa os esqueletos de `components/skeletons` com o formato da página, nunca spinner solto.

@@ -50,11 +50,11 @@ function formatDate(iso: string): string {
       <CardSkeleton :rows="2" />
     </div>
 
-    <EmptyState v-else-if="state === 'not-found'" page :icon="SearchX" title="Sorteio não encontrado" description="Confira se o link está completo.">
+    <EmptyState v-else-if="state === 'not-found'" page :icon="SearchX" description="Sorteio não encontrado. Confira se o link está completo.">
       <Button as-child size="lg"><RouterLink to="/raffle">Fazer um novo sorteio</RouterLink></Button>
     </EmptyState>
 
-    <EmptyState v-else-if="state === 'error'" page :icon="TriangleAlert" title="Não foi possível abrir o sorteio" :description="`${errorMessage}`">
+    <EmptyState v-else-if="state === 'error'" page :icon="TriangleAlert" :description="`Não foi possível abrir o sorteio. ${errorMessage}`">
       <Button as-child size="lg"><RouterLink to="/raffle">Fazer um novo sorteio</RouterLink></Button>
     </EmptyState>
 
