@@ -5,6 +5,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import EmptyState from '@/components/EmptyState.vue'
@@ -70,17 +71,11 @@ function formatDate(iso: string): string {
           <FactTile v-else :icon="AlertTriangle" label="Registro" tone="paper">Não confere com o original</FactTile>
         </FactList>
       </PageHeader>
-      <div
-        v-if="!verified"
-        class="flex items-start gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4"
-      >
-        <AlertTriangle class="mt-0.5 size-5 shrink-0 text-destructive" />
-        <div class="space-y-1 text-sm">
-          <p class="font-semibold">Este registro não confere</p>
-          <p class="text-muted-foreground">
-            O conteúdo não bate com o código de verificação gravado. Não confie neste resultado.
-          </p>
-        </div>
+      <Alert v-if="!verified" variant="destructive">
+        <TriangleAlert aria-hidden="true" />
+        <AlertTitle>Este registro não confere</AlertTitle>
+        <AlertDescription>O conteúdo não bate com o código de verificação gravado. Não confie neste resultado.</AlertDescription>
+      </Alert>
       </div>
 
       <Card>

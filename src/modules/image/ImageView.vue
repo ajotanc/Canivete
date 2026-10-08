@@ -15,12 +15,19 @@ import { Field, FieldContent, FieldDescription, FieldLabel } from '@/components/
 import { Skeleton } from '@/components/ui/skeleton'
 import { Slider } from '@/components/ui/slider'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
-import { FORMATS, fitWidth, formatBytes, isSupportedImage, MAX_FILE_MB, MAX_SIDE, outputName, sizeChangePercent, type OutputFormat } from './lib/image'
+import { DEFAULT_SVG_SIZE, FORMATS, fitWidth, formatBytes, isSupportedImage, isSvg, MAX_FILE_MB, MAX_SIDE, outputName, sizeChangePercent, svgSize, type OutputFormat } from './lib/image'
 
 const WIDTH_PRESETS = [0, 1920, 1280, 800] as const
 
 const file = ref<File | null>(null)
-const bitmap = shallowRef<ImageBitmap | null>(null)
+/** O que se desenha no canvas: bitmap (fotos) ou imagem (SVG), com o tamanho em pixels. */
+interface Source {
+  draw: CanvasImageSource
+  width: number
+  height: number
+  close: () => void
+}
+const source = shallowRef<Source | null>(null)
 const originalUrl = ref('')
 const error = ref('')
 
@@ -34,7 +41,7 @@ const resultUrl = ref('')
 const rendering = ref(false)
 
 const lossy = computed(() => FORMATS.find((item) => item.value === format.value)?.lossy ?? false)
-const target = computed(() => (bitmap.value ? fitWidth({ width: bitmap.value.width, height: bitmap.value.height }, Number(maxWidth.value) || 0) : null))
+const target = computed(() => (source.value ? fitWidth({ width: source.value.width, height: source.value.height }, Number(maxWidth.value) || 0) : null))
 const change = computed(() => (file.value && resultBlob.value ? sizeChangePercent(file.value.size, resultBlob.value.size) : 0))
 
 function revoke(url: string) {
@@ -42,8 +49,8 @@ function revoke(url: string) {
 }
 
 function clear() {
-  bitmap.value?.close()
-  bitmap.value = null
+  source.value?.close()
+  source.value = null
   file.value = null
   revoke(originalUrl.value)
   revoke(resultUrl.value)
@@ -53,10 +60,28 @@ function clear() {
   error.value = ''
 }
 
+async function loadSource(selected: File): Promise<Source> {
+  if (isSvg(selected.type)) {
+    const size = svgSize(await selected.text()) ?? { width: DEFAULT_SVG_SIZE, height: DEFAULT_SVG_SIZE }
+    const url = URL.createObjectURL(selected)
+    const image = new Image()
+    image.src = url
+    try {
+      await image.decode()
+    } catch (cause) {
+      URL.revokeObjectURL(url)
+      throw cause
+    }
+    return { draw: image, ...size, close: () => URL.revokeObjectURL(url) }
+  }
+  const bitmap = await createImageBitmap(selected)
+  return { draw: bitmap, width: bitmap.width, height: bitmap.height, close: () => bitmap.close() }
+}
+
 async function onSelect(selected: File) {
   error.value = ''
   if (!isSupportedImage(selected.type)) {
-    error.value = 'Esse arquivo não é uma imagem que o navegador abre (use JPEG, PNG, WebP, GIF, BMP ou AVIF).'
+    error.value = 'Esse arquivo não é uma imagem que o navegador abre (use JPEG, PNG, WebP, GIF, BMP, AVIF ou SVG).'
     return
   }
   if (selected.size > MAX_FILE_MB * 1_000_000) {
@@ -64,9 +89,9 @@ async function onSelect(selected: File) {
     return
   }
   try {
-    const decoded = await createImageBitmap(selected)
+    const decoded = await loadSource(selected)
     clear()
-    bitmap.value = decoded
+    source.value = decoded
     file.value = selected
     originalUrl.value = URL.createObjectURL(selected)
   } catch {
@@ -77,9 +102,9 @@ async function onSelect(selected: File) {
 /** Só o resultado da última configuração vale: se mudar no meio, o anterior é descartado. */
 let run = 0
 async function render() {
-  const source = bitmap.value
+  const loaded = source.value
   const size = target.value
-  if (!source || !size) return
+  if (!loaded || !size) return
   const current = ++run
   rendering.value = true
   try {
@@ -93,7 +118,7 @@ async function render() {
       context.fillStyle = '#ffffff'
       context.fillRect(0, 0, canvas.width, canvas.height)
     }
-    context.drawImage(source, 0, 0, canvas.width, canvas.height)
+    context.drawImage(loaded.draw, 0, 0, canvas.width, canvas.height)
     const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, format.value, lossy.value ? quality.value / 100 : undefined))
     if (current !== run) return
     if (!blob) throw new Error('blob')
@@ -108,7 +133,7 @@ async function render() {
 }
 
 let timer: ReturnType<typeof setTimeout> | undefined
-watch([bitmap, format, quality, maxWidth], () => {
+watch([source, format, quality, maxWidth], () => {
   clearTimeout(timer)
   timer = setTimeout(render, 150)
 })
@@ -156,7 +181,7 @@ onBeforeUnmount(() => {
       <Card>
         <CardHeader>
           <CardTitle class="text-lg">Como comprimir</CardTitle>
-          <CardDescription class="break-all">{{ file.name }} · {{ bitmap?.width }} × {{ bitmap?.height }} px · {{ formatBytes(file.size) }}</CardDescription>
+          <CardDescription class="break-all">{{ file.name }} · {{ source?.width }} × {{ source?.height }} px · {{ formatBytes(file.size) }}</CardDescription>
         </CardHeader>
         <CardContent class="space-y-5">
           <Field>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, ChevronRight, Gift, KeyRound, ListChecks, Lock, LogOut } from '@lucide/vue'
+import { ArrowLeft, ChevronRight, CircleAlert, Gift, KeyRound, ListChecks, Lock, LogOut } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -8,6 +8,7 @@ import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PinField from '@/components/PinField.vue'
 import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -214,7 +215,10 @@ function onNext() {
               </p>
             </FieldGroup>
 
-            <p v-if="error" class="text-sm text-destructive" role="alert">{{ error }}</p>
+            <Alert v-if="error" variant="destructive">
+              <CircleAlert aria-hidden="true" />
+              <AlertDescription>{{ error }}</AlertDescription>
+            </Alert>
 
             <div class="flex items-center gap-3">
               <Button v-if="step > 1" type="button" variant="outline" size="lg" @click="step -= 1">

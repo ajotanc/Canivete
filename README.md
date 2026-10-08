@@ -46,7 +46,7 @@ npm run build
 | Valor por extenso (reais e números, até 999 bilhões) | `amount-words` | não |
 | UUID e hash (v4, v7, SHA-1/256/384/512 e HMAC) | `hash` | não |
 | Lorem ipsum (parágrafos, frases ou palavras; latim ou português; HTML) | `lorem` | não |
-| Comprimir imagem (reduz peso e largura; JPEG, WebP, PNG) | `image` | não |
+| Comprimir imagem (reduz peso e largura; aceita JPEG, PNG, WebP, GIF, BMP, AVIF e SVG; saída JPEG, WebP ou PNG) | `image` | não |
 | Cara ou coroa e dados (D4 a D100) | `coin-dice` | não |
 
 A consulta de CEP é a única que chama um serviço externo (`viacep.com.br`, direto do navegador); as outras rodam só no aparelho.

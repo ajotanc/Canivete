@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Fingerprint, Hash, KeyRound, RefreshCw, Zap } from '@lucide/vue'
+import { CircleAlert, Fingerprint, Hash, KeyRound, RefreshCw, Zap } from '@lucide/vue'
 import { ref, watch } from 'vue'
 import CopyField from '@/components/CopyField.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@/components/ui/field'
@@ -149,7 +150,10 @@ watch(
               <FieldLabel for="hash-key">Chave</FieldLabel>
               <Input id="hash-key" v-model="key" autocomplete="off" spellcheck="false" />
             </Field>
-            <p v-if="hashError" role="alert" class="text-sm font-medium text-destructive">{{ hashError }}</p>
+            <Alert v-if="hashError" variant="destructive">
+              <CircleAlert aria-hidden="true" />
+              <AlertDescription>{{ hashError }}</AlertDescription>
+            </Alert>
             <ul v-else-if="hashes.length" class="space-y-3" aria-live="polite">
               <li v-for="item in hashes" :key="item.algorithm" class="space-y-1.5">
                 <p class="text-sm font-medium">{{ useKey && key ? `HMAC-${item.algorithm}` : item.algorithm }}</p>

@@ -6,6 +6,7 @@ import CopyField from '@/components/CopyField.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -154,12 +155,12 @@ onBeforeUnmount(() => clearTimeout(copiedTimer))
           <FieldLabel for="to-check">CPF ou CNPJ</FieldLabel>
           <Input id="to-check" v-model="toCheck" v-maska="MASK" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="000.000.000-00" class="tabular-nums" :aria-invalid="toCheck && check.kind && !check.valid ? true : undefined" />
         </Field>
-        <p v-if="check.message" role="status" class="flex items-start gap-2 text-sm" :class="check.valid ? 'font-medium text-success' : check.kind ? 'font-medium text-destructive' : 'text-muted-foreground'">
-          <CircleCheck v-if="check.valid" class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          <CircleX v-else-if="check.kind" class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          <ScanSearch v-else class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-          {{ check.message }}
-        </p>
+        <Alert v-if="check.message" :variant="check.valid ? 'success' : check.kind ? 'destructive' : 'default'" role="status">
+          <CircleCheck v-if="check.valid" aria-hidden="true" />
+          <CircleX v-else-if="check.kind" aria-hidden="true" />
+          <ScanSearch v-else aria-hidden="true" />
+          <AlertDescription>{{ check.message }}</AlertDescription>
+        </Alert>
       </CardContent>
     </Card>
   </section>

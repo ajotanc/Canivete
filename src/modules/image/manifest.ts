@@ -5,7 +5,7 @@ import type { ToolManifest } from '@/core/modules/types'
 const manifest: ToolManifest = {
   id: 'image',
   title: 'Comprimir imagem',
-  description: 'Reduza o peso e a largura de uma foto, converta entre JPEG, WebP e PNG e baixe sem enviar nada para a internet.',
+  description: 'Reduza o peso e a largura de uma foto ou SVG, converta entre JPEG, WebP e PNG e baixe sem enviar nada para a internet.',
   icon: ImageDown,
   color: 'amber',
   preview: PreviewImage,

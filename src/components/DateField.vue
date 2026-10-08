@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { getLocalTimeZone, today, type DateValue } from '@internationalized/date'
-import { CalendarIcon } from '@lucide/vue'
+import { CalendarIcon, CircleAlert } from '@lucide/vue'
 import { createYearRange } from 'reka-ui/date'
 import { computed, ref, watch } from 'vue'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
@@ -84,6 +85,9 @@ const years = computed(() => {
         </div>
       </PopoverContent>
     </Popover>
-    <p v-if="invalid" role="alert" class="text-sm text-destructive">Essa data não existe ou está fora do período permitido.</p>
+    <Alert v-if="invalid" variant="destructive">
+      <CircleAlert aria-hidden="true" />
+      <AlertDescription>Essa data não existe ou está fora do período permitido.</AlertDescription>
+    </Alert>
   </div>
 </template>

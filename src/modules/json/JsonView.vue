@@ -5,6 +5,7 @@ import { toast } from 'vue-sonner'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldLabel } from '@/components/ui/field'
@@ -77,10 +78,10 @@ const formatBytes = (bytes: number) => (bytes < 1024 ? `${bytes} B` : `${(bytes 
               </InputGroupAddon>
             </InputGroup>
           </Field>
-          <p v-if="parsed && !parsed.ok" role="alert" class="mt-3 flex items-start gap-2 text-sm font-medium text-destructive">
-            <CircleAlert class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-            {{ parsed.message }}
-          </p>
+          <Alert v-if="parsed && !parsed.ok" variant="destructive" class="mt-3">
+            <CircleAlert aria-hidden="true" />
+            <AlertDescription>{{ parsed.message }}</AlertDescription>
+          </Alert>
         </CardContent>
       </Card>
 
