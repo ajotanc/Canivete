@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Coins, Dices, Hash, RotateCcw, Zap } from '@lucide/vue'
+import { Coins, Dices, RotateCcw, Zap } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref } from 'vue'
 import EmptyState from '@/components/EmptyState.vue'
 import FactList from '@/components/FactList.vue'
@@ -7,66 +7,69 @@ import FactTile from '@/components/FactTile.vue'
 import NumberInput from '@/components/NumberInput.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@/components/ui/field'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import CoinPiece from './components/CoinPiece.vue'
+import DiceFace from './components/DiceFace.vue'
 import { COIN_LABEL, DIE_SIDES, diceNotation, flipCoin, MAX_DICE, rollDice, type CoinSide, type DiceRoll } from './lib/roll'
 
 const tab = ref('coin')
 
 // Moeda
-const FLIP_MS = 900
+const coin = ref<InstanceType<typeof CoinPiece>>()
 const coinSide = ref<CoinSide | null>(null)
-/** Meias-voltas acumuladas; sempre cresce, para a moeda girar para o mesmo lado a cada sorteio. */
-const turns = ref(0)
 const flipping = ref(false)
 const tally = ref<Record<CoinSide, number>>({ heads: 0, tails: 0 })
-let flipTimer: ReturnType<typeof setTimeout> | undefined
 
-function flip() {
-  if (flipping.value) return
+async function flip() {
+  if (flipping.value || !coin.value) return
   const side = flipCoin()
-  const spins = 5
-  // Cara fica de frente em múltiplos pares de meias-voltas, coroa nos ímpares.
-  const base = Math.ceil(turns.value / 2) * 2
-  turns.value = base + spins * 2 + (side === 'tails' ? 1 : 0)
   flipping.value = true
-  clearTimeout(flipTimer)
-  flipTimer = setTimeout(() => {
-    coinSide.value = side
-    tally.value = { ...tally.value, [side]: tally.value[side] + 1 }
-    flipping.value = false
-  }, FLIP_MS)
+  await coin.value.toss(side)
+  coinSide.value = side
+  tally.value = { ...tally.value, [side]: tally.value[side] + 1 }
+  flipping.value = false
 }
 function resetCoin() {
-  clearTimeout(flipTimer)
-  flipping.value = false
   coinSide.value = null
   tally.value = { heads: 0, tails: 0 }
 }
 
 // Dados
+const ROLL_MS = 900
 const diceCount = ref(2)
 const sides = ref<number>(6)
 const last = ref<DiceRoll | null>(null)
 const rollId = ref(0)
+const rolling = ref(false)
 const history = ref<Array<{ id: number; label: string; total: number }>>([])
+let rollTimer: ReturnType<typeof setTimeout> | undefined
 
 const count = computed(() => Math.min(MAX_DICE, Math.max(1, Math.floor(Number(diceCount.value)) || 1)))
 
 function roll() {
+  if (rolling.value) return
   const result = rollDice(count.value, sides.value)
   last.value = result
   rollId.value++
-  history.value = [{ id: rollId.value, label: diceNotation(count.value, sides.value), total: result.total }, ...history.value].slice(0, 8)
+  rolling.value = true
+  clearTimeout(rollTimer)
+  // O resultado só entra no total e no histórico quando os dados param.
+  const id = rollId.value
+  const label = diceNotation(count.value, sides.value)
+  rollTimer = setTimeout(() => {
+    rolling.value = false
+    history.value = [{ id, label, total: result.total }, ...history.value].slice(0, 8)
+  }, ROLL_MS)
 }
 function onSides(value: unknown) {
   const amount = Number(value)
   if ((DIE_SIDES as readonly number[]).includes(amount)) sides.value = amount
 }
 
-onBeforeUnmount(() => clearTimeout(flipTimer))
+onBeforeUnmount(() => clearTimeout(rollTimer))
 </script>
 
 <template>
@@ -88,22 +91,8 @@ onBeforeUnmount(() => clearTimeout(flipTimer))
           </TabsList>
 
           <TabsContent value="coin" class="mt-6 space-y-6">
-            <div class="flex justify-center [perspective:800px]">
-              <div
-                class="relative size-36 transition-transform duration-[900ms] ease-out [transform-style:preserve-3d] motion-reduce:transition-none"
-                :style="{ transform: `rotateY(${turns * 180}deg)` }"
-                role="img"
-                :aria-label="coinSide ? COIN_LABEL[coinSide] : 'Moeda'"
-              >
-                <div class="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-full border-4 border-primary-foreground/30 bg-primary text-primary-foreground shadow-lg [backface-visibility:hidden]">
-                  <Coins class="size-10" aria-hidden="true" />
-                  <span class="text-lg font-semibold">Cara</span>
-                </div>
-                <div class="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-full border-4 border-foreground/20 bg-card text-card-foreground shadow-lg [backface-visibility:hidden] [transform:rotateY(180deg)]">
-                  <Hash class="size-10" aria-hidden="true" />
-                  <span class="text-lg font-semibold">Coroa</span>
-                </div>
-              </div>
+            <div class="flex min-h-80 items-end justify-center pb-2">
+              <CoinPiece ref="coin" />
             </div>
             <div class="text-center" role="status">
               <p class="min-h-9 text-3xl font-semibold">{{ flipping ? '' : coinSide ? COIN_LABEL[coinSide] : 'Jogue a moeda' }}</p>
@@ -131,21 +120,18 @@ onBeforeUnmount(() => clearTimeout(flipTimer))
                 </ToggleGroup>
               </Field>
             </div>
-            <Button size="lg" class="w-full sm:w-auto" @click="roll"><Dices aria-hidden="true" />Rolar {{ diceNotation(count, sides) }}</Button>
+            <Button size="lg" class="w-full sm:w-auto" :disabled="rolling" @click="roll"><Dices aria-hidden="true" />Rolar {{ diceNotation(count, sides) }}</Button>
 
-            <div v-if="last" role="status" class="space-y-4">
-              <ul :key="rollId" class="flex flex-wrap gap-2">
-                <li
-                  v-for="(value, index) in last.rolls"
-                  :key="index"
-                  class="flex size-14 items-center justify-center rounded-xl border bg-card text-2xl font-semibold tabular-nums animate-in zoom-in-75 duration-300 motion-reduce:animate-none"
-                >
-                  {{ value }}
+            <div v-if="last" class="space-y-4" role="status">
+              <ul class="flex min-h-24 flex-wrap items-end gap-4 pt-8">
+                <li v-for="(value, index) in last.rolls" :key="index">
+                  <DiceFace :sides="last.sides" :value="value" :roll-key="rollId" :rolling="rolling" />
                 </li>
               </ul>
-              <p class="text-lg"><span class="text-muted-foreground">Total:</span> <span class="font-semibold tabular-nums">{{ last.total }}</span></p>
+              <p v-if="!rolling" class="text-lg"><span class="text-muted-foreground">Total:</span> <span class="font-semibold tabular-nums">{{ last.total }}</span></p>
+              <p v-else class="text-lg text-muted-foreground">Rolando…</p>
             </div>
-            <EmptyState v-else :icon="Dices" description="O resultado dos dados aparece aqui." />
+            <EmptyState v-else :icon="Dices" description="Os dados aparecem aqui quando você rolar." />
 
             <div v-if="history.length > 1" class="space-y-2">
               <h3 class="text-sm font-medium">Últimas jogadas</h3>
