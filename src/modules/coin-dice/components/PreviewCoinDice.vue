@@ -1,44 +1,52 @@
 <script setup lang="ts">
 import { Crown, Star } from '@lucide/vue'
-import { CUBE_FACES, pipCells } from '../lib/shapes'
+import { pipCells } from '../lib/shapes'
 
-// Miniatura da moeda e do dado, com o mesmo desenho da ferramenta: a moeda de ouro vira da estrela para a coroa e o cubo
-// gira, os dois ao passar o mouse (ou focar o card).
+// Miniatura da moeda e do dado no padrão dos cards da home: um mini-cartão com a moeda e o dado na cor da ferramenta,
+// o resultado em texto e o botão. Ao passar o mouse (ou focar o card), a moeda vira da estrela para a coroa,
+// o dado troca de 3 para 5 pontos e o resultado muda.
 
-/** Metade da aresta do cubo da miniatura (3rem de aresta). */
-const HALF = '1.5rem'
+const BEFORE = 3
+const AFTER = 5
+const cells = Array.from({ length: 9 }, (_, index) => ({
+  index: index + 1,
+  before: pipCells(BEFORE).includes(index + 1),
+  after: pipCells(AFTER).includes(index + 1),
+}))
 </script>
 
 <template>
-  <div class="flex w-44 items-center justify-around rounded-md bg-card p-3 text-card-foreground shadow-[0_6px_16px_-6px_rgb(14_20_32/0.45)]" aria-hidden="true">
-    <!-- Moeda: estrela de um lado, coroa do outro -->
-    <div class="size-14 [perspective:320px]">
-      <div class="relative size-full transition-transform duration-[900ms] ease-out [transform-style:preserve-3d] group-hover:[transform:rotateY(540deg)] group-focus-visible:[transform:rotateY(540deg)] motion-reduce:transition-none">
-        <div class="absolute inset-0 flex items-center justify-center rounded-full border border-[#8a5a12]/60 bg-[conic-gradient(from_30deg,#7d520f,#fbe48f_14%,#c58a2a_28%,#fff3bd_42%,#9a6a19_56%,#f3cf6a_70%,#b47b21_84%,#7d520f)] shadow-sm [backface-visibility:hidden]">
-          <span class="flex size-[2.6rem] items-center justify-center rounded-full border border-[#fff0b0]/80 bg-[radial-gradient(circle_at_35%_30%,#f9e08d,#dcab43_60%,#b98427)]">
-            <Star class="size-6 fill-[#fff0b0] text-[#7a4e0e]" stroke-width="1.5" />
+  <div class="w-44 rounded-md bg-card p-3 text-card-foreground shadow-[0_6px_16px_-6px_rgb(14_20_32/0.45)]" aria-hidden="true">
+    <div class="flex items-center justify-center gap-4">
+      <!-- Moeda -->
+      <div class="size-12 [perspective:240px]">
+        <div class="relative size-full transition-transform duration-700 ease-out [transform-style:preserve-3d] group-hover:[transform:rotateY(540deg)] group-focus-visible:[transform:rotateY(540deg)] motion-reduce:transition-none">
+          <span class="absolute inset-0 grid place-items-center rounded-full border-2 border-tool bg-tool text-tool-foreground shadow-sm [backface-visibility:hidden]">
+            <Star class="size-5 fill-current" />
           </span>
-        </div>
-        <div class="absolute inset-0 flex items-center justify-center rounded-full border border-[#8a5a12]/60 bg-[conic-gradient(from_210deg,#7d520f,#fbe48f_14%,#c58a2a_28%,#fff3bd_42%,#9a6a19_56%,#f3cf6a_70%,#b47b21_84%,#7d520f)] shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)]">
-          <span class="flex size-[2.6rem] items-center justify-center rounded-full border border-[#fff0b0]/80 bg-[radial-gradient(circle_at_35%_30%,#f9e08d,#dcab43_60%,#b98427)]">
-            <Crown class="size-6 fill-[#fff0b0] text-[#7a4e0e]" stroke-width="1.5" />
+          <span class="absolute inset-0 grid place-items-center rounded-full border-2 border-tool bg-card text-tool shadow-sm [backface-visibility:hidden] [transform:rotateY(180deg)]">
+            <Crown class="size-5 fill-current" />
           </span>
         </div>
       </div>
+
+      <!-- Dado -->
+      <span class="grid size-12 grid-cols-3 grid-rows-3 rounded-xl border bg-muted p-1.5 shadow-sm transition-transform duration-500 group-hover:-rotate-6 group-focus-visible:-rotate-6 motion-reduce:transition-none">
+        <span
+          v-for="cell in cells"
+          :key="cell.index"
+          class="m-auto size-1.5 rounded-full transition-colors duration-300 motion-reduce:transition-none"
+          :class="cell.before && cell.after ? 'bg-tool' : cell.before ? 'bg-tool group-hover:bg-transparent group-focus-visible:bg-transparent' : cell.after ? 'bg-transparent group-hover:bg-tool group-focus-visible:bg-tool' : ''"
+        />
+      </span>
     </div>
 
-    <!-- Dado: cubo com pontos, visto de cantinho -->
-    <div class="size-12 [perspective:260px]">
-      <div class="relative size-full transition-transform duration-[900ms] ease-out [transform-style:preserve-3d] [transform:rotateX(-24deg)_rotateY(32deg)] group-hover:[transform:rotateX(-24deg)_rotateY(752deg)] group-focus-visible:[transform:rotateX(-24deg)_rotateY(752deg)] motion-reduce:transition-none">
-        <div
-          v-for="face in CUBE_FACES"
-          :key="face.value"
-          class="absolute inset-0 grid grid-cols-3 grid-rows-3 rounded-md border border-foreground/20 bg-card p-1.5 [backface-visibility:hidden]"
-          :style="{ transform: `${face.place} translateZ(${HALF})` }"
-        >
-          <span v-for="cell in 9" :key="cell" class="m-auto size-1.5 rounded-full" :class="pipCells(face.value).includes(cell) ? 'bg-tool' : ''" />
-        </div>
-      </div>
+    <div class="mt-3 flex items-center justify-between">
+      <span class="text-xs font-semibold tabular-nums">
+        <span class="group-hover:hidden group-focus-visible:hidden">Cara · 3</span>
+        <span class="hidden group-hover:inline group-focus-visible:inline">Coroa · 5</span>
+      </span>
+      <span class="rounded bg-tool px-1.5 py-0.5 text-xs font-semibold text-tool-foreground">Jogar</span>
     </div>
   </div>
 </template>
