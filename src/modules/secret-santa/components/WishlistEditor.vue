@@ -78,7 +78,7 @@ function remove() {
 
     <ul v-else class="space-y-3">
       <li class="overflow-hidden rounded-xl border bg-card shadow-xs has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-3 has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50" v-for="(row, index) in rows" :key="row.key">
-        <div class="flex items-center pr-1">
+        <div class="flex items-center gap-1 pr-1">
           <InputGroupInput
             v-model="row.text"
             data-wish-text
@@ -91,8 +91,8 @@ function remove() {
             type="button"
             variant="ghost"
             size="icon"
-            class="size-9 rounded-[calc(var(--radius-xl)-5px)] text-blue-700 hover:bg-blue-600/10 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-300"
-            :class="row.hasLink ? 'bg-blue-600/10' : 'opacity-70 hover:opacity-100'"
+            class="size-9 rounded-[calc(var(--radius-xl)-5px)] hover:bg-blue-600/10 hover:text-blue-700 dark:hover:text-blue-300"
+            :class="row.hasLink ? 'bg-blue-600/10 text-blue-700 dark:text-blue-300' : 'text-muted-foreground'"
             :aria-pressed="row.hasLink"
             :aria-label="row.hasLink ? `Tirar o link de ${row.text || 'presente ' + (index + 1)}` : `Adicionar link de ${row.text || 'presente ' + (index + 1)}`"
             @click="row.hasLink = !row.hasLink"
