@@ -164,7 +164,7 @@ async function onSave() {
           @logout="onLogout"
         >
           <template #badge>
-            <Badge variant="glass" class="gap-1.5 rounded-md py-1"><Lock aria-hidden="true" />Só você vê isto</Badge>
+            <Badge variant="glass" class="gap-1.5 py-1"><Lock aria-hidden="true" />Só você vê isto</Badge>
           </template>
         </MeHeader>
 

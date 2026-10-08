@@ -112,7 +112,7 @@ async function onAnswer(item: QuestionItem) {
       <div v-if="received.length > 0" class="space-y-2">
         <h3 class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
           Perguntas para você
-          <Badge v-if="received.some((item) => !item.answer)" variant="warning" class="rounded-md">{{ received.filter((item) => !item.answer).length }} sem resposta</Badge>
+          <Badge v-if="received.some((item) => !item.answer)" variant="warning">{{ received.filter((item) => !item.answer).length }} sem resposta</Badge>
         </h3>
         <ItemGroup class="gap-2">
           <Item v-for="item in received" :key="item.id" variant="muted" size="sm" class="flex-col items-stretch">

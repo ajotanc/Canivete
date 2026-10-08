@@ -151,7 +151,7 @@ function onNext() {
                 <ItemDescription>Abrir painel do organizador</ItemDescription>
               </ItemContent>
               <ItemActions>
-                <Badge :variant="group.status === 'drawn' ? 'success' : 'tool'" class="rounded-md">
+                <Badge :variant="group.status === 'drawn' ? 'success' : 'tool'">
                   {{ group.status === 'drawn' ? 'Sorteado' : 'Aberto' }}
                 </Badge>
                 <ChevronRight class="size-4 text-muted-foreground" aria-hidden="true" />

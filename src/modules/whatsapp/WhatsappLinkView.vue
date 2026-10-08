@@ -55,7 +55,7 @@ const tooLong = computed(() => message.value.length > MESSAGE_LIMIT)
               <InputGroup class="bg-card">
                 <InputGroupTextarea id="message" v-model="message" rows="5" placeholder="Olá! Vi seu anúncio e gostaria de saber mais." class="text-base" />
                 <InputGroupAddon align="block-end" class="border-t">
-                  <Badge variant="secondary" class="rounded-md tabular-nums">{{ message.length }} {{ message.length === 1 ? 'caractere' : 'caracteres' }}</Badge>
+                  <Badge variant="secondary" class="tabular-nums">{{ message.length }} {{ message.length === 1 ? 'caractere' : 'caracteres' }}</Badge>
                 </InputGroupAddon>
               </InputGroup>
               <FieldDescription v-if="tooLong">Mensagem muito longa: o WhatsApp pode cortar o texto ao abrir o link.</FieldDescription>

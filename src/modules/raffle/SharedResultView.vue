@@ -61,7 +61,7 @@ function formatDate(iso: string): string {
     <template v-else-if="raffle">
       <PageHeader filled :icon="Dices" title="Resultado do sorteio" :description="`Sorteio de ${formatDate(raffle.drawnAt)}`">
         <template v-if="verified" #badge>
-          <Badge variant="glass" class="gap-1.5 rounded-md py-1"><ShieldCheck aria-hidden="true" />Registro verificado</Badge>
+          <Badge variant="glass" class="gap-1.5 py-1"><ShieldCheck aria-hidden="true" />Registro verificado</Badge>
         </template>
         <FactList>
           <FactTile :icon="Users" label="Participantes">{{ raffle.participants.length }} {{ raffle.participants.length === 1 ? 'nome' : 'nomes' }}</FactTile>

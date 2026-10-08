@@ -203,7 +203,7 @@ watch(now, (current) => {
 
           <TabsContent value="pomodoro" class="mt-6 space-y-6">
             <div class="text-center">
-              <Badge variant="tool" class="gap-1.5 rounded-md py-1 text-sm">
+              <Badge variant="tool" class="gap-1.5 py-1 text-sm">
                 <component :is="PHASES[phase].icon" aria-hidden="true" />
                 {{ PHASES[phase].label }}
               </Badge>

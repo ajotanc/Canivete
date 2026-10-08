@@ -26,7 +26,7 @@ const error = computed(() => (count.value === 0 ? null : validateNames(parsed.va
         :aria-invalid="error ? true : undefined"
       />
       <InputGroupAddon align="block-end" class="border-t">
-        <Badge variant="secondary" class="rounded-md">{{ count }} {{ count === 1 ? 'nome' : 'nomes' }}</Badge>
+        <Badge variant="secondary">{{ count }} {{ count === 1 ? 'nome' : 'nomes' }}</Badge>
       </InputGroupAddon>
     </InputGroup>
     <FieldError v-if="error">{{ error }}</FieldError>

@@ -72,7 +72,7 @@ function clearFilters() {
               <p class="text-pretty text-muted-foreground">{{ tool.description }}</p>
             </div>
             <div class="mt-auto flex items-center justify-between">
-              <Badge variant="secondary" class="rounded-md font-medium">{{ tool.category }}</Badge>
+              <Badge variant="tool-tint">{{ tool.category }}</Badge>
               <span class="flex items-center gap-1.5 text-sm font-semibold">
                 Abrir
                 <ArrowRight class="size-4 transition-transform duration-200 group-hover:translate-x-1 motion-reduce:transition-none" aria-hidden="true" />
