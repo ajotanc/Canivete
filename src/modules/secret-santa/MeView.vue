@@ -169,7 +169,7 @@ async function onSave() {
 
             <Card>
               <CardHeader>
-                <CardHeading :icon="Gift">{{ landed ? `O que ${result.receiver.name} gostaria de ganhar` : 'O que quem você tirou gostaria de ganhar' }}</CardHeading>
+                <CardHeading :icon="Gift">{{ landed ? `Lista de ${result.receiver.name.split(' ')[0]}` : 'Lista de quem você tirou' }}</CardHeading>
                 <CardDescription v-if="!landed">Aparece quando você abrir a carta.</CardDescription>
                 <CardDescription v-else-if="result.receiver.wishlist.length > 0">
                   {{ result.receiver.wishlist.length }} {{ result.receiver.wishlist.length === 1 ? 'ideia' : 'ideias' }} de presente{{ linkCount > 0 ? `, ${linkCount} com ${linkCount === 1 ? 'link' : 'links'} para comprar` : '' }}.
