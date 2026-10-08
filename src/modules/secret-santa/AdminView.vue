@@ -35,6 +35,8 @@ import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle }
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
+import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
+import HeaderSkeleton from '@/components/skeletons/HeaderSkeleton.vue'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -416,10 +418,26 @@ async function onDraw() {
 
 <template>
   <section class="mx-auto w-full max-w-5xl space-y-8">
-    <div v-if="state === 'loading'" class="space-y-4" role="status" aria-label="Abrindo o painel">
-      <Skeleton class="h-9 w-1/2" />
-      <Skeleton class="h-5 w-2/3" />
-      <Skeleton class="h-64 w-full" />
+    <div v-if="state === 'loading'" class="space-y-8" role="status" aria-label="Abrindo o painel">
+      <HeaderSkeleton actions />
+      <div class="grid items-start gap-x-6 gap-y-8 lg:grid-cols-2">
+        <div class="space-y-4">
+          <Skeleton class="h-7 w-44" />
+          <div class="space-y-6">
+            <CardSkeleton :rows="1" block="h-40 w-full rounded-xl" />
+            <CardSkeleton button />
+            <CardSkeleton :lines="2" button />
+          </div>
+        </div>
+        <div class="space-y-4">
+          <Skeleton class="h-7 w-44" />
+          <div class="space-y-6">
+            <CardSkeleton :rows="2" button />
+            <CardSkeleton :lines="2" :rows="3" button />
+            <CardSkeleton :lines="2" :rows="1" />
+          </div>
+        </div>
+      </div>
     </div>
 
     <Card v-else-if="state === 'login'" class="mx-auto w-full max-w-xl">

@@ -18,6 +18,9 @@ import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
+import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
+import HeaderSkeleton from '@/components/skeletons/HeaderSkeleton.vue'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { loadUser, logout, useAuth } from '@/core/services/auth'
@@ -143,9 +146,10 @@ function onNext() {
       <p v-if="user" class="truncate text-sm text-primary-foreground/90">Conectado como {{ user.email }}</p>
     </PageHeader>
 
-    <div v-if="!ready" class="flex items-center gap-2 py-8 text-muted-foreground">
-      <Spinner />
-      Carregando...
+    <div v-if="!ready" class="space-y-6" role="status" aria-label="Carregando">
+      <Skeleton class="h-6 w-44" />
+      <Skeleton class="h-[76px] w-full rounded-xl" />
+      <CardSkeleton :lines="0" :rows="2" button />
     </div>
 
     <Card v-else-if="!user">

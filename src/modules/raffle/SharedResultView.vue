@@ -8,6 +8,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import EmptyState from '@/components/EmptyState.vue'
+import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { loadShare, ShareError, type StoredRaffle } from './lib/share'
@@ -45,8 +46,8 @@ function formatDate(iso: string): string {
 <template>
   <section class="mx-auto max-w-2xl space-y-6">
     <div v-if="state === 'loading'" class="space-y-4" role="status" aria-label="Carregando o sorteio">
-      <Skeleton class="h-44 w-full rounded-2xl" />
-      <Skeleton class="h-40 w-full" />
+      <Skeleton class="h-44 w-full rounded-3xl" />
+      <CardSkeleton :rows="2" />
     </div>
 
     <EmptyState v-else-if="state === 'not-found'" page :icon="SearchX" title="Sorteio não encontrado" description="Confira se o link está completo.">

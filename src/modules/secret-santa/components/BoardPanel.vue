@@ -93,7 +93,7 @@ function when(iso: string): string {
         </InputGroup>
       </form>
 
-      <EmptyState v-if="posts.length === 0" title="Nenhum recado ainda" description="Seja a primeira pessoa a escrever." />
+      <EmptyState v-if="posts.length === 0" :icon="Megaphone" title="Nenhum recado ainda" description="Seja a primeira pessoa a escrever." />
       <ItemGroup v-else class="gap-2">
         <Item v-for="post in posts" :key="post.id" variant="muted" size="sm" class="items-start">
           <ItemContent>

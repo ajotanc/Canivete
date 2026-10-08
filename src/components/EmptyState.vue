@@ -3,7 +3,8 @@ import type { Component } from 'vue'
 import { cn } from '@/lib/utils'
 
 /**
- * Bloco de "nada aqui": borda tracejada, ícone num quadrado, texto curto e, se precisar, ações embaixo.
+ * Bloco de "nada aqui": borda tracejada, ícone num quadrado, descrição e, se precisar, título e ações embaixo.
+ * Uso padrão: sempre `icon` e `description`; `title` só quando a descrição não basta.
  * `page` é a versão de tela inteira (estados de erro e de não encontrado); o padrão cabe dentro de uma carta.
  * Serve também para conteúdo bloqueado ou ainda vazio (ex.: lista que aparece depois de abrir a carta).
  */

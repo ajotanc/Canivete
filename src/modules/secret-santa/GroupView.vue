@@ -3,6 +3,7 @@ import { CalendarDays, ChevronRight, Coins, Gift, KeyRound, Search, SearchX, Tri
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
+import HeaderSkeleton from '@/components/skeletons/HeaderSkeleton.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
@@ -129,10 +130,14 @@ async function onSubmit() {
 
 <template>
   <section class="mx-auto w-full max-w-xl space-y-8">
-    <div v-if="state === 'loading'" class="space-y-4" role="status" aria-label="Abrindo o grupo">
-      <Skeleton class="h-9 w-2/3" />
-      <Skeleton class="h-5 w-1/2" />
-      <Skeleton class="h-40 w-full" />
+    <div v-if="state === 'loading'" class="space-y-8" role="status" aria-label="Abrindo o grupo">
+      <HeaderSkeleton />
+      <div class="space-y-4">
+        <Skeleton class="h-6 w-44" />
+        <div class="grid gap-3 sm:grid-cols-2">
+          <Skeleton v-for="n in 3" :key="n" class="h-[74px] rounded-2xl" />
+        </div>
+      </div>
     </div>
 
     <EmptyState v-else-if="state === 'not-found'" page :icon="SearchX" title="Grupo não encontrado" description="Confira se o link do convite está completo.">
@@ -170,7 +175,7 @@ async function onSubmit() {
       <!-- Passo 1: quem é você -->
       <div v-if="!selected" class="space-y-4">
         <h2 class="text-xl">{{ returning ? 'Ou entre como outra pessoa' : 'Quem é você?' }}</h2>
-        <EmptyState v-if="group.members.length === 0" title="Ninguém foi adicionado ainda" description="O organizador ainda não cadastrou as pessoas. Volte mais tarde." />
+        <EmptyState v-if="group.members.length === 0" :icon="Users" title="Ninguém foi adicionado ainda" description="O organizador ainda não cadastrou as pessoas. Volte mais tarde." />
         <InputGroup v-if="group.members.length >= NAME_SEARCH_FROM" class="h-11 bg-card">
           <InputGroupAddon><Search aria-hidden="true" /></InputGroupAddon>
           <InputGroupInput v-model="query" type="search" autocomplete="off" placeholder="Buscar seu nome" aria-label="Buscar seu nome" />
@@ -182,14 +187,17 @@ async function onSubmit() {
           <li v-for="person in visibleMembers" :key="person.name">
             <button
               type="button"
-              class="flex w-full items-center gap-3 rounded-2xl border bg-card p-3 text-left shadow-sm outline-none transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/60 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+              class="group flex w-full items-center gap-3 rounded-2xl border bg-card p-3 pr-4 text-left shadow-sm outline-none transition-[transform,box-shadow,border-color] hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:ring-3 focus-visible:ring-ring/60 motion-reduce:transition-none motion-reduce:hover:translate-y-0"
               @click="choose(person.name)"
             >
+              <span class="flex size-11 shrink-0 items-center justify-center rounded-chip border border-primary/20 bg-primary/10 text-lg font-semibold text-primary" aria-hidden="true">{{ person.name.charAt(0).toUpperCase() }}</span>
               <span class="min-w-0 flex-1">
                 <span class="block truncate font-semibold">{{ person.name }}</span>
-                <span class="block text-sm text-muted-foreground">{{ person.hasPin ? 'Entrar com o PIN' : 'Criar o PIN' }}</span>
+                <span class="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <KeyRound class="size-3.5" aria-hidden="true" />{{ person.hasPin ? 'Entrar com o PIN' : 'Criar o PIN' }}
+                </span>
               </span>
-              <ChevronRight class="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+              <ChevronRight class="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
             </button>
           </li>
         </ul>

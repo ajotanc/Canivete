@@ -10,6 +10,8 @@ import { triggerConfetti } from '@/core/effects/confetti'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import EmptyState from '@/components/EmptyState.vue'
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
+import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
+import HeaderSkeleton from '@/components/skeletons/HeaderSkeleton.vue'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import BoardPanel from './components/BoardPanel.vue'
@@ -127,9 +129,25 @@ async function onSave() {
 
 <template>
   <section class="mx-auto w-full max-w-5xl space-y-8">
-    <div v-if="state === 'loading'" class="space-y-4" role="status" aria-label="Abrindo seu painel">
-      <Skeleton class="h-9 w-1/2" />
-      <Skeleton class="h-64 w-full max-w-sm" />
+    <div v-if="state === 'loading'" class="space-y-8" role="status" aria-label="Abrindo seu painel">
+      <HeaderSkeleton actions />
+      <div class="grid items-start gap-x-6 gap-y-8 lg:grid-cols-2">
+        <div class="space-y-4">
+          <Skeleton class="h-7 w-36" />
+          <div class="space-y-6">
+            <Skeleton class="h-74 w-full rounded-3xl" />
+            <CardSkeleton block="h-32 w-full rounded-xl" />
+            <CardSkeleton :lines="2" :rows="1" />
+          </div>
+        </div>
+        <div class="space-y-4">
+          <Skeleton class="h-7 w-36" />
+          <div class="space-y-6">
+            <CardSkeleton :rows="2" button />
+            <CardSkeleton :rows="1" block="h-32 w-full rounded-xl" />
+          </div>
+        </div>
+      </div>
     </div>
 
     <EmptyState v-else-if="state === 'error'" page :icon="TriangleAlert" title="Não foi possível abrir seu painel" :description="`${errorMessage}`">
