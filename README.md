@@ -21,6 +21,24 @@ npm run build
 - `src/modules/<id>`: cada ferramenta.
 - `tests/`: todos os testes, espelhando a estrutura de `src/`.
 
+## Ferramentas
+
+| Ferramenta | Pasta | Usa Appwrite |
+|---|---|---|
+| Sorteador | `raffle` | sim |
+| Amigo secreto | `secret-santa` | sim |
+| Gerador e validador de CPF e CNPJ | `cpf-cnpj` | não |
+| QR Code | `qrcode` | não |
+| Link de WhatsApp | `whatsapp` | não |
+| Contador de texto | `text-counter` | não |
+| Gerador de senhas (senha ou frase, com medidor de força) | `password` | não |
+| Consulta de CEP (por CEP ou pela rua, via ViaCEP) | `cep` | não |
+| Calculadora de datas (diferença, dias úteis com feriados nacionais, idade) | `dates` | não |
+| Ferramentas de texto (caixa, camelCase, slug, linhas, Base64, URL) | `text-tools` | não |
+| Calculadora de porcentagem (%, desconto, variação, juros) | `percentage` | não |
+
+A consulta de CEP é a única que chama um serviço externo (`viacep.com.br`, direto do navegador); as outras rodam só no aparelho.
+
 ## Convenções
 
 Código (nomes de arquivos, funções, variáveis, tipos, rotas) em inglês. Textos de interface, mensagens, comentários e blocos de documentação em português. Estilo 100% Tailwind; `style` inline só para valores dinâmicos.
