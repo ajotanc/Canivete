@@ -11,7 +11,7 @@ const props = defineProps<{ sides: number; value: number; rollKey: number; rolli
 
 const ROLL_MS = 900
 /** Metade da aresta do cubo (px): as faces ficam a essa distância do centro. */
-const HALF = 32
+const HALF = 40
 
 const isCube = computed(() => props.sides === 6)
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
@@ -70,16 +70,16 @@ const label = computed(() => (props.sides === 100 ? 'd%' : `d${props.sides}`))
 </script>
 
 <template>
-  <div ref="lift" class="size-16 [perspective:500px]" role="img" :aria-label="`Dado ${label}: ${value}`">
+  <div ref="lift" class="size-20 [perspective:600px]" role="img" :aria-label="`Dado ${label}: ${value}`">
     <!-- d6: cubo -->
     <div v-if="isCube" ref="body" class="relative size-full [transform-style:preserve-3d]" :style="{ transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)` }">
       <div
         v-for="face in CUBE_FACES"
         :key="face.value"
-        class="absolute inset-0 grid grid-cols-3 grid-rows-3 rounded-xl border bg-card p-2 shadow-inner"
+        class="absolute inset-0 grid grid-cols-3 grid-rows-3 rounded-lg border border-foreground/15 bg-card p-2.5 shadow-inner [backface-visibility:hidden]"
         :style="{ transform: `${face.place} translateZ(${HALF}px)` }"
       >
-        <span v-for="cell in 9" :key="cell" class="m-auto size-2.5 rounded-full" :class="pipCells(face.value).includes(cell) ? 'bg-foreground' : ''" />
+        <span v-for="cell in 9" :key="cell" class="m-auto size-3 rounded-full" :class="pipCells(face.value).includes(cell) ? 'bg-foreground' : ''" />
       </div>
     </div>
 
