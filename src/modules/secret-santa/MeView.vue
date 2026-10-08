@@ -213,7 +213,7 @@ async function onSave() {
                   <Field>
                     <FieldLabel>O que você gostaria de ganhar</FieldLabel>
                     <WishlistEditor v-model="wishlist" />
-                    <FieldDescription>Quem tirar você vai ver essa lista. Se tiver o link do produto, ligue o interruptor e cole.</FieldDescription>
+                    <FieldDescription>Quem tirar você vai ver essa lista. Se tiver o link do produto, toque no ícone de link e cole.</FieldDescription>
                   </Field>
                   <p v-if="dirty" class="text-center text-sm font-medium text-warning" role="status">Alterações não salvas</p>
                   <Button type="submit" size="lg" class="w-full" :disabled="saving || !dirty">

@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { Link2, Plus, Trash2 } from '@lucide/vue'
-import { nextTick, ref, useId, watch } from 'vue'
+import { nextTick, ref, watch } from 'vue'
 import ConfirmDelete from '@/components/ConfirmDelete.vue'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Switch } from '@/components/ui/switch'
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { LIMITS } from '../constants'
 import type { WishItem } from '../lib/api'
 
@@ -19,7 +18,6 @@ interface Row {
 }
 
 let nextKey = 0
-const uid = useId()
 const root = ref<HTMLElement | null>(null)
 const toRows = (items: WishItem[]): Row[] =>
   items.map((item) => ({ key: nextKey++, text: item.text, hasLink: Boolean(item.url), url: item.url ?? '' }))
@@ -79,49 +77,58 @@ function remove() {
     </p>
 
     <ul v-else class="space-y-3">
-      <li v-for="(row, index) in rows" :key="row.key" class="space-y-3 rounded-2xl border bg-card p-3 shadow-xs">
-        <div class="flex gap-2">
-          <Input
+      <li v-for="(row, index) in rows" :key="row.key" class="space-y-2">
+        <InputGroup class="h-11 bg-card">
+          <InputGroupInput
             v-model="row.text"
             data-wish-text
             :maxlength="LIMITS.wishlistText"
             placeholder="Ex.: meias de lã"
             :aria-label="`Presente ${index + 1}`"
           />
-          <Button type="button" variant="ghost" size="icon" class="text-destructive hover:text-destructive" :aria-label="`Remover ${row.text || 'presente ' + (index + 1)}`" @click="askRemove(index)">
-            <Trash2 />
-          </Button>
-        </div>
-
-        <label :for="`${uid}-${row.key}-switch`" class="flex h-11 cursor-pointer items-center justify-between gap-3 rounded-xl bg-muted px-3 text-sm font-medium">
-          <span class="flex items-center gap-2"><Link2 class="size-4 text-muted-foreground" aria-hidden="true" /> Tenho o link do produto</span>
-          <Switch :id="`${uid}-${row.key}-switch`" :model-value="row.hasLink" @update:model-value="row.hasLink = $event" />
-        </label>
+          <InputGroupAddon align="inline-end">
+            <InputGroupButton
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              class="rounded-none"
+              :class="row.hasLink ? 'text-primary' : 'text-muted-foreground'"
+              :aria-pressed="row.hasLink"
+              :aria-label="row.hasLink ? `Tirar o link de ${row.text || 'presente ' + (index + 1)}` : `Adicionar link de ${row.text || 'presente ' + (index + 1)}`"
+              @click="row.hasLink = !row.hasLink"
+            >
+              <Link2 aria-hidden="true" />
+            </InputGroupButton>
+            <InputGroupButton type="button" variant="ghost" size="icon-sm" class="text-destructive hover:text-destructive" :aria-label="`Remover ${row.text || 'presente ' + (index + 1)}`" @click="askRemove(index)">
+              <Trash2 aria-hidden="true" />
+            </InputGroupButton>
+          </InputGroupAddon>
+        </InputGroup>
 
         <div class="grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none" :class="row.hasLink ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
           <div class="overflow-hidden" :inert="!row.hasLink">
-            <Input
-              v-model="row.url"
-              type="url"
-              inputmode="url"
-              autocomplete="off"
-              :maxlength="LIMITS.wishlistUrl"
-              placeholder="Cole o link do produto"
-              :aria-label="`Link de ${row.text || 'presente ' + (index + 1)}`"
-              :tabindex="row.hasLink ? 0 : -1"
-            />
+            <InputGroup class="h-11 bg-card">
+              <InputGroupAddon><Link2 aria-hidden="true" /></InputGroupAddon>
+              <InputGroupInput
+                v-model="row.url"
+                type="url"
+                inputmode="url"
+                autocomplete="off"
+                :maxlength="LIMITS.wishlistUrl"
+                placeholder="Cole o link do produto"
+                :aria-label="`Link de ${row.text || 'presente ' + (index + 1)}`"
+                :tabindex="row.hasLink ? 0 : -1"
+              />
+            </InputGroup>
           </div>
         </div>
       </li>
     </ul>
 
-    <Button type="button" variant="outline" size="lg" class="w-full" :disabled="rows.length >= max" @click="add">
-      <Plus />
-      Adicionar presente
+    <Button type="button" variant="outline" size="lg" class="w-full border-dashed" :disabled="rows.length >= max" @click="add">
+      <Plus aria-hidden="true" />
+      {{ rows.length >= max ? `Limite de ${max} presentes` : 'Adicionar presente' }}
     </Button>
-    <p class="text-center text-sm text-muted-foreground" :class="rows.length >= max ? 'text-foreground' : ''">
-      {{ rows.length >= max ? `Limite de ${max} presentes atingido.` : `${rows.length} de ${max} presentes` }}
-    </p>
 
     <ConfirmDelete
       :open="removeIndex !== null"

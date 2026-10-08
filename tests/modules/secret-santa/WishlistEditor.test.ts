@@ -4,11 +4,11 @@ import { describe, expect, it } from 'vitest'
 import WishlistEditor from '@/modules/secret-santa/components/WishlistEditor.vue'
 
 describe('WishlistEditor', () => {
-  it('adiciona um presente e só inclui o link quando o interruptor está ligado', async () => {
+  it('adiciona um presente e só inclui o link quando o botão de link está ativo', async () => {
     const wrapper = mount(WishlistEditor, { props: { modelValue: [{ text: 'Meias', url: 'https://loja.com/meias' }] } })
     expect(wrapper.find('input[type="url"]').element).toHaveProperty('value', 'https://loja.com/meias')
 
-    await wrapper.find('button[role="switch"]').trigger('click')
+    await wrapper.find('button[aria-pressed="true"]').trigger('click')
     const events = wrapper.emitted('update:modelValue')!
     expect(events.at(-1)).toEqual([[{ text: 'Meias' }]])
 
