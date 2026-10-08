@@ -70,7 +70,7 @@ const years = computed(() => {
           <InputGroupInput :id="id" v-model="text" v-maska data-maska="##/##/####" type="text" inputmode="numeric" autocomplete="off" :placeholder="placeholder" class="tabular-nums" :aria-invalid="invalid ? true : undefined" />
           <InputGroupAddon align="inline-end">
             <PopoverTrigger as-child>
-              <InputGroupButton variant="ghost" size="icon-sm" class="hover:bg-transparent hover:text-foreground dark:hover:bg-transparent" aria-label="Abrir o calendário" @click.capture="makeRoomBelow">
+              <InputGroupButton variant="ghost" size="icon-sm" aria-label="Abrir o calendário" @click.capture="makeRoomBelow">
                 <CalendarIcon aria-hidden="true" />
               </InputGroupButton>
             </PopoverTrigger>

@@ -38,8 +38,8 @@ export const inputGroupButtonVariants = cva(
       size: {
         "xs": "h-full self-stretch gap-2 rounded-l-none rounded-r-[calc(var(--radius)-1px)] px-4 has-[>svg]:px-3.5",
         "sm": "h-full self-stretch gap-2 rounded-l-none rounded-r-[calc(var(--radius)-1px)] px-4 has-[>svg]:px-3.5",
-        "icon-xs": "h-full w-11 self-stretch rounded-l-none rounded-r-[calc(var(--radius)-1px)] p-0 has-[>svg]:p-0",
-        "icon-sm": "h-full w-11 self-stretch rounded-l-none rounded-r-[calc(var(--radius)-1px)] p-0 has-[>svg]:p-0",
+        "icon-xs": "h-full w-11 self-stretch rounded-l-none rounded-r-[calc(var(--radius)-1px)] p-0 hover:bg-transparent dark:hover:bg-transparent has-[>svg]:p-0",
+        "icon-sm": "h-full w-11 self-stretch rounded-l-none rounded-r-[calc(var(--radius)-1px)] p-0 hover:bg-transparent dark:hover:bg-transparent has-[>svg]:p-0",
       },
     },
     defaultVariants: {
