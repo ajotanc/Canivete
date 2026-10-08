@@ -22,6 +22,9 @@ const forwardedProps = useForwardProps(delegatedProps)
       buttonVariants({ variant: 'ghost' }),
       'aspect-square h-auto w-full max-w-10 p-0 font-normal aria-selected:opacity-100 cursor-default',
       '[&[data-today]:not([data-selected])]:bg-accent [&[data-today]:not([data-selected])]:text-accent-foreground',
+      // Foco por teclado: anel por dentro da célula, para não ser cortado nem virar um halo fora do dia
+      'focus-visible:border-transparent focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+      'data-[selected]:focus-visible:ring-primary-foreground/70',
       // Selected
       'data-[selected]:bg-primary data-[selected]:text-primary-foreground data-[selected]:opacity-100 [&[data-selected]:hover]:bg-primary data-[selected]:hover:text-primary-foreground data-[selected]:focus:bg-primary data-[selected]:focus:text-primary-foreground',
       // Disabled
