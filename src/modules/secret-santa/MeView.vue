@@ -46,6 +46,8 @@ const snapshot = (items: WishItem[]) =>
   JSON.stringify(items.filter((i) => i.text.trim()).map((i) => ({ text: i.text.trim(), url: i.url?.trim() || undefined })))
 /** Última versão da lista que o servidor tem. */
 const savedSnapshot = ref('[]')
+/** Quantos presentes de quem você tirou têm link de compra. */
+const linkCount = computed(() => (result.value && 'receiver' in result.value ? result.value.receiver.wishlist.filter((item) => item.url).length : 0))
 const dirty = computed(() => snapshot(wishlist.value) !== savedSnapshot.value)
 useUnsavedGuard(dirty)
 
@@ -165,10 +167,12 @@ async function onSave() {
             <Card v-if="landed" class="animate-in fade-in slide-in-from-bottom-3 duration-500 motion-reduce:animate-none">
               <CardHeader>
                 <CardTitle class="text-lg">O que {{ result.receiver.name }} gostaria de ganhar</CardTitle>
+                <CardDescription v-if="result.receiver.wishlist.length > 0">
+                  {{ result.receiver.wishlist.length }} {{ result.receiver.wishlist.length === 1 ? 'ideia' : 'ideias' }} de presente{{ linkCount > 0 ? `, ${linkCount} com ${linkCount === 1 ? 'link' : 'links'} para comprar` : '' }}.
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <WishlistView v-if="result.receiver.wishlist.length > 0" :items="result.receiver.wishlist" />
-                <p v-else class="text-sm text-muted-foreground">Ainda não escreveu nada.</p>
+                <WishlistView :items="result.receiver.wishlist" :name="result.receiver.name.split(' ')[0]" />
               </CardContent>
             </Card>
 

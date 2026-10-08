@@ -2,13 +2,22 @@
 import { ExternalLink, Gift } from '@lucide/vue'
 import type { WishItem } from '../lib/api'
 
-defineProps<{ items: WishItem[] }>()
+defineProps<{ items: WishItem[]; name?: string }>()
+
+/** Endereço curto para mostrar de onde é o link ("loja.com.br"); vazio se a URL não puder ser lida. */
+function host(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return ''
+  }
+}
 
 // Cartão rounded-xl com p-2: o ícone e a tag por dentro usam o raio do cartão menos o respiro (e a borda de 1px), para as curvas ficarem paralelas.
 </script>
 
 <template>
-  <ul class="space-y-2">
+  <ul v-if="items.length > 0" class="space-y-2">
     <li v-for="item in items" :key="item.text">
       <component
         :is="item.url ? 'a' : 'div'"
@@ -25,15 +34,23 @@ defineProps<{ items: WishItem[] }>()
         >
           <Gift class="size-5" />
         </span>
-        <span class="min-w-0 flex-1 break-words font-medium">{{ item.text }}</span>
+        <span class="min-w-0 flex-1">
+          <span class="block break-words font-medium">{{ item.text }}</span>
+          <span v-if="item.url && host(item.url)" class="block truncate text-sm text-muted-foreground">{{ host(item.url) }}</span>
+        </span>
         <span
           v-if="item.url"
           class="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-[calc(var(--radius-xl)-9px)] border border-primary/40 px-3 text-sm font-semibold text-primary"
         >
-          Ver produto
+          Ver<span class="sr-only"> produto</span>
           <ExternalLink class="size-4" aria-hidden="true" />
         </span>
       </component>
     </li>
   </ul>
+  <div v-else class="flex flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-6 text-center">
+    <span class="flex size-10 items-center justify-center rounded-[calc(var(--radius-xl)-1px)] bg-muted text-muted-foreground" aria-hidden="true"><Gift class="size-5" /></span>
+    <p class="font-medium">{{ name ? `${name} ainda não escreveu nada` : 'Ainda não escreveu nada' }}</p>
+    <p class="text-sm text-muted-foreground">Dá para mandar uma pergunta anônima aqui embaixo e descobrir o que a pessoa gosta.</p>
+  </div>
 </template>
