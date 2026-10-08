@@ -13,9 +13,11 @@ As duas ficam no mesmo banco do sorteador. Nenhuma tem permissões (nem para `an
 | `name` | string | 80 | sim |
 | `budget` | float | | não (padrão `null`) |
 | `eventDate` | string | 10 | não |
-| `status` | string | 10 | sim |
+| `status` | string | 10 | sim (`open`, `drawing` ou `drawn`) |
 | `ownerId` | string | 36 | sim |
 | `slug` | string | 40 | não (padrão `null`) |
+| `exclusions` | string, **array** | 80 por item (`"idA|idB"`, em ordem) | não (padrão `null`) |
+| `color` | string | 20 | não (padrão `null`, vale framboesa; nome da paleta ou `#rrggbb`) |
 
 Índice: `idx_owner` (key) em `ownerId`. O `slug` não tem índice único: vários grupos podem repetir o texto do link. A data de criação não tem coluna própria: use o `$createdAt` que o Appwrite já guarda em toda linha.
 
@@ -34,6 +36,7 @@ As duas ficam no mesmo banco do sorteador. Nenhuma tem permissões (nem para `an
 | `lockedUntil` | datetime | | não |
 | `assignedToId` | string | 36 | não |
 | `isOrganizer` | boolean | | sim |
+| `revealed` | boolean | | não (padrão `false`) |
 
 Índices: `idx_group` (key) em `groupId`; `uniq_group_name` (unique) em `groupId` + `nameKey`.
 

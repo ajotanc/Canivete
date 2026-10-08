@@ -10,7 +10,7 @@ export interface GroupRow {
   status: GroupStatus
   /** Id da conta (Appwrite Auth) do organizador que criou o grupo. */
   ownerId: string
-  /** Endereço amigável opcional, único entre os grupos (ex.: familia-da-bagunca). */
+  /** Endereço amigável opcional, que pode se repetir entre os grupos (ex.: familia-da-bagunca). */
   slug: string | null
   /** Pares de ids ("idA|idB", em ordem) que não podem se tirar. */
   exclusions: string[]
