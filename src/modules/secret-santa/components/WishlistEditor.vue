@@ -3,7 +3,7 @@ import { Link2, Plus, Trash2 } from '@lucide/vue'
 import { nextTick, ref, watch } from 'vue'
 import ConfirmDelete from '@/components/ConfirmDelete.vue'
 import { Button } from '@/components/ui/button'
-import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
+import { InputGroupInput } from '@/components/ui/input-group'
 import { LIMITS } from '../constants'
 import type { WishItem } from '../lib/api'
 
@@ -77,39 +77,37 @@ function remove() {
     </p>
 
     <ul v-else class="space-y-3">
-      <li v-for="(row, index) in rows" :key="row.key" class="space-y-2">
-        <InputGroup class="h-11 bg-card has-[[data-slot=input-group-control]:focus-visible]:border-foreground/50 has-[[data-slot=input-group-control]:focus-visible]:ring-foreground/10">
+      <li class="overflow-hidden rounded-xl border bg-card shadow-xs has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-3 has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50" v-for="(row, index) in rows" :key="row.key">
+        <div class="flex items-center pr-1">
           <InputGroupInput
             v-model="row.text"
             data-wish-text
             :maxlength="LIMITS.wishlistText"
             placeholder="Ex.: meias de lã"
             :aria-label="`Presente ${index + 1}`"
+            class="h-11"
           />
-          <InputGroupAddon align="inline-end" class="gap-0 pr-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              class="size-9"
-              :class="row.hasLink ? 'text-primary' : 'text-muted-foreground'"
-              :aria-pressed="row.hasLink"
-              :aria-label="row.hasLink ? `Tirar o link de ${row.text || 'presente ' + (index + 1)}` : `Adicionar link de ${row.text || 'presente ' + (index + 1)}`"
-              @click="row.hasLink = !row.hasLink"
-            >
-              <Link2 aria-hidden="true" />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" class="size-9 text-destructive hover:text-destructive" :aria-label="`Remover ${row.text || 'presente ' + (index + 1)}`" @click="askRemove(index)">
-              <Trash2 aria-hidden="true" />
-            </Button>
-          </InputGroupAddon>
-        </InputGroup>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            class="size-9"
+            :class="row.hasLink ? 'text-primary' : 'text-muted-foreground'"
+            :aria-pressed="row.hasLink"
+            :aria-label="row.hasLink ? `Tirar o link de ${row.text || 'presente ' + (index + 1)}` : `Adicionar link de ${row.text || 'presente ' + (index + 1)}`"
+            @click="row.hasLink = !row.hasLink"
+          >
+            <Link2 aria-hidden="true" />
+          </Button>
+          <Button type="button" variant="ghost" size="icon" class="size-9 text-destructive hover:text-destructive" :aria-label="`Remover ${row.text || 'presente ' + (index + 1)}`" @click="askRemove(index)">
+            <Trash2 aria-hidden="true" />
+          </Button>
+        </div>
 
         <div class="grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none" :class="row.hasLink ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'">
-          <!-- O respiro de 1 (p-1/-m-1) evita que o overflow corte o contorno de foco do campo. -->
-          <div class="-m-1 overflow-hidden p-1" :inert="!row.hasLink">
-            <InputGroup class="h-11 bg-card has-[[data-slot=input-group-control]:focus-visible]:border-foreground/50 has-[[data-slot=input-group-control]:focus-visible]:ring-foreground/10">
-              <InputGroupAddon><Link2 aria-hidden="true" /></InputGroupAddon>
+          <div class="overflow-hidden" :inert="!row.hasLink">
+            <div class="flex items-center border-t pl-3">
+              <Link2 class="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               <InputGroupInput
                 v-model="row.url"
                 type="url"
@@ -119,8 +117,9 @@ function remove() {
                 placeholder="Cole o link do produto"
                 :aria-label="`Link de ${row.text || 'presente ' + (index + 1)}`"
                 :tabindex="row.hasLink ? 0 : -1"
+                class="h-11"
               />
-            </InputGroup>
+            </div>
           </div>
         </div>
       </li>
