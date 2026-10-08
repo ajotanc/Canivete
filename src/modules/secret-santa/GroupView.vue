@@ -16,6 +16,8 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { formatMoney } from '@/lib/money'
+import HeaderAction from './components/HeaderAction.vue'
+import HeaderActions from './components/HeaderActions.vue'
 import AddToCalendar from './components/AddToCalendar.vue'
 import WishlistEditor from './components/WishlistEditor.vue'
 import { applyGroupColor } from './lib/groupColor'
@@ -169,16 +171,15 @@ async function onSubmit() {
           <FactTile :icon="Coins" label="Valor sugerido">{{ group.budget !== null ? formatMoney(group.budget) : 'A definir' }}</FactTile>
           <FactTile :icon="CalendarDays" :label="group.eventDate ? eventCountdown(group.eventDate) : 'Data da troca'" tone="paper">{{ group.eventDate ? formatEventDate(group.eventDate) : 'A combinar' }}</FactTile>
         </FactList>
-        <div v-if="returning && !selected" class="grid auto-cols-fr grid-flow-col gap-2">
-          <Button as-child variant="secondary" class="h-auto flex-col gap-1 bg-card py-2.5 text-card-foreground hover:bg-card/90 [&_svg]:size-5">
+        <HeaderActions v-if="(returning && !selected) || group.eventDate">
+          <HeaderAction v-if="returning && !selected" as-child tone="paper">
             <RouterLink :to="mePath(groupId)">
               <Gift aria-hidden="true" />
-              <span class="line-clamp-2 text-balance text-center text-sm leading-tight">Continuar como {{ returning.split(' ')[0] }}</span>
+              <span class="line-clamp-2 text-balance text-center leading-tight">Continuar como {{ returning.split(' ')[0] }}</span>
             </RouterLink>
-          </Button>
-          <AddToCalendar v-if="group.eventDate" class="h-auto flex-col justify-center gap-1 bg-primary-foreground/15 py-2.5 text-sm [&_svg]:size-5" :group-id="groupId" :group-name="group.name" :event-date="group.eventDate" />
-        </div>
-        <AddToCalendar v-else-if="group.eventDate" class="-ml-3 self-start" :group-id="groupId" :group-name="group.name" :event-date="group.eventDate" />
+          </HeaderAction>
+          <AddToCalendar v-if="group.eventDate" :group-id="groupId" :group-name="group.name" :event-date="group.eventDate" />
+        </HeaderActions>
       </PageHeader>
 
       <!-- Passo 1: quem é você -->

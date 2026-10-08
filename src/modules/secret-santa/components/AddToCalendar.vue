@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { CalendarPlus } from '@lucide/vue'
-import { Button } from '@/components/ui/button'
 import { downloadEventIcs } from '../lib/calendar'
+import HeaderAction from './HeaderAction.vue'
 
-/** Baixa a data da troca como evento de dia inteiro, que abre em qualquer agenda. */
+/** Baixa a data da troca como evento de dia inteiro, que abre em qualquer agenda. Vai dentro de `HeaderActions`. */
 defineProps<{ groupId: string; groupName: string; eventDate: string }>()
 </script>
 
 <template>
-  <Button type="button" variant="ghost" size="sm" @click="downloadEventIcs(groupId, groupName, eventDate)">
+  <HeaderAction type="button" @click="downloadEventIcs(groupId, groupName, eventDate)">
     <CalendarPlus aria-hidden="true" />
-    Adicionar à agenda
-  </Button>
+    <span>Adicionar à agenda</span>
+  </HeaderAction>
 </template>
