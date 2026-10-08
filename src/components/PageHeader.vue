@@ -37,7 +37,7 @@ withDefaults(
     <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
       <span
         v-if="icon"
-        :class="cn('flex size-14 shrink-0 items-center justify-center rounded-md', filled ? 'bg-primary-foreground/15' : 'bg-primary/10 text-primary')"
+        :class="cn('flex size-14 shrink-0 items-center justify-center rounded-chip border', filled ? 'border-primary-foreground/20 bg-primary-foreground/15' : 'border-primary/20 bg-primary/10 text-primary')"
       >
         <component :is="icon" class="size-7" aria-hidden="true" />
       </span>

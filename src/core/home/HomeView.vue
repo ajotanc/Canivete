@@ -93,7 +93,7 @@ function clearFilters() {
           <div class="flex flex-1 flex-col gap-4 p-5">
             <div class="space-y-1.5">
               <div class="flex items-center gap-3">
-                <span class="flex size-12 shrink-0 items-center justify-center rounded-md bg-tool text-tool-foreground">
+                <span class="flex size-12 shrink-0 items-center justify-center rounded-chip bg-tool text-tool-foreground">
                   <component :is="tool.icon" class="size-6" aria-hidden="true" />
                 </span>
                 <h2 class="text-xl font-semibold">{{ tool.title }}</h2>

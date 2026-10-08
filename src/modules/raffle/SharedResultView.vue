@@ -103,7 +103,7 @@ function formatDate(iso: string): string {
               :key="index"
               class="flex items-center gap-3 rounded-xl bg-card px-4 py-4 text-card-foreground shadow-sm"
             >
-              <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div class="flex size-10 shrink-0 items-center justify-center rounded-chip border border-primary/20 bg-primary/10 text-primary">
                 <Trophy aria-hidden="true" class="size-5" />
               </div>
               <div class="min-w-0">

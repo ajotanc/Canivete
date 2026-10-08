@@ -58,6 +58,8 @@
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 6px);
   --radius-3xl: calc(var(--radius) + 10px);
+  /* Quadrado de ícone: o raio é uma fração do lado, então qualquer tamanho fica proporcional. */
+  --radius-chip: 28%;
 }
 
 /*

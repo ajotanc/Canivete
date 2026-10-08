@@ -28,8 +28,8 @@ function host(url: string): string {
         :class="item.url ? 'border-primary/30 bg-primary/10 transition-colors hover:border-primary/60 hover:bg-primary/15 focus-visible:ring-3 focus-visible:ring-ring/60 motion-reduce:transition-none' : 'bg-card'"
       >
         <span
-          class="flex size-10 shrink-0 items-center justify-center rounded-[calc(var(--radius-xl)-9px)]"
-          :class="item.url ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'"
+          class="flex size-10 shrink-0 items-center justify-center rounded-chip border"
+          :class="item.url ? 'border-primary bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'"
           aria-hidden="true"
         >
           <Gift class="size-5" />
@@ -44,7 +44,7 @@ function host(url: string): string {
     </li>
   </ul>
   <div v-else class="flex flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-6 text-center">
-    <span class="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground" aria-hidden="true"><Gift class="size-5" /></span>
+    <span class="flex size-10 items-center justify-center rounded-chip border bg-muted text-muted-foreground" aria-hidden="true"><Gift class="size-5" /></span>
     <p class="font-medium">{{ name ? `${name} ainda não escreveu nada` : 'Ainda não escreveu nada' }}</p>
     <p class="text-sm text-muted-foreground">Dá para mandar uma pergunta anônima aqui embaixo e descobrir o que a pessoa gosta.</p>
   </div>

@@ -7,7 +7,7 @@ import { Heart, LockKeyhole } from '@lucide/vue'
 <template>
   <div class="w-44 rounded-md bg-card p-3 text-card-foreground shadow-[0_6px_16px_-6px_rgb(14_20_32/0.45)]" aria-hidden="true">
     <div class="flex items-center gap-1.5">
-      <span class="flex size-6 shrink-0 items-center justify-center rounded-md bg-tool/10 text-tool">
+      <span class="flex size-6 shrink-0 items-center justify-center rounded-chip bg-tool/10 text-tool">
         <LockKeyhole class="size-3" />
       </span>
       <p class="text-xs font-semibold leading-tight">Carta confidencial</p>

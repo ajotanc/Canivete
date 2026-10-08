@@ -51,7 +51,7 @@ function switchTheme() {
       <CommandEmpty>Nada encontrado. Tente outra palavra.</CommandEmpty>
       <CommandGroup heading="Ferramentas">
         <CommandItem v-for="tool in tools" :key="tool.id" :value="`${tool.title} ${tool.description} ${tool.category}`" @select="go(`/${tool.id}`)">
-          <span data-slot="tool-dot" :data-tool="tool.color ?? 'cobalt'" class="flex size-7 items-center justify-center rounded-md bg-tool">
+          <span data-slot="tool-dot" :data-tool="tool.color ?? 'cobalt'" class="flex size-7 items-center justify-center rounded-chip bg-tool">
             <component :is="tool.icon" class="size-4 text-tool-foreground" aria-hidden="true" />
           </span>
           <span>{{ tool.title }}</span>

@@ -58,7 +58,7 @@ onBeforeUnmount(stop)
     >
       <div class="flex items-center gap-3">
         <div
-          class="flex size-10 shrink-0 items-center justify-center rounded-lg"
+          class="flex size-10 shrink-0 items-center justify-center rounded-chip"
           :class="revealed ? 'bg-primary/10 text-primary' : 'bg-primary-foreground/15 text-primary-foreground'"
         >
           <Trophy v-if="revealed" class="size-5" aria-hidden="true" />
