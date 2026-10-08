@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge'
 import EmptyState from '@/components/EmptyState.vue'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { filterTools } from '@/core/home/filterTools'
 import { tools } from '@/core/modules/registry'
 
@@ -20,10 +19,11 @@ const category = ref('all')
 const categories = computed(() => [...new Set(tools.map((tool) => tool.category))].sort())
 const visibleTools = computed(() => filterTools(tools, query.value, category.value === 'all' ? null : category.value))
 
-/** O ToggleGroup devolve vazio ao clicar no item já ativo; volta para "todas". */
-function onCategory(value: unknown) {
-  category.value = typeof value === 'string' && value !== '' ? value : 'all'
-}
+/** "Todas" mais uma opção por categoria, cada uma com quantas ferramentas tem. */
+const options = computed(() => [
+  { value: 'all', label: 'Todas', count: tools.length },
+  ...categories.value.map((name) => ({ value: name, label: name, count: tools.filter((tool) => tool.category === name).length })),
+])
 
 function clearFilters() {
   query.value = ''
@@ -57,18 +57,20 @@ function clearFilters() {
           <Kbd>/</Kbd>
         </InputGroupAddon>
       </InputGroup>
-      <ToggleGroup
-        type="single"
-        variant="outline"
-        :model-value="category"
-        aria-label="Filtrar por categoria"
-        :spacing="2"
-        class="w-full flex-wrap justify-start sm:w-auto"
-        @update:model-value="onCategory"
-      >
-        <ToggleGroupItem value="all" class="bg-card px-4 data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Todas</ToggleGroupItem>
-        <ToggleGroupItem v-for="item in categories" :key="item" :value="item" class="bg-card px-4 data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">{{ item }}</ToggleGroupItem>
-      </ToggleGroup>
+      <div role="group" aria-label="Filtrar por categoria" class="flex flex-wrap gap-1.5">
+        <button
+          v-for="option in options"
+          :key="option.value"
+          type="button"
+          :aria-pressed="category === option.value"
+          class="inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+          :class="category === option.value ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'"
+          @click="category = option.value"
+        >
+          {{ option.label }}
+          <span class="text-xs tabular-nums opacity-60">{{ option.count }}</span>
+        </button>
+      </div>
     </div>
 
     <EmptyState v-if="visibleTools.length === 0" :icon="SearchX" description="Nenhuma ferramenta encontrada. Tente outra palavra ou mostre todas as categorias.">
