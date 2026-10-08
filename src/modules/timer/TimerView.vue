@@ -8,6 +8,7 @@ import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import NumberInput from '@/components/NumberInput.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldLabel } from '@/components/ui/field'
@@ -202,10 +203,10 @@ watch(now, (current) => {
 
           <TabsContent value="pomodoro" class="mt-6 space-y-6">
             <div class="text-center">
-              <p class="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-sm font-medium">
-                <component :is="PHASES[phase].icon" class="size-4" aria-hidden="true" />
+              <Badge variant="tool" class="gap-1.5 rounded-md py-1 text-sm">
+                <component :is="PHASES[phase].icon" aria-hidden="true" />
                 {{ PHASES[phase].label }}
-              </p>
+              </Badge>
               <p class="mt-3 text-6xl font-semibold tabular-nums sm:text-7xl" role="timer" aria-label="Pomodoro">{{ formatCountdown(pomodoroLeft) }}</p>
               <p class="mt-2 text-sm text-muted-foreground">{{ completedFocus }} {{ completedFocus === 1 ? 'foco concluído' : 'focos concluídos' }}. Foco de {{ config.focusMinutes }} min, pausa de {{ config.shortBreakMinutes }} e, a cada {{ config.cyclesBeforeLong }} focos, pausa de {{ config.longBreakMinutes }}.</p>
             </div>

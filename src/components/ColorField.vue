@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Input } from '@/components/ui/input'
-import { parseColor, toHex } from '@/lib/color'
+import { Palette } from '@lucide/vue'
+import { parseColor, readableOn, toHex } from '@/lib/color'
 
 /**
  * Campo de cor: texto livre (HEX, rgb() ou hsl()) e, ao lado, uma amostra que abre o seletor de cor do aparelho.
@@ -23,10 +24,11 @@ function onPick(event: Event) {
   <div class="flex items-center gap-2">
     <Input :id="id" v-model="model" autocomplete="off" spellcheck="false" class="min-w-0 flex-1 tabular-nums" :aria-invalid="model && !color ? true : undefined" />
     <label
-      class="relative size-11 shrink-0 cursor-pointer overflow-hidden rounded-lg border focus-within:ring-3 focus-within:ring-ring/50"
-      :class="color ? '' : 'bg-[repeating-linear-gradient(45deg,var(--muted)_0_6px,transparent_6px_12px)]'"
-      :style="color ? { backgroundColor: hex } : undefined"
+      class="relative flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-lg border outline-none transition-transform focus-within:ring-3 focus-within:ring-ring/60 hover:scale-105 motion-reduce:transition-none"
+      :style="{ background: color ? hex : 'conic-gradient(var(--berry), var(--amber), var(--pine), var(--cobalt), var(--violet), var(--berry))' }"
+      :title="`Escolher ${label.toLowerCase()} no seletor`"
     >
+      <Palette class="size-5" :class="color ? '' : 'drop-shadow'" :style="{ color: color ? toHex(readableOn(color)) : '#fff' }" aria-hidden="true" />
       <span class="sr-only">Escolher {{ label.toLowerCase() }} no seletor</span>
       <input type="color" :value="hex" class="absolute inset-0 size-full cursor-pointer opacity-0" @input="onPick" />
     </label>
