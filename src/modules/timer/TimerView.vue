@@ -13,6 +13,7 @@ import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { beep } from './lib/beep'
+import { askNotifyPermission, notify, notifyState, type NotifyState } from './lib/notify'
 import { DEFAULT_POMODORO, elapsed, formatClock, formatCountdown, idle, isRunning, nextPhase, pause, phaseMinutes, remainingMs, start, type PomodoroPhase, type Run } from './lib/clock'
 
 const tab = ref('stopwatch')
@@ -86,7 +87,11 @@ const PHASES: Record<PomodoroPhase, { label: string; icon: typeof Brain }> = {
   'long-break': { label: 'Pausa longa', icon: Coffee },
 }
 
-function togglePomodoro() {
+/** Avisos do navegador: a permissão é pedida ao iniciar o Pomodoro (um clique), para o aviso do fim da fase aparecer. */
+const notifications = ref<NotifyState>(notifyState())
+
+async function togglePomodoro() {
+  if (!isRunning(pomodoroRun.value) && notifications.value === 'default') notifications.value = await askNotifyPermission()
   pomodoroRun.value = isRunning(pomodoroRun.value) ? pause(pomodoroRun.value, Date.now()) : start(pomodoroRun.value, Date.now())
 }
 function resetPomodoro() {
@@ -109,7 +114,9 @@ watch(now, (current) => {
     phase.value = nextPhase(phase.value, completedFocus.value, DEFAULT_POMODORO)
     pomodoroRun.value = start(idle(), current)
     beep()
-    toast.success(phase.value === 'focus' ? 'Hora de voltar ao foco.' : 'Hora de uma pausa.')
+    const message = phase.value === 'focus' ? 'Hora de voltar ao foco.' : 'Hora de uma pausa.'
+    toast.success(message)
+    void notify(PHASES[phase.value].label, message)
   }
 })
 </script>
@@ -193,6 +200,8 @@ watch(now, (current) => {
               <p class="mt-3 text-6xl font-semibold tabular-nums sm:text-7xl" role="timer" aria-label="Pomodoro">{{ formatCountdown(pomodoroLeft) }}</p>
               <p class="mt-2 text-sm text-muted-foreground">{{ completedFocus }} {{ completedFocus === 1 ? 'foco concluído' : 'focos concluídos' }}. Foco de 25 min, pausa de 5 e, a cada 4 focos, pausa de 15.</p>
             </div>
+            <p v-if="notifications === 'denied'" class="text-center text-sm text-muted-foreground">Os avisos do navegador estão bloqueados para este site. Libere nas configurações do site para ser avisado no fim de cada fase.</p>
+            <p v-else-if="notifications === 'unsupported'" class="text-center text-sm text-muted-foreground">Este navegador não mostra avisos; você ainda ouve o bipe com a página aberta.</p>
             <div class="flex flex-wrap justify-center gap-3">
               <Button size="lg" class="min-w-32" @click="togglePomodoro">
                 <Pause v-if="isRunning(pomodoroRun)" aria-hidden="true" />

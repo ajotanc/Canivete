@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { CalendarDays, CalendarRange, Cake, PartyPopper, Zap } from '@lucide/vue'
 import { computed, ref } from 'vue'
+import DateField from '@/components/DateField.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
@@ -79,11 +80,11 @@ const age = computed(() => {
             <div class="grid gap-4 sm:grid-cols-2">
               <Field>
                 <FieldLabel for="from">De</FieldLabel>
-                <Input id="from" v-model="from" type="date" />
+                <DateField id="from" v-model="from" :past="100" :future="100" />
               </Field>
               <Field>
                 <FieldLabel for="to">Até</FieldLabel>
-                <Input id="to" v-model="to" type="date" />
+                <DateField id="to" v-model="to" :past="100" :future="100" />
               </Field>
             </div>
             <div v-if="difference" role="status" class="space-y-3">
@@ -107,7 +108,7 @@ const age = computed(() => {
             <div class="grid gap-4 sm:grid-cols-2">
               <Field>
                 <FieldLabel for="base">Data de partida</FieldLabel>
-                <Input id="base" v-model="base" type="date" />
+                <DateField id="base" v-model="base" :past="100" :future="100" />
               </Field>
               <Field>
                 <FieldLabel for="amount">Quantidade de dias</FieldLabel>
@@ -128,7 +129,7 @@ const age = computed(() => {
           <TabsContent value="age" class="mt-5 space-y-5">
             <Field class="max-w-xs">
               <FieldLabel for="birth">Data de nascimento</FieldLabel>
-              <Input id="birth" v-model="birth" type="date" :max="today" />
+              <DateField id="birth" v-model="birth" :past="110" max-today />
             </Field>
             <div v-if="age" role="status" class="space-y-3">
               <p class="text-3xl font-semibold tabular-nums">{{ age.years }} {{ age.years === 1 ? 'ano' : 'anos' }}</p>

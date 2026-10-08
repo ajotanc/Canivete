@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { CircleCheck, CircleX, Contrast, Palette, Pipette, SwatchBook, Zap } from '@lucide/vue'
 import { computed, ref } from 'vue'
+import { toast } from 'vue-sonner'
 import CopyField from '@/components/CopyField.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import FactList from '@/components/FactList.vue'
@@ -8,16 +9,20 @@ import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import ColorField from './components/ColorField.vue'
 import { parseColor, readableOn, shades, toHex, toHslString, toRgbString, wcag, type Rgb } from './lib/color'
 
 const text = ref('#2F5BEA')
 const color = computed(() => parseColor(text.value))
 const hex = computed(() => (color.value ? toHex(color.value) : '#000000'))
 
-/** O seletor nativo só devolve #rrggbb; escrever nele troca o texto. */
-function onPick(event: Event) {
-  text.value = (event.target as HTMLInputElement).value.toUpperCase()
+async function copy(value: string) {
+  try {
+    await navigator.clipboard.writeText(value)
+    toast.success(`${value} copiado.`)
+  } catch {
+    toast.error('Não foi possível copiar. Selecione o texto e copie manualmente.')
+  }
 }
 
 const formats = computed(() =>
@@ -66,13 +71,10 @@ const css = (rgb: Rgb | null, fallback: string) => (rgb ? toHex(rgb) : fallback)
           <CardDescription>Use o seletor ou digite: #2F5BEA, rgb(47, 91, 234) ou hsl(224, 82%, 56%).</CardDescription>
         </CardHeader>
         <CardContent class="space-y-5">
-          <div class="flex items-end gap-3">
-            <Field class="flex-1">
-              <FieldLabel for="color-text">Cor</FieldLabel>
-              <Input id="color-text" v-model="text" autocomplete="off" spellcheck="false" class="tabular-nums" :aria-invalid="text && !color ? true : undefined" />
-            </Field>
-            <input type="color" :value="hex" aria-label="Seletor de cor" class="h-9 w-14 shrink-0 cursor-pointer rounded-lg border bg-card p-1" @input="onPick" />
-          </div>
+          <Field>
+            <FieldLabel for="color-text">Cor</FieldLabel>
+            <ColorField id="color-text" v-model="text" label="Cor" />
+          </Field>
           <template v-if="color">
             <div class="flex h-24 items-center justify-center rounded-xl border text-lg font-semibold tabular-nums" :style="{ backgroundColor: hex, color: toHex(readableOn(color)) }">{{ hex }}</div>
             <ul class="space-y-2">
@@ -84,8 +86,11 @@ const css = (rgb: Rgb | null, fallback: string) => (rgb ? toHex(rgb) : fallback)
             <div>
               <h3 class="mb-2 flex items-center gap-1.5 text-sm font-medium"><SwatchBook class="size-4" aria-hidden="true" />Tons da mesma cor</h3>
               <ul class="grid grid-cols-9 overflow-hidden rounded-lg border">
-                <li v-for="shade in palette" :key="shade.hex" class="flex h-12 items-end justify-center pb-1 text-[10px] font-semibold tabular-nums" :style="{ backgroundColor: shade.hex, color: shade.text }" :title="shade.hex" />
+                <li v-for="shade in palette" :key="shade.hex">
+                  <button type="button" class="flex h-12 w-full items-end justify-center pb-1 text-[10px] font-semibold tabular-nums outline-none focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/50" :style="{ backgroundColor: shade.hex, color: shade.text }" :title="`Copiar ${shade.hex}`" :aria-label="`Copiar ${shade.hex}`" @click="copy(shade.hex)" />
+                </li>
               </ul>
+              <p class="mt-2 text-xs text-muted-foreground">Toque em um tom para copiar o HEX.</p>
             </div>
           </template>
           <EmptyState v-else :icon="Palette" description="Esse texto não é uma cor. Tente algo como #2F5BEA." />
@@ -101,11 +106,11 @@ const css = (rgb: Rgb | null, fallback: string) => (rgb ? toHex(rgb) : fallback)
           <div class="grid gap-3 sm:grid-cols-2">
             <Field>
               <FieldLabel for="foreground">Texto</FieldLabel>
-              <Input id="foreground" v-model="foregroundText" autocomplete="off" spellcheck="false" class="tabular-nums" :aria-invalid="foregroundText && !foreground ? true : undefined" />
+              <ColorField id="foreground" v-model="foregroundText" label="Cor do texto" />
             </Field>
             <Field>
               <FieldLabel for="background">Fundo</FieldLabel>
-              <Input id="background" v-model="backgroundText" autocomplete="off" spellcheck="false" class="tabular-nums" :aria-invalid="backgroundText && !background ? true : undefined" />
+              <ColorField id="background" v-model="backgroundText" label="Cor do fundo" />
             </Field>
           </div>
           <template v-if="contrast">

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { getLocalTimeZone, today } from '@internationalized/date'
-import { dateValueToIso, eventYearRange, formatDateValue, isoToDateValue } from '@/lib/date'
+import { dateValueToIso, eventYearRange, formatDateNumeric, formatDateValue, isoToDateValue } from '@/lib/date'
 import { DATE_PICKER } from '@/core/config'
 
 describe('isoToDateValue e dateValueToIso', () => {
@@ -39,5 +39,12 @@ describe('eventYearRange', () => {
 
   it('mantém a faixa quando a data salva está dentro dela', () => {
     expect(years(`${thisYear + 1}-06-01`)).toEqual(years())
+  })
+})
+
+describe('formatDateNumeric', () => {
+  it('formata como dd/mm/aaaa, com zero à esquerda', () => {
+    expect(formatDateNumeric(isoToDateValue('2026-03-05')!)).toBe('05/03/2026')
+    expect(formatDateNumeric(isoToDateValue('2026-12-24')!)).toBe('24/12/2026')
   })
 })

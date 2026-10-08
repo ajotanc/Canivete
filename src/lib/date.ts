@@ -21,6 +21,9 @@ export const dateValueToIso = (value: DateValue | undefined): string => (value ?
 /** "24 de dezembro de 2026". */
 export const formatDateValue = (value: DateValue): string => longDate.format(value.toDate(getLocalTimeZone()))
 
+/** "24/12/2026". */
+export const formatDateNumeric = (value: DateValue): string => `${String(value.day).padStart(2, '0')}/${String(value.month).padStart(2, '0')}/${value.year}`
+
 /**
  * Anos oferecidos no seletor de ano do calendário: do atual até daqui a `DATE_PICKER.yearsAhead` anos.
  * Uma data já salva fora dessa faixa (ex.: de um grupo antigo) amplia a faixa para continuar aparecendo.
