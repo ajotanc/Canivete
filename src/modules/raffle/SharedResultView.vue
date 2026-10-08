@@ -76,7 +76,6 @@ function formatDate(iso: string): string {
         <AlertTitle>Este registro não confere</AlertTitle>
         <AlertDescription>O conteúdo não bate com o código de verificação gravado. Não confie neste resultado.</AlertDescription>
       </Alert>
-      </div>
 
       <Card>
         <CardHeader>
