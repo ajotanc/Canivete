@@ -132,7 +132,7 @@ function onNext() {
       <FactList>
         <FactTile :icon="ListChecks" label="Grupo">{{ stepTitles.length }} passos</FactTile>
         <FactTile :icon="KeyRound" label="PIN">{{ PIN_LENGTH }} números</FactTile>
-        <FactTile :icon="Lock" label="Privacidade" tone="paper">Só você vê o seu par</FactTile>
+        <FactTile :icon="Lock" label="Privacidade" tone="paper">Só você vê</FactTile>
       </FactList>
     </PageHeader>
 

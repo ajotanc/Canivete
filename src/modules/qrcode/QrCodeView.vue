@@ -16,8 +16,10 @@ import { contactPayload, wifiPayload, type WifiData } from './lib/payload'
 
 type Kind = 'text' | 'wifi' | 'contact'
 
+/** Cor usada enquanto nenhuma outra estiver escolhida. */
+const DEFAULT_COLOR = '#111111'
+
 const COLORS = [
-  { label: 'Preto', value: '#111111' },
   { label: 'Azul', value: '#1d4ed8' },
   { label: 'Verde', value: '#15803d' },
   { label: 'Vinho', value: '#9f1239' },
@@ -27,9 +29,9 @@ const COLORS = [
 const MIN_CONTRAST = 3
 
 const kind = ref<Kind>('text')
-const dark = ref<string>(COLORS[0].value)
+const dark = ref<string>(DEFAULT_COLOR)
 const customColor = ref('#7c3aed')
-const isCustom = computed(() => !COLORS.some((color) => color.value === dark.value))
+const isCustom = computed(() => dark.value !== DEFAULT_COLOR && !COLORS.some((color) => color.value === dark.value))
 
 /** Contraste (WCAG) da cor escolhida contra o branco. */
 function contrastWithWhite(hex: string): number {
@@ -40,6 +42,13 @@ function contrastWithWhite(hex: string): number {
   return 1.05 / (0.2126 * r! + 0.7152 * g! + 0.0722 * b! + 0.05)
 }
 const lowContrast = computed(() => contrastWithWhite(dark.value) < MIN_CONTRAST)
+
+/** Clicar na cor já escolhida desmarca e volta ao preto. */
+function onPreset(value: string, event: Event) {
+  if (dark.value !== value) return
+  event.preventDefault()
+  dark.value = DEFAULT_COLOR
+}
 
 function onCustomColor(event: Event) {
   customColor.value = (event.target as HTMLInputElement).value
@@ -162,10 +171,10 @@ function onSecurity(next: unknown) {
           </Tabs>
 
           <div class="mt-6 flex items-center justify-between gap-3 border-t pt-4">
-            <span id="qr-color-label" class="text-sm font-medium">Cor do QR Code</span>
+            <span id="qr-color-label" class="text-sm font-medium">Cor</span>
             <div role="radiogroup" aria-labelledby="qr-color-label" class="flex items-center">
               <label v-for="color in COLORS" :key="color.value" class="group cursor-pointer" :title="color.label">
-                <input v-model="dark" type="radio" name="qr-color" :value="color.value" :aria-label="color.label" class="sr-only" />
+                <input v-model="dark" type="radio" name="qr-color" :value="color.value" :aria-label="color.label" class="sr-only" @click="onPreset(color.value, $event)" />
                 <span class="flex size-11 items-center justify-center">
                   <span
                     class="size-7 rounded-full ring-offset-2 ring-offset-card transition-shadow group-has-[:checked]:ring-2 group-has-[:checked]:ring-primary group-has-[:focus-visible]:ring-4 group-has-[:focus-visible]:ring-ring/50 motion-reduce:transition-none"
