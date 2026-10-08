@@ -57,17 +57,17 @@ const headline = computed(() => {
       <Card>
         <CardHeader>
           <CardTitle class="text-lg">Preços do posto</CardTitle>
-          <CardDescription>Use vírgula para os centavos (5,89).</CardDescription>
+          <CardDescription>Digite os números; a vírgula entra sozinha (5899 vira 5,899).</CardDescription>
         </CardHeader>
         <CardContent class="space-y-5">
           <div class="grid gap-3 sm:grid-cols-2">
             <Field>
               <FieldLabel for="gasoline">Gasolina (R$/L)</FieldLabel>
-              <Input id="gasoline" v-model="gasoline" inputmode="decimal" autocomplete="off" placeholder="5,89" class="tabular-nums" />
+              <Input id="gasoline" v-model="gasoline" v-maska data-maska="['#,###', '##,###']" inputmode="numeric" autocomplete="off" placeholder="5,899" class="tabular-nums" />
             </Field>
             <Field>
               <FieldLabel for="ethanol">Etanol (R$/L)</FieldLabel>
-              <Input id="ethanol" v-model="ethanol" inputmode="decimal" autocomplete="off" placeholder="3,99" class="tabular-nums" />
+              <Input id="ethanol" v-model="ethanol" v-maska data-maska="['#,###', '##,###']" inputmode="numeric" autocomplete="off" placeholder="3,999" class="tabular-nums" />
             </Field>
           </div>
           <Field orientation="horizontal">
