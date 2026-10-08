@@ -91,15 +91,15 @@ function remove() {
             type="button"
             variant="ghost"
             size="icon"
-            class="size-9 hover:bg-muted"
-            :class="row.hasLink ? 'text-primary hover:text-primary' : 'text-muted-foreground hover:text-muted-foreground'"
+            class="size-9 rounded-[calc(var(--radius-xl)-5px)] text-blue-700 hover:bg-blue-600/10 hover:text-blue-700 dark:text-blue-300 dark:hover:text-blue-300"
+            :class="row.hasLink ? 'bg-blue-600/10' : 'opacity-70 hover:opacity-100'"
             :aria-pressed="row.hasLink"
             :aria-label="row.hasLink ? `Tirar o link de ${row.text || 'presente ' + (index + 1)}` : `Adicionar link de ${row.text || 'presente ' + (index + 1)}`"
             @click="row.hasLink = !row.hasLink"
           >
             <Link2 aria-hidden="true" />
           </Button>
-          <Button type="button" variant="ghost" size="icon" class="size-9 text-destructive hover:bg-muted hover:text-destructive" :aria-label="`Remover ${row.text || 'presente ' + (index + 1)}`" @click="askRemove(index)">
+          <Button type="button" variant="ghost" size="icon" class="size-9 rounded-[calc(var(--radius-xl)-5px)] text-destructive hover:bg-destructive/10 hover:text-destructive" :aria-label="`Remover ${row.text || 'presente ' + (index + 1)}`" @click="askRemove(index)">
             <Trash2 aria-hidden="true" />
           </Button>
         </div>
@@ -125,7 +125,7 @@ function remove() {
       </li>
     </ul>
 
-    <Button type="button" variant="outline" size="lg" class="w-full hover:bg-muted" :disabled="rows.length >= max" @click="add">
+    <Button type="button" variant="outline" size="lg" class="w-full hover:border-primary/40 hover:bg-primary/10 hover:text-primary" :disabled="rows.length >= max" @click="add">
       <Plus aria-hidden="true" />
       {{ rows.length >= max ? `Limite de ${max} presentes` : 'Adicionar presente' }}
     </Button>
