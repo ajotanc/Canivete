@@ -492,9 +492,9 @@ async function onDraw() {
       </PageHeader>
 
       <div class="grid items-start gap-x-6 gap-y-8 lg:grid-cols-2">
-        <!-- Coluna 1: quem participa e o sorteio -->
+        <!-- Coluna 1: acompanhar (pessoas, sorteio, mural) -->
         <div class="space-y-4">
-        <h2 class="text-xl">Participantes e sorteio</h2>
+        <h2 class="text-xl">Acompanhamento</h2>
         <div class="space-y-6">
         <!-- Pessoas -->
         <Card>
@@ -676,11 +676,13 @@ async function onDraw() {
 
         </div>
 
+          <!-- Mural -->
+          <BoardPanel :credentials="{ groupId }" />
         </div>
 
-        <!-- Coluna 2: convite, mural e ajustes do grupo -->
+        <!-- Coluna 2: convite e ajustes do grupo -->
         <div class="space-y-4">
-        <h2 class="text-xl">Grupo e ajustes</h2>
+        <h2 class="text-xl">Ajustes do grupo</h2>
         <div class="space-y-6">
           <!-- Convite -->
           <Card>
@@ -725,9 +727,6 @@ async function onDraw() {
               </form>
             </CardContent>
           </Card>
-
-          <!-- Mural -->
-          <BoardPanel :credentials="{ groupId }" />
 
           <!-- Dados do grupo -->
           <Card>

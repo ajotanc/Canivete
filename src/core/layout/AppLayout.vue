@@ -46,13 +46,13 @@ watchEffect(() => {
             Buscar ferramenta
             <Kbd>Ctrl K</Kbd>
           </Button>
-          <Button variant="ghost" size="icon" class="sm:hidden" aria-label="Buscar ferramenta" @click="paletteOpen = true">
+          <Button variant="ghost" size="icon" class="hover:bg-transparent dark:hover:bg-transparent sm:hidden" aria-label="Buscar ferramenta" @click="paletteOpen = true">
             <Search class="size-5" aria-hidden="true" />
           </Button>
           <TooltipProvider :delay-duration="300">
             <Tooltip>
               <TooltipTrigger as-child>
-                <Button variant="ghost" size="icon" :aria-label="isDark ? 'Usar tema claro' : 'Usar tema escuro'" @click="toggle">
+                <Button variant="ghost" size="icon" class="hover:bg-transparent dark:hover:bg-transparent" :aria-label="isDark ? 'Usar tema claro' : 'Usar tema escuro'" @click="toggle">
                   <Sun v-if="isDark" class="size-5" aria-hidden="true" />
                   <Moon v-else class="size-5" aria-hidden="true" />
                 </Button>
