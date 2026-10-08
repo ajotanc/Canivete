@@ -666,7 +666,7 @@ async function onDraw() {
                 </a>
               </Button>
               <Button v-if="hasMyself" as-child variant="outline" size="lg" class="w-full">
-                <RouterLink :to="{ path: mePath(String(route.params.id)), query: { pessoa: myName } }">
+                <RouterLink :to="{ path: mePath(String(route.params.id)), query: { person: myName } }">
                   <Gift aria-hidden="true" />
                   Ver meu amigo
                 </RouterLink>
@@ -698,7 +698,7 @@ async function onDraw() {
             </CardHeader>
             <CardContent>
               <Button as-child variant="outline" size="lg" class="w-full">
-                <RouterLink :to="{ path: mePath(String(route.params.id)), query: { pessoa: myName } }">
+                <RouterLink :to="{ path: mePath(String(route.params.id)), query: { person: myName } }">
                   <Gift aria-hidden="true" />
                   Editar minha lista
                 </RouterLink>

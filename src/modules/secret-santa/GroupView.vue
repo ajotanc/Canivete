@@ -87,7 +87,7 @@ async function load() {
 onMounted(async () => {
   await load()
   // Vindo do painel do organizador: já deixa o nome escolhido, só falta o PIN.
-  const wanted = route.query.pessoa
+  const wanted = route.query.person
   if (typeof wanted === 'string' && group.value?.members.some((m) => m.name === wanted)) choose(wanted)
 })
 
