@@ -74,7 +74,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="mx-auto w-full max-w-sm">
+  <div class="w-full">
     <div class="relative h-74">
       <!-- Envelope: a aba levanta enquanto o lacre é arrastado e o envelope desce quando a carta sai -->
       <section

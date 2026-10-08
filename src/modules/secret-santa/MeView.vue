@@ -167,15 +167,20 @@ async function onSave() {
               @reveal="reveal"
             />
 
-            <Card v-if="landed" class="animate-in fade-in slide-in-from-bottom-3 duration-500 motion-reduce:animate-none">
+            <Card>
               <CardHeader>
-                <CardHeading :icon="Gift">O que {{ result.receiver.name }} gostaria de ganhar</CardHeading>
-                <CardDescription v-if="result.receiver.wishlist.length > 0">
+                <CardHeading :icon="Gift">{{ landed ? `O que ${result.receiver.name} gostaria de ganhar` : 'O que quem você tirou gostaria de ganhar' }}</CardHeading>
+                <CardDescription v-if="!landed">Aparece quando você abrir a carta.</CardDescription>
+                <CardDescription v-else-if="result.receiver.wishlist.length > 0">
                   {{ result.receiver.wishlist.length }} {{ result.receiver.wishlist.length === 1 ? 'ideia' : 'ideias' }} de presente{{ linkCount > 0 ? `, ${linkCount} com ${linkCount === 1 ? 'link' : 'links'} para comprar` : '' }}.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <WishlistView :items="result.receiver.wishlist" :name="result.receiver.name.split(' ')[0]" />
+                <div v-if="!landed" class="flex flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-6 text-center">
+                  <span class="flex size-10 items-center justify-center rounded-chip border bg-muted text-muted-foreground" aria-hidden="true"><Lock class="size-5" /></span>
+                  <p class="text-sm text-muted-foreground">Arraste o lacre da carta para ver a lista.</p>
+                </div>
+                <WishlistView v-else :items="result.receiver.wishlist" :name="result.receiver.name.split(' ')[0]" />
               </CardContent>
             </Card>
 
