@@ -7,7 +7,7 @@ import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import EmptyState from '@/components/EmptyState.vue'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { loadShare, ShareError, type StoredRaffle } from './lib/share'
@@ -49,23 +49,13 @@ function formatDate(iso: string): string {
       <Skeleton class="h-40 w-full" />
     </div>
 
-    <Empty v-else-if="state === 'not-found'" class="rounded-xl border border-dashed bg-card/50 py-12">
-      <EmptyHeader>
-        <EmptyMedia variant="icon"><SearchX aria-hidden="true" /></EmptyMedia>
-        <EmptyTitle>Sorteio não encontrado</EmptyTitle>
-        <EmptyDescription>Confira se o link está completo.</EmptyDescription>
-      </EmptyHeader>
+    <EmptyState v-else-if="state === 'not-found'" page :icon="SearchX" title="Sorteio não encontrado" description="Confira se o link está completo.">
       <Button as-child size="lg"><RouterLink to="/raffle">Fazer um novo sorteio</RouterLink></Button>
-    </Empty>
+    </EmptyState>
 
-    <Empty v-else-if="state === 'error'" class="rounded-xl border border-dashed bg-card/50 py-12">
-      <EmptyHeader>
-        <EmptyMedia variant="icon"><TriangleAlert aria-hidden="true" /></EmptyMedia>
-        <EmptyTitle>Não foi possível abrir o sorteio</EmptyTitle>
-        <EmptyDescription>{{ errorMessage }}</EmptyDescription>
-      </EmptyHeader>
+    <EmptyState v-else-if="state === 'error'" page :icon="TriangleAlert" title="Não foi possível abrir o sorteio" :description="`${errorMessage}`">
       <Button as-child size="lg"><RouterLink to="/raffle">Fazer um novo sorteio</RouterLink></Button>
-    </Empty>
+    </EmptyState>
 
     <template v-else-if="raffle">
       <PageHeader filled :icon="Dices" title="Resultado do sorteio" :description="`Sorteio de ${formatDate(raffle.drawnAt)}`">

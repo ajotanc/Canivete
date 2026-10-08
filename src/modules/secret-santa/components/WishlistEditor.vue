@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Link2, Plus, Trash2 } from '@lucide/vue'
+import { Gift, Link2, Plus, Trash2 } from '@lucide/vue'
 import { nextTick, ref, watch } from 'vue'
+import EmptyState from '@/components/EmptyState.vue'
 import ConfirmDelete from '@/components/ConfirmDelete.vue'
 import { Button } from '@/components/ui/button'
 import { InputGroupInput } from '@/components/ui/input-group'
@@ -72,9 +73,7 @@ function remove() {
 
 <template>
   <div ref="root" class="space-y-3">
-    <p v-if="rows.length === 0" class="rounded-2xl border border-dashed px-4 py-5 text-center text-sm text-muted-foreground">
-      Nenhum presente na lista ainda.
-    </p>
+    <EmptyState v-if="rows.length === 0" :icon="Gift" description="Nenhum presente na lista ainda." />
 
     <ul v-else class="space-y-3">
       <li class="overflow-hidden rounded-xl border bg-card shadow-xs has-[[data-slot=input-group-control]:focus-visible]:border-ring has-[[data-slot=input-group-control]:focus-visible]:ring-3 has-[[data-slot=input-group-control]:focus-visible]:ring-ring/50" v-for="(row, index) in rows" :key="row.key">

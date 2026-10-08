@@ -6,7 +6,7 @@ import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Badge } from '@/components/ui/badge'
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import EmptyState from '@/components/EmptyState.vue'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Kbd } from '@/components/ui/kbd'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
@@ -70,14 +70,9 @@ function clearFilters() {
       </ToggleGroup>
     </div>
 
-    <Empty v-if="visibleTools.length === 0" class="rounded-xl border border-dashed bg-card/50">
-      <EmptyHeader>
-        <EmptyMedia variant="icon"><SearchX aria-hidden="true" /></EmptyMedia>
-        <EmptyTitle>Nenhuma ferramenta encontrada</EmptyTitle>
-        <EmptyDescription>Tente outra palavra ou mostre todas as categorias.</EmptyDescription>
-      </EmptyHeader>
+    <EmptyState v-if="visibleTools.length === 0" :icon="SearchX" title="Nenhuma ferramenta encontrada" description="Tente outra palavra ou mostre todas as categorias.">
       <button type="button" class="text-sm font-medium underline underline-offset-4" @click="clearFilters">Limpar busca</button>
-    </Empty>
+    </EmptyState>
 
     <ul v-else class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Ferramentas">
       <li v-for="tool in visibleTools" :key="tool.id" class="contents">

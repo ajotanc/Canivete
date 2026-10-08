@@ -8,7 +8,7 @@ import { toast } from 'vue-sonner'
 import ConfirmDelete from '@/components/ConfirmDelete.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
-import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+import EmptyState from '@/components/EmptyState.vue'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { Spinner } from '@/components/ui/spinner'
@@ -93,12 +93,7 @@ function when(iso: string): string {
         </InputGroup>
       </form>
 
-      <Empty v-if="posts.length === 0" class="rounded-lg border border-dashed p-6">
-        <EmptyHeader>
-          <EmptyTitle>Nenhum recado ainda</EmptyTitle>
-          <EmptyDescription>Seja a primeira pessoa a escrever.</EmptyDescription>
-        </EmptyHeader>
-      </Empty>
+      <EmptyState v-if="posts.length === 0" title="Nenhum recado ainda" description="Seja a primeira pessoa a escrever." />
       <ItemGroup v-else class="gap-2">
         <Item v-for="post in posts" :key="post.id" variant="muted" size="sm" class="items-start">
           <ItemContent>

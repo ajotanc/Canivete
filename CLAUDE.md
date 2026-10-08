@@ -6,3 +6,4 @@
 - Todo identificador de código, rota e parâmetro de URL em inglês; só o texto que a pessoa lê fica em português.
 - Quadrado de ícone (chip): `rounded-chip` (raio de 28% do lado, vale para qualquer tamanho) e borda do sistema (`border` com a cor do chip a 20%).
 - Elemento com raio dentro de outro com raio e respiro (padding): raio de dentro = raio de fora - padding - borda (curvas paralelas), por exemplo `rounded-[calc(var(--radius-xl)-5px)]`.
+- Estado vazio, bloqueado ou de erro usa sempre o componente `EmptyState` (borda tracejada, ícone em quadrado, texto curto); nada de bloco tracejado feito à mão.

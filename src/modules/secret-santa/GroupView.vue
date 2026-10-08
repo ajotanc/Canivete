@@ -10,7 +10,7 @@ import PinField from '@/components/PinField.vue'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import EmptyState from '@/components/EmptyState.vue'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -135,23 +135,13 @@ async function onSubmit() {
       <Skeleton class="h-40 w-full" />
     </div>
 
-    <Empty v-else-if="state === 'not-found'" class="rounded-xl border border-dashed bg-card/50 py-12">
-      <EmptyHeader>
-        <EmptyMedia variant="icon"><SearchX aria-hidden="true" /></EmptyMedia>
-        <EmptyTitle>Grupo não encontrado</EmptyTitle>
-        <EmptyDescription>Confira se o link do convite está completo.</EmptyDescription>
-      </EmptyHeader>
+    <EmptyState v-else-if="state === 'not-found'" page :icon="SearchX" title="Grupo não encontrado" description="Confira se o link do convite está completo.">
       <Button as-child size="lg"><RouterLink to="/secret-santa">Criar um grupo</RouterLink></Button>
-    </Empty>
+    </EmptyState>
 
-    <Empty v-else-if="state === 'error'" class="rounded-xl border border-dashed bg-card/50 py-12">
-      <EmptyHeader>
-        <EmptyMedia variant="icon"><TriangleAlert aria-hidden="true" /></EmptyMedia>
-        <EmptyTitle>Não foi possível abrir o grupo</EmptyTitle>
-        <EmptyDescription>{{ errorMessage }}</EmptyDescription>
-      </EmptyHeader>
+    <EmptyState v-else-if="state === 'error'" page :icon="TriangleAlert" title="Não foi possível abrir o grupo" :description="`${errorMessage}`">
       <Button size="lg" @click="$router.go(0)">Tentar de novo</Button>
-    </Empty>
+    </EmptyState>
 
     <template v-else-if="group">
       <PageHeader
@@ -180,12 +170,7 @@ async function onSubmit() {
       <!-- Passo 1: quem é você -->
       <div v-if="!selected" class="space-y-4">
         <h2 class="text-xl">{{ returning ? 'Ou entre como outra pessoa' : 'Quem é você?' }}</h2>
-        <Empty v-if="group.members.length === 0" class="rounded-xl border border-dashed bg-card/50">
-          <EmptyHeader>
-            <EmptyTitle>Ninguém foi adicionado ainda</EmptyTitle>
-            <EmptyDescription>O organizador ainda não cadastrou as pessoas. Volte mais tarde.</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
+        <EmptyState v-if="group.members.length === 0" title="Ninguém foi adicionado ainda" description="O organizador ainda não cadastrou as pessoas. Volte mais tarde." />
         <InputGroup v-if="group.members.length >= NAME_SEARCH_FROM" class="h-11 bg-card">
           <InputGroupAddon><Search aria-hidden="true" /></InputGroupAddon>
           <InputGroupInput v-model="query" type="search" autocomplete="off" placeholder="Buscar seu nome" aria-label="Buscar seu nome" />

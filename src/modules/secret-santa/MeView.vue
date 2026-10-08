@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { triggerConfetti } from '@/core/effects/confetti'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
-import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import EmptyState from '@/components/EmptyState.vue'
 import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
@@ -132,14 +132,9 @@ async function onSave() {
       <Skeleton class="h-64 w-full max-w-sm" />
     </div>
 
-    <Empty v-else-if="state === 'error'" class="rounded-xl border border-dashed bg-card/50 py-12">
-      <EmptyHeader>
-        <EmptyMedia variant="icon"><TriangleAlert aria-hidden="true" /></EmptyMedia>
-        <EmptyTitle>Não foi possível abrir seu painel</EmptyTitle>
-        <EmptyDescription>{{ errorMessage }}</EmptyDescription>
-      </EmptyHeader>
+    <EmptyState v-else-if="state === 'error'" page :icon="TriangleAlert" title="Não foi possível abrir seu painel" :description="`${errorMessage}`">
       <Button size="lg" @click="$router.go(0)">Tentar de novo</Button>
-    </Empty>
+    </EmptyState>
 
     <template v-else-if="result">
       <template v-if="result.status === 'drawn'">
@@ -176,10 +171,7 @@ async function onSave() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div v-if="!landed" class="flex flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-6 text-center">
-                  <span class="flex size-10 items-center justify-center rounded-chip border bg-muted text-muted-foreground" aria-hidden="true"><Lock class="size-5" /></span>
-                  <p class="text-sm text-muted-foreground">Arraste o lacre da carta para ver a lista.</p>
-                </div>
+                <EmptyState v-if="!landed" :icon="Lock" description="Arraste o lacre da carta para ver a lista." />
                 <WishlistView v-else :items="result.receiver.wishlist" :name="result.receiver.name.split(' ')[0]" />
               </CardContent>
             </Card>
