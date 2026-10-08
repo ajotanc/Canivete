@@ -8,7 +8,7 @@ defineProps<{ groupId: string; groupName: string; eventDate: string }>()
 </script>
 
 <template>
-  <Button type="button" variant="ghost" class="h-auto flex-col justify-center gap-1 bg-primary-foreground/15 py-2.5 text-sm [&_svg]:size-5" @click="downloadEventIcs(groupId, groupName, eventDate)">
+  <Button type="button" variant="ghost" size="sm" @click="downloadEventIcs(groupId, groupName, eventDate)">
     <CalendarPlus aria-hidden="true" />
     Adicionar à agenda
   </Button>
