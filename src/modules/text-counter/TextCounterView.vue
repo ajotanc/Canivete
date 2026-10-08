@@ -51,7 +51,7 @@ const limits = computed(() =>
           <Field>
             <FieldLabel for="text" class="sr-only">Texto para contar</FieldLabel>
             <InputGroup class="bg-card">
-              <InputGroupTextarea id="text" v-model="text" rows="18" placeholder="Escreva ou cole aqui…" class="min-h-[28rem] text-base" />
+              <InputGroupTextarea id="text" v-model="text" rows="6" placeholder="Escreva ou cole aqui…" class="min-h-40 text-base lg:min-h-[28rem]" />
               <InputGroupAddon align="block-end" class="justify-between border-t">
                 <span class="text-sm tabular-nums text-muted-foreground" role="status">{{ stats.characters }} {{ stats.characters === 1 ? 'caractere' : 'caracteres' }} · {{ stats.words }} {{ stats.words === 1 ? 'palavra' : 'palavras' }}</span>
                 <Button type="button" variant="ghost" size="sm" :disabled="!text" @click="text = ''">
