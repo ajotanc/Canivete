@@ -72,6 +72,8 @@ export type Segment = readonly [number, number, number, number]
 
 export interface DieShape {
   outline: Point[]
+  /** Altura (na caixa de 100) do centro visual do poliedro, onde fica o número. */
+  labelY: number
   /** Arestas desenhadas por dentro, para parecer um poliedro. */
   edges: Segment[]
 }
@@ -84,18 +86,19 @@ export function dieShape(sides: number): DieShape {
   switch (sides) {
     case 4: {
       const outline = regularPolygon(3, 48)
-      return { outline, edges: outline.map((vertex) => segment(center, vertex)) }
+      return { outline, labelY: 58, edges: outline.map((vertex) => segment(center, vertex)) }
     }
     case 8: {
       const outline = regularPolygon(4, 48)
       const inner = regularPolygon(4, 22)
-      return { outline, edges: [...inner.map((vertex, index) => segment(vertex, inner[(index + 1) % 4])), ...outline.map((vertex, index) => segment(vertex, inner[index]))] }
+      return { outline, labelY: 50, edges: [...inner.map((vertex, index) => segment(vertex, inner[(index + 1) % 4])), ...outline.map((vertex, index) => segment(vertex, inner[index]))] }
     }
     case 12: {
       const outline = regularPolygon(5, 48)
       const inner = regularPolygon(5, 24, -54)
       return {
         outline,
+        labelY: 52,
         edges: [
           ...inner.map((vertex, index) => segment(vertex, inner[(index + 1) % 5])),
           // Cada vértice de fora se liga aos dois vértices de dentro mais próximos.
@@ -108,6 +111,7 @@ export function dieShape(sides: number): DieShape {
       const inner = regularPolygon(3, 26)
       return {
         outline,
+        labelY: 50,
         edges: [
           ...inner.map((vertex, index) => segment(vertex, inner[(index + 1) % 3])),
           ...inner.flatMap((vertex, index) => [-1, 0, 1].map((offset) => segment(vertex, outline[(index * 2 + offset + 6) % 6]))),
@@ -118,7 +122,7 @@ export function dieShape(sides: number): DieShape {
       // d10 e d100: um papagaio (trapezoedro pentagonal visto de lado).
       const outline: Point[] = [[50, 4], [92, 38], [50, 96], [8, 38]]
       const inner: Point[] = [[50, 28], [68, 42], [50, 70], [32, 42]]
-      return { outline, edges: [...inner.map((vertex, index) => segment(vertex, inner[(index + 1) % 4])), ...outline.map((vertex, index) => segment(vertex, inner[index]))] }
+      return { outline, labelY: 50, edges: [...inner.map((vertex, index) => segment(vertex, inner[(index + 1) % 4])), ...outline.map((vertex, index) => segment(vertex, inner[index]))] }
     }
   }
 }

@@ -11,7 +11,7 @@ const props = defineProps<{ sides: number; value: number; rollKey: number; rolli
 
 const ROLL_MS = 900
 /** Metade da aresta do cubo (px): as faces ficam a essa distância do centro. */
-const HALF = 40
+const HALF = 48
 
 const isCube = computed(() => props.sides === 6)
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
@@ -66,20 +66,22 @@ watch(() => props.value, (value) => !props.rolling && (shown.value = value))
 onBeforeUnmount(() => clearInterval(timer))
 
 const shape = computed(() => dieShape(props.sides))
+/** Tamanho do número: com mais algarismos a letra diminui, para sempre caber dentro do poliedro. */
+const fontSize = computed(() => (shown.value >= 100 ? 22 : shown.value >= 10 ? 27 : 34))
 const label = computed(() => (props.sides === 100 ? 'd%' : `d${props.sides}`))
 </script>
 
 <template>
-  <div ref="lift" class="size-20 [perspective:600px]" role="img" :aria-label="`Dado ${label}: ${value}`">
+  <div ref="lift" class="size-24 [perspective:700px]" role="img" :aria-label="`Dado ${label}: ${value}`">
     <!-- d6: cubo -->
     <div v-if="isCube" ref="body" class="relative size-full [transform-style:preserve-3d]" :style="{ transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)` }">
       <div
         v-for="face in CUBE_FACES"
         :key="face.value"
-        class="absolute inset-0 grid grid-cols-3 grid-rows-3 rounded-lg border border-foreground/15 bg-card p-2.5 shadow-inner [backface-visibility:hidden]"
+        class="absolute inset-0 grid grid-cols-3 grid-rows-3 rounded-xl border border-foreground/15 bg-card p-3 shadow-inner [backface-visibility:hidden]"
         :style="{ transform: `${face.place} translateZ(${HALF}px)` }"
       >
-        <span v-for="cell in 9" :key="cell" class="m-auto size-3 rounded-full" :class="pipCells(face.value).includes(cell) ? 'bg-foreground' : ''" />
+        <span v-for="cell in 9" :key="cell" class="m-auto size-3.5 rounded-full" :class="pipCells(face.value).includes(cell) ? 'bg-foreground' : ''" />
       </div>
     </div>
 
@@ -88,7 +90,7 @@ const label = computed(() => (props.sides === 100 ? 'd%' : `d${props.sides}`))
       <svg viewBox="0 0 100 100" class="size-full overflow-visible drop-shadow-sm" aria-hidden="true">
         <polygon :points="toPoints(shape.outline)" class="fill-primary/15 stroke-primary" stroke-width="3" stroke-linejoin="round" />
         <line v-for="(edge, index) in shape.edges" :key="index" :x1="edge[0]" :y1="edge[1]" :x2="edge[2]" :y2="edge[3]" class="stroke-primary/50" stroke-width="1.5" stroke-linecap="round" />
-        <text x="50" y="58" text-anchor="middle" :font-size="shown >= 100 ? 24 : shown >= 10 ? 30 : 36" font-weight="700" class="fill-foreground tabular-nums">{{ shown }}</text>
+        <text x="50" :y="shape.labelY" text-anchor="middle" dominant-baseline="central" :font-size="fontSize" font-weight="700" stroke-width="4" stroke-linejoin="round" class="fill-foreground stroke-card tabular-nums [paint-order:stroke]">{{ shown }}</text>
       </svg>
     </div>
   </div>

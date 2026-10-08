@@ -4,11 +4,11 @@ import { spinTo } from '../lib/shapes'
 import type { CoinSide } from '../lib/roll'
 
 /**
- * Moeda de ouro em 3D: duas faces em relevo (cara com um perfil, coroa com uma coroa real), borda serrilhada e espessura de verdade.
+ * Moeda de ouro em 3D: duas faces em relevo (cara com uma estrela radiante, coroa com uma coroa real), borda serrilhada e espessura de verdade.
  * `toss` arremessa a moeda para cima, gira de ponta a ponta e pousa no lado sorteado; a promessa termina quando ela pousa.
  */
 const TOSS_MS = 1500
-const LIFT_PX = 160
+const LIFT_PX = 100
 /** Espessura da moeda em px: as faces ficam a metade para cada lado do centro. */
 const THICKNESS = 12
 const RIM_LAYERS = 11
@@ -55,15 +55,35 @@ interface Leaf {
 /** Folhas de louro em dois ramos que sobem pelos lados da moeda, do pé até perto do topo. */
 const leaves = computed<Leaf[]>(() => {
   const result: Leaf[] = []
-  for (let index = 0; index < 9; index++) {
-    const angle = 104 + index * 15.5
+  for (let index = 0; index < 8; index++) {
+    const angle = 108 + index * 17
     for (const side of [1, -1]) {
       const radians = ((side === 1 ? angle : 180 - angle) * Math.PI) / 180
-      const radius = 31.5 + (index % 2 === 0 ? 0 : 1.6)
-      result.push({ x: 50 + radius * Math.cos(radians), y: 50 + radius * Math.sin(radians), rotate: (radians * 180) / Math.PI + 90 + (index % 2 === 0 ? -22 : 22) * side })
+      // As folhas alternam um pouco para dentro e para fora do ramo, apontando para cima.
+      const outer = index % 2 === 0
+      const radius = 32 + (outer ? 1.8 : -1.8)
+      result.push({ x: 50 + radius * Math.cos(radians), y: 50 + radius * Math.sin(radians), rotate: (radians * 180) / Math.PI + 90 + (outer ? 28 : -28) * side })
     }
   }
   return result
+})
+
+/** Ramo (arco) por onde as folhas crescem, um de cada lado. */
+const branches = ['M 50 82 A 32 32 0 0 1 21 36', 'M 50 82 A 32 32 0 0 0 79 36']
+
+/** Estrela de cinco pontas, de raio externo 17 e interno 7.2, com uma ponta para cima. */
+const star = Array.from({ length: 10 }, (_, index) => {
+  const radius = index % 2 === 0 ? 17 : 7.2
+  const angle = ((-90 + index * 36) * Math.PI) / 180
+  return `${(50 + radius * Math.cos(angle)).toFixed(2)},${(50 + radius * Math.sin(angle)).toFixed(2)}`
+}).join(' ')
+
+/** Raios finos em volta da estrela, alternando curtos e longos. */
+const rays = Array.from({ length: 24 }, (_, index) => {
+  const angle = (index * 15 * Math.PI) / 180
+  const inner = 21
+  const outer = index % 2 === 0 ? 29 : 25
+  return { x1: 50 + inner * Math.cos(angle), y1: 50 + inner * Math.sin(angle), x2: 50 + outer * Math.cos(angle), y2: 50 + outer * Math.sin(angle) }
 })
 </script>
 
@@ -105,22 +125,17 @@ const leaves = computed<Leaf[]>(() => {
         />
 
         <!-- Cara: perfil em relevo com ramos de louro -->
-        <svg viewBox="0 0 100 100" class="absolute inset-0 size-full [backface-visibility:hidden]" :style="{ transform: `translateZ(${THICKNESS / 2}px)` }" role="img" aria-label="Cara da moeda">
+        <svg viewBox="0 0 100 100" class="absolute inset-0 size-full [backface-visibility:hidden]" :style="{ transform: `translateZ(${THICKNESS / 2}px)` }" role="img" aria-label="Cara da moeda: estrela">
           <circle cx="50" cy="50" r="49.5" fill="url(#coin-gold)" />
           <circle cx="50" cy="50" r="47" fill="none" stroke="#7a4e0e" stroke-width="1.6" stroke-dasharray="0.9 1.5" opacity="0.65" />
           <circle cx="50" cy="50" r="42.5" fill="url(#coin-field)" stroke="#fff0b0" stroke-opacity="0.8" stroke-width="0.8" />
           <circle cx="50" cy="50" r="41.5" fill="none" stroke="#7a4e0e" stroke-opacity="0.55" stroke-width="0.8" />
           <g filter="url(#coin-relief)">
-            <ellipse v-for="(leaf, index) in leaves" :key="index" rx="2.1" ry="4.9" fill="url(#coin-gold)" :transform="`translate(${leaf.x} ${leaf.y}) rotate(${leaf.rotate})`" />
-            <!-- Perfil -->
-            <path
-              d="M 42 31 C 48 25 60 26 64 34 C 66 38 66 41 67 44 L 71.5 50 C 72.5 52 70.5 53 68.5 53 C 69 55 68.5 56 67 57 C 68.5 58 68 60 66 60.5 C 67 63 65 65 62 65.5 L 61.5 69 L 63 77 L 36 77 C 33 67 33 55 34.5 47 C 34.5 39 37 34 42 31 Z"
-              fill="url(#coin-gold)"
-            />
-            <path d="M 42 33 C 47 29 56 29 61 34" fill="none" stroke="#8a5a12" stroke-width="1" stroke-linecap="round" />
-            <path d="M 38 40 C 43 36 50 36 55 39 M 37 46 C 42 42 49 42 54 45" fill="none" stroke="#8a5a12" stroke-opacity="0.7" stroke-width="0.9" stroke-linecap="round" />
-            <circle cx="61" cy="44" r="1.2" fill="#6e4510" />
-            <path d="M 36 77 C 40 74 56 74 63 77" fill="none" stroke="#8a5a12" stroke-width="0.9" />
+            <path v-for="branch in branches" :key="branch" :d="branch" fill="none" stroke="url(#coin-gold)" stroke-width="1.2" stroke-linecap="round" />
+            <path v-for="(leaf, index) in leaves" :key="index" d="M 0 -5.6 C 3.2 -2.8 3.2 2.8 0 5.6 C -3.2 2.8 -3.2 -2.8 0 -5.6 Z" fill="url(#coin-gold)" :transform="`translate(${leaf.x} ${leaf.y}) rotate(${leaf.rotate})`" />
+            <line v-for="(ray, index) in rays" :key="`ray-${index}`" :x1="ray.x1" :y1="ray.y1" :x2="ray.x2" :y2="ray.y2" stroke="url(#coin-gold)" stroke-width="1.1" stroke-linecap="round" />
+            <polygon :points="star" fill="url(#coin-gold)" stroke="#8a5a12" stroke-width="0.7" stroke-linejoin="round" />
+            <circle cx="50" cy="50" r="3.2" fill="#fff3bd" stroke="#8a5a12" stroke-width="0.6" />
           </g>
           <path d="M 12 38 A 42 42 0 0 1 60 8" fill="none" stroke="url(#coin-shine)" stroke-width="3" stroke-linecap="round" />
         </svg>
@@ -132,7 +147,8 @@ const leaves = computed<Leaf[]>(() => {
           <circle cx="50" cy="50" r="42.5" fill="url(#coin-field)" stroke="#fff0b0" stroke-opacity="0.8" stroke-width="0.8" />
           <circle cx="50" cy="50" r="41.5" fill="none" stroke="#7a4e0e" stroke-opacity="0.55" stroke-width="0.8" />
           <g filter="url(#coin-relief)">
-            <ellipse v-for="(leaf, index) in leaves" :key="index" rx="2.1" ry="4.9" fill="url(#coin-gold)" :transform="`translate(${leaf.x} ${leaf.y}) rotate(${leaf.rotate})`" />
+            <path v-for="branch in branches" :key="branch" :d="branch" fill="none" stroke="url(#coin-gold)" stroke-width="1.2" stroke-linecap="round" />
+            <path v-for="(leaf, index) in leaves" :key="index" d="M 0 -5.6 C 3.2 -2.8 3.2 2.8 0 5.6 C -3.2 2.8 -3.2 -2.8 0 -5.6 Z" fill="url(#coin-gold)" :transform="`translate(${leaf.x} ${leaf.y}) rotate(${leaf.rotate})`" />
             <!-- Coroa -->
             <path d="M 31 63 L 26.5 40 L 38.5 51 L 50 34 L 61.5 51 L 73.5 40 L 69 63 Z" fill="url(#coin-gold)" />
             <rect x="31" y="63" width="38" height="8" rx="2" fill="url(#coin-gold)" />

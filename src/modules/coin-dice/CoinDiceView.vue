@@ -91,7 +91,7 @@ onBeforeUnmount(() => clearTimeout(rollTimer))
           </TabsList>
 
           <TabsContent value="coin" class="mt-6 space-y-6">
-            <div class="flex min-h-96 items-end justify-center pb-2">
+            <div class="flex min-h-[26rem] items-center justify-center">
               <CoinPiece ref="coin" />
             </div>
             <div class="text-center" role="status">
@@ -123,7 +123,7 @@ onBeforeUnmount(() => clearTimeout(rollTimer))
             <Button size="lg" class="w-full sm:w-auto" :disabled="rolling" @click="roll"><Dices aria-hidden="true" />Rolar {{ diceNotation(count, sides) }}</Button>
 
             <div v-if="last" class="space-y-4" role="status">
-              <ul class="flex min-h-28 flex-wrap items-end justify-center gap-5 pt-8 sm:justify-start">
+              <ul class="flex min-h-32 flex-wrap items-end justify-center gap-6 pt-8 sm:justify-start">
                 <li v-for="(value, index) in last.rolls" :key="index">
                   <DiceFace :sides="last.sides" :value="value" :roll-key="rollId" :rolling="rolling" />
                 </li>
