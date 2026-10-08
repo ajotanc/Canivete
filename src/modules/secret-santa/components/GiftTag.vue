@@ -90,7 +90,7 @@ onBeforeUnmount(() => {
         />
         <div class="relative flex h-full flex-col items-center justify-between p-8 text-center text-primary-foreground">
           <div>
-            <span class="mx-auto flex size-12 items-center justify-center rounded-full bg-primary-foreground/15 ring-4 ring-primary-foreground/10">
+            <span class="mx-auto flex size-12 items-center justify-center rounded-xl bg-primary-foreground/15">
               <LockKeyhole class="size-5" aria-hidden="true" />
             </span>
             <p class="mt-4 text-sm font-medium text-primary-foreground/80">Carta confidencial</p>
@@ -145,7 +145,7 @@ onBeforeUnmount(() => {
           class="absolute inset-0 flex flex-col items-center justify-center overflow-hidden rounded-3xl border border-foreground/10 bg-card px-7 text-center shadow-[0_22px_42px_-24px_rgb(14_20_32/0.42)]"
           aria-live="polite"
         >
-          <Sparkles class="size-6 text-primary motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-700" aria-hidden="true" />
+          <span class="flex size-12 items-center justify-center rounded-xl bg-primary/10 text-primary motion-safe:animate-in motion-safe:zoom-in-50 motion-safe:duration-700" aria-hidden="true"><Sparkles class="size-6" /></span>
           <p class="mt-5 text-sm text-muted-foreground">Você vai presentear</p>
           <h2 class="mt-2 wrap-break-word text-4xl font-semibold leading-none tracking-tight text-foreground sm:text-5xl">{{ name }}</h2>
           <div class="mt-7 h-px w-16 bg-primary/40" aria-hidden="true" />

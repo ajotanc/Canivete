@@ -29,7 +29,7 @@ withDefaults(
 </script>
 
 <template>
-  <header :class="cn('space-y-3 sm:space-y-4', filled && 'rounded-3xl bg-primary p-5 text-primary-foreground sm:p-8 [&_[data-slot=button]:hover]:bg-primary-foreground/15 [&_[data-slot=button]:hover]:text-primary-foreground', $props.class)">
+  <header :class="cn('space-y-3 sm:space-y-4', filled && 'rounded-3xl bg-primary p-5 text-primary-foreground sm:p-8 [&_[data-slot=button]:hover]:bg-transparent [&_[data-slot=button]:hover]:text-primary-foreground', $props.class)">
     <div v-if="$slots.back || $slots.actions" class="flex min-h-11 items-center justify-between gap-3">
       <div class="-ml-3"><slot name="back" /></div>
       <div class="-mr-3"><slot name="actions" /></div>
