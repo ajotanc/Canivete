@@ -9,8 +9,6 @@ import { formatMoney } from '@/lib/money'
 import { eventCountdown, formatEventDate } from '../lib/event'
 import { adminPath, invitePath } from '../lib/links'
 import AddToCalendar from './AddToCalendar.vue'
-import HeaderAction from './HeaderAction.vue'
-import HeaderActions from './HeaderActions.vue'
 
 export interface MeGroupInfo {
   name: string
@@ -43,11 +41,12 @@ defineEmits<{ logout: [] }>()
       <FactTile :icon="Coins" label="Valor sugerido">{{ group.budget !== null ? formatMoney(group.budget) : 'A definir' }}</FactTile>
       <FactTile :icon="CalendarDays" :label="group.eventDate ? eventCountdown(group.eventDate) : 'Data da troca'" tone="paper">{{ group.eventDate ? formatEventDate(group.eventDate) : 'A combinar' }}</FactTile>
     </FactList>
-    <HeaderActions v-if="isOrganizer || group?.eventDate">
-      <HeaderAction v-if="isOrganizer" as-child>
-        <RouterLink :to="adminPath(groupId)"><LayoutDashboard aria-hidden="true" /><span>Painel do organizador</span></RouterLink>
-      </HeaderAction>
+    <!-- Atalhos em linha própria: no celular "Voltar", "Painel" e "Sair" juntos não cabem lado a lado. -->
+    <div v-if="isOrganizer || group?.eventDate" class="-ml-3 flex flex-wrap gap-2">
+      <Button v-if="isOrganizer" as-child variant="ghost" size="sm">
+        <RouterLink :to="adminPath(groupId)"><LayoutDashboard aria-hidden="true" />Painel do organizador</RouterLink>
+      </Button>
       <AddToCalendar v-if="group?.eventDate" :group-id="groupId" :group-name="group.name" :event-date="group.eventDate" />
-    </HeaderActions>
+    </div>
   </PageHeader>
 </template>

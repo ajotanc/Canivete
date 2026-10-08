@@ -16,8 +16,6 @@ import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/in
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { formatMoney } from '@/lib/money'
-import HeaderAction from './components/HeaderAction.vue'
-import HeaderActions from './components/HeaderActions.vue'
 import AddToCalendar from './components/AddToCalendar.vue'
 import WishlistEditor from './components/WishlistEditor.vue'
 import { applyGroupColor } from './lib/groupColor'
@@ -171,15 +169,12 @@ async function onSubmit() {
           <FactTile :icon="Coins" label="Valor sugerido">{{ group.budget !== null ? formatMoney(group.budget) : 'A definir' }}</FactTile>
           <FactTile :icon="CalendarDays" :label="group.eventDate ? eventCountdown(group.eventDate) : 'Data da troca'" tone="paper">{{ group.eventDate ? formatEventDate(group.eventDate) : 'A combinar' }}</FactTile>
         </FactList>
-        <HeaderActions v-if="(returning && !selected) || group.eventDate">
-          <HeaderAction v-if="returning && !selected" as-child tone="paper">
-            <RouterLink :to="mePath(groupId)">
-              <Gift aria-hidden="true" />
-              <span class="line-clamp-2 text-balance text-center leading-tight">Continuar como {{ returning.split(' ')[0] }}</span>
-            </RouterLink>
-          </HeaderAction>
+        <div v-if="(returning && !selected) || group.eventDate" class="-ml-3 flex flex-wrap gap-2">
+          <Button v-if="returning && !selected" as-child variant="ghost" size="sm">
+            <RouterLink :to="mePath(groupId)"><Gift aria-hidden="true" />Continuar como {{ returning.split(' ')[0] }}</RouterLink>
+          </Button>
           <AddToCalendar v-if="group.eventDate" :group-id="groupId" :group-name="group.name" :event-date="group.eventDate" />
-        </HeaderActions>
+        </div>
       </PageHeader>
 
       <!-- Passo 1: quem é você -->
