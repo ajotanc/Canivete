@@ -150,7 +150,7 @@ onBeforeUnmount(() => {
       <AlertDescription>{{ error }}</AlertDescription>
     </Alert>
 
-    <FileField v-if="!file" id="image-file" accept="image/*" :icon="ImageUp" description="Toque para escolher uma imagem ou solte aqui. Ela não sai do seu aparelho." />
+    <FileField v-if="!file" id="image-file" accept="image/*" :icon="ImageUp" @select="onSelect" description="Toque para escolher uma imagem ou solte aqui. Ela não sai do seu aparelho." />
 
     <div v-else class="grid items-start gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
       <Card>
