@@ -36,6 +36,11 @@ npm run build
 | Calculadora de datas (diferença, dias úteis com feriados nacionais, idade) | `dates` | não |
 | Ferramentas de texto (caixa, camelCase, slug, linhas, Base64, URL) | `text-tools` | não |
 | Calculadora de porcentagem (%, desconto, variação, juros) | `percentage` | não |
+| Dados fictícios (pessoa com CPF válido, e-mail, telefone, endereço; copia em JSON) | `fake-data` | não |
+| Cores (HEX, RGB, HSL, tons e contraste WCAG) | `colors` | não |
+| Cronômetro, timer e Pomodoro (aviso sonoro ao fim) | `timer` | não |
+| Conversor de unidades (comprimento, peso, volume, temperatura, área, velocidade, tempo, dados) | `units` | não |
+| Formatador de JSON (valida, formata, compacta, ordena chaves) | `json` | não |
 
 A consulta de CEP é a única que chama um serviço externo (`viacep.com.br`, direto do navegador); as outras rodam só no aparelho.
 
