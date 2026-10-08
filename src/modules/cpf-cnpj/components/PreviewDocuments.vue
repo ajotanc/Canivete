@@ -9,7 +9,7 @@
       <span class="rounded bg-muted px-1.5 py-0.5 text-muted-foreground">CNPJ</span>
       <span class="rounded bg-tool px-1.5 py-0.5 text-tool-foreground">A–Z</span>
     </div>
-    <p class="mt-3 font-mono text-xs font-semibold tracking-tight">12.<span class="text-tool">ABC</span>.345/01<span class="text-tool">DE</span>-35</p>
+    <p class="mt-3 text-xs font-semibold tabular-nums">12.<span class="text-tool">ABC</span>.345/01<span class="text-tool">DE</span>-35</p>
     <div
       class="mt-3 flex h-9 items-center justify-center rounded-lg bg-muted text-xs font-semibold transition-colors duration-300 group-hover:bg-tool group-hover:text-tool-foreground group-focus-visible:bg-tool group-focus-visible:text-tool-foreground motion-reduce:transition-none"
     >

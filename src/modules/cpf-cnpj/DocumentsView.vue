@@ -126,7 +126,7 @@ onBeforeUnmount(() => clearTimeout(copiedTimer))
           <p class="sr-only" role="status">{{ items.length }} {{ items.length === 1 ? 'número gerado' : 'números gerados' }}.</p>
           <ul class="space-y-2">
             <li v-for="(item, index) in items" :key="`${index}-${item}`">
-              <CopyField :value="item" :label="typeLabel" :message="`${typeLabel} copiado.`" :input-class="items.length === 1 ? 'text-base min-[400px]:text-xl sm:text-2xl' : 'text-base sm:text-lg'" class="font-semibold tabular-nums" />
+              <CopyField :value="item" :label="typeLabel" :message="`${typeLabel} copiado.`" :input-class="items.length === 1 ? 'text-base min-[400px]:text-xl sm:text-2xl' : 'text-base sm:text-lg'" class="tabular-nums" />
             </li>
           </ul>
           <p class="mt-4 text-sm text-muted-foreground">Os números passam na conta dos dígitos verificadores, mas não pertencem a ninguém. Use só para testes.</p>

@@ -4,7 +4,7 @@
 
 <template>
   <div class="w-44 rounded-md bg-card p-3 text-card-foreground shadow-[0_6px_16px_-6px_rgb(14_20_32/0.45)]" aria-hidden="true">
-    <p class="truncate rounded bg-muted px-1.5 py-1 font-mono text-xs font-semibold"><span class="text-tool">wa.me</span>/5511…</p>
+    <p class="truncate rounded bg-muted px-1.5 py-1 text-xs font-semibold"><span class="text-tool">wa.me</span>/5511…</p>
     <div class="mt-3 flex items-center justify-center">
       <svg viewBox="0 0 7 7" class="size-16" fill="currentColor" shape-rendering="crispEdges">
         <path d="M0 0h3v3H0zM4 0h3v3H4zM0 4h3v3H0z" class="text-muted-foreground/70" />

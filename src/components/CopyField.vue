@@ -46,7 +46,7 @@ onBeforeUnmount(() => clearTimeout(timer))
       readonly
       :aria-label="label"
       :placeholder="placeholder"
-      :class="cn('font-mono text-sm', inputClass)"
+      :class="cn('text-sm', inputClass)"
       @focus="($event.target as HTMLInputElement).select()"
     />
     <InputGroupAddon align="inline-end">
