@@ -35,8 +35,8 @@ function host(url: string): string {
           <Gift class="size-5" />
         </span>
         <span class="min-w-0 flex-1">
-          <span class="block break-words font-medium">{{ item.text }}</span>
-          <span v-if="item.url && host(item.url)" class="block truncate text-sm text-muted-foreground">{{ host(item.url) }}</span>
+          <span class="block break-words font-semibold">{{ item.text }}</span>
+          <span v-if="item.url && host(item.url)" class="block truncate text-sm text-primary">{{ host(item.url) }}</span>
         </span>
         <ExternalLink v-if="item.url" class="mr-2 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary group-focus-visible:text-primary motion-reduce:transition-none" aria-hidden="true" />
         <span v-if="item.url" class="sr-only">(abre o produto em outra aba)</span>
