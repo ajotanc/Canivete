@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { spinTo } from '../lib/shapes'
 import type { CoinSide } from '../lib/roll'
 
 /**
- * Moeda de ouro em 3D: duas faces em relevo (cara com uma estrela radiante, coroa com uma coroa real), borda serrilhada e espessura de verdade.
- * `toss` arremessa a moeda para cima, gira de ponta a ponta e pousa no lado sorteado; a promessa termina quando ela pousa.
+ * Moeda de ouro em 3D de verdade: o disco tem espessura (a borda é feita de camadas serrilhadas) e o desenho de cada face
+ * (estrela radiante na cara, coroa real na coroa) é um relevo empilhado em três alturas, então ele se desloca ao girar.
+ * `toss` arremessa a moeda para cima, faz ela girar em volta de um eixo inclinado, como os dados, e pousa no lado sorteado.
+ * A promessa termina quando ela pousa.
  */
 const TOSS_MS = 1500
 const LIFT_PX = 100
@@ -14,25 +15,37 @@ const THICKNESS = 12
 const RIM_LAYERS = 11
 /** Inclinação da moeda parada, para a borda aparecer e ela parecer um objeto, não uma figura. */
 const TILT = 26
+/** Eixo do giro no ar, inclinado para a moeda rolar de lado também, e não só virar de ponta a ponta. */
+const AXIS = '1, 0.35, 0.15'
+const TURNS = 5
+/** Alturas do relevo acima da face (px) e o escurecimento de cada camada: a de baixo é a mais escura, a de cima a mais clara. */
+const RELIEF = [
+  { raise: 1, brightness: 0.6 },
+  { raise: 2, brightness: 0.8 },
+  { raise: 3, brightness: 1 },
+] as const
 
 const lift = ref<HTMLElement>()
 const coin = ref<HTMLElement>()
 const shadow = ref<HTMLElement>()
-/** Giro acumulado em torno do eixo horizontal: múltiplos de 360 mostram a cara, 180 a mais mostram a coroa. */
-const angle = ref(0)
+/** Lado que está para cima agora. */
+const resting = ref<CoinSide>('heads')
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
+const flipOf = (side: CoinSide): number => (side === 'heads' ? 0 : 180)
+/** `transform` da moeda: inclinação, voltas em volta do eixo e a virada que escolhe o lado. As duas pontas da animação têm a mesma lista de funções. */
+const orientation = (degrees: number, side: CoinSide): string => `rotateX(${TILT}deg) rotate3d(${AXIS}, ${degrees}deg) rotateX(${flipOf(side)}deg)`
+
 async function toss(side: CoinSide): Promise<void> {
-  const from = angle.value
-  const to = spinTo(from, side === 'heads' ? 0 : 180, 5)
+  const from = resting.value
   // O estado final já vale; a animação só cobre o caminho até ele.
-  angle.value = to
+  resting.value = side
   if (reducedMotion() || !coin.value || !lift.value || !shadow.value) return
 
   const duration = { duration: TOSS_MS }
   const animations = [
-    coin.value.animate([{ transform: `rotateX(${from + TILT}deg)` }, { transform: `rotateX(${to + TILT}deg)` }], { ...duration, easing: 'cubic-bezier(0.3, 0.1, 0.3, 1)' }),
+    coin.value.animate([{ transform: orientation(0, from) }, { transform: orientation(360 * TURNS, side) }], { ...duration, easing: 'cubic-bezier(0.3, 0.1, 0.3, 1)' }),
     lift.value.animate(
       [
         { transform: 'translateY(0) rotateZ(0deg)', easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' },
@@ -91,7 +104,7 @@ const rays = Array.from({ length: 24 }, (_, index) => {
 
 <template>
   <div class="flex flex-col items-center [perspective:1000px]">
-    <!-- Gradientes e filtros usados pelas duas faces -->
+    <!-- Gradientes, filtro e os desenhos em relevo, usados pelas duas faces -->
     <svg width="0" height="0" class="absolute" aria-hidden="true">
       <defs>
         <radialGradient id="coin-gold" cx="0.3" cy="0.25" r="1">
@@ -113,11 +126,50 @@ const rays = Array.from({ length: 24 }, (_, index) => {
           <feDropShadow dx="-0.5" dy="-0.5" stdDeviation="0.25" flood-color="#fff6c8" flood-opacity="0.9" />
           <feDropShadow dx="0.7" dy="0.9" stdDeviation="0.45" flood-color="#4a2f05" flood-opacity="0.75" />
         </filter>
+
+        <!-- Louro: nas duas faces -->
+        <g id="coin-laurel">
+          <path v-for="branch in branches" :key="branch" :d="branch" fill="none" stroke="url(#coin-gold)" stroke-width="1.2" stroke-linecap="round" />
+          <path v-for="(leaf, index) in leaves" :key="index" d="M 0 -5.6 C 3.2 -2.8 3.2 2.8 0 5.6 C -3.2 2.8 -3.2 -2.8 0 -5.6 Z" fill="url(#coin-gold)" :transform="`translate(${leaf.x} ${leaf.y}) rotate(${leaf.rotate})`" />
+        </g>
+        <!-- Cara: estrela radiante -->
+        <g id="coin-relief-heads">
+          <use href="#coin-laurel" />
+          <line v-for="(ray, index) in rays" :key="`ray-${index}`" :x1="ray.x1" :y1="ray.y1" :x2="ray.x2" :y2="ray.y2" stroke="url(#coin-gold)" stroke-width="1.1" stroke-linecap="round" />
+          <polygon :points="star" fill="url(#coin-gold)" stroke="#8a5a12" stroke-width="0.7" stroke-linejoin="round" />
+          <circle cx="50" cy="50" r="3.2" fill="#fff3bd" stroke="#8a5a12" stroke-width="0.6" />
+        </g>
+        <!-- Coroa: coroa real com joias -->
+        <g id="coin-relief-tails">
+          <use href="#coin-laurel" />
+          <path d="M 31 63 L 26.5 40 L 38.5 51 L 50 34 L 61.5 51 L 73.5 40 L 69 63 Z" fill="url(#coin-gold)" />
+          <rect x="31" y="63" width="38" height="8" rx="2" fill="url(#coin-gold)" />
+          <path d="M 31 63 L 69 63" stroke="#8a5a12" stroke-width="0.9" />
+          <g fill="#fff3bd" stroke="#8a5a12" stroke-width="0.7">
+            <circle cx="26.5" cy="38.5" r="2.7" />
+            <circle cx="50" cy="32" r="3.1" />
+            <circle cx="73.5" cy="38.5" r="2.7" />
+          </g>
+          <g fill="#c0392b" stroke="#6e4510" stroke-width="0.6">
+            <circle cx="38.5" cy="67" r="1.7" />
+            <circle cx="61.5" cy="67" r="1.7" />
+          </g>
+          <circle cx="50" cy="67" r="2" fill="#2f6fd0" stroke="#6e4510" stroke-width="0.6" />
+        </g>
+
+        <!-- Disco de fundo de cada face: anéis e campo, sem o relevo -->
+        <g id="coin-plate">
+          <circle cx="50" cy="50" r="49.5" fill="url(#coin-gold)" />
+          <circle cx="50" cy="50" r="47" fill="none" stroke="#7a4e0e" stroke-width="1.6" stroke-dasharray="0.9 1.5" opacity="0.65" />
+          <circle cx="50" cy="50" r="42.5" fill="url(#coin-field)" stroke="#fff0b0" stroke-opacity="0.8" stroke-width="0.8" />
+          <circle cx="50" cy="50" r="41.5" fill="none" stroke="#7a4e0e" stroke-opacity="0.55" stroke-width="0.8" />
+          <path d="M 12 38 A 42 42 0 0 1 60 8" fill="none" stroke="url(#coin-shine)" stroke-width="3" stroke-linecap="round" />
+        </g>
       </defs>
     </svg>
 
     <div ref="lift" class="size-44">
-      <div ref="coin" class="relative size-full [transform-style:preserve-3d]" :style="{ transform: `rotateX(${angle + TILT}deg)` }">
+      <div ref="coin" class="relative size-full [transform-style:preserve-3d]" :style="{ transform: orientation(0, resting) }">
         <!-- Borda: discos serrilhados empilhados entre as duas faces -->
         <span
           v-for="layer in RIM_LAYERS"
@@ -126,47 +178,34 @@ const rays = Array.from({ length: 24 }, (_, index) => {
           :style="{ transform: `translateZ(${(layer - (RIM_LAYERS + 1) / 2) * (THICKNESS / RIM_LAYERS)}px)` }"
         />
 
-        <!-- Cara: perfil em relevo com ramos de louro -->
+        <!-- Cara: fundo e relevo em três alturas -->
         <svg viewBox="0 0 100 100" class="absolute inset-0 size-full [backface-visibility:hidden]" :style="{ transform: `translateZ(${THICKNESS / 2}px)` }" role="img" aria-label="Cara da moeda: estrela">
-          <circle cx="50" cy="50" r="49.5" fill="url(#coin-gold)" />
-          <circle cx="50" cy="50" r="47" fill="none" stroke="#7a4e0e" stroke-width="1.6" stroke-dasharray="0.9 1.5" opacity="0.65" />
-          <circle cx="50" cy="50" r="42.5" fill="url(#coin-field)" stroke="#fff0b0" stroke-opacity="0.8" stroke-width="0.8" />
-          <circle cx="50" cy="50" r="41.5" fill="none" stroke="#7a4e0e" stroke-opacity="0.55" stroke-width="0.8" />
-          <g filter="url(#coin-relief)">
-            <path v-for="branch in branches" :key="branch" :d="branch" fill="none" stroke="url(#coin-gold)" stroke-width="1.2" stroke-linecap="round" />
-            <path v-for="(leaf, index) in leaves" :key="index" d="M 0 -5.6 C 3.2 -2.8 3.2 2.8 0 5.6 C -3.2 2.8 -3.2 -2.8 0 -5.6 Z" fill="url(#coin-gold)" :transform="`translate(${leaf.x} ${leaf.y}) rotate(${leaf.rotate})`" />
-            <line v-for="(ray, index) in rays" :key="`ray-${index}`" :x1="ray.x1" :y1="ray.y1" :x2="ray.x2" :y2="ray.y2" stroke="url(#coin-gold)" stroke-width="1.1" stroke-linecap="round" />
-            <polygon :points="star" fill="url(#coin-gold)" stroke="#8a5a12" stroke-width="0.7" stroke-linejoin="round" />
-            <circle cx="50" cy="50" r="3.2" fill="#fff3bd" stroke="#8a5a12" stroke-width="0.6" />
-          </g>
-          <path d="M 12 38 A 42 42 0 0 1 60 8" fill="none" stroke="url(#coin-shine)" stroke-width="3" stroke-linecap="round" />
+          <use href="#coin-plate" />
+        </svg>
+        <svg
+          v-for="level in RELIEF"
+          :key="`heads-${level.raise}`"
+          viewBox="0 0 100 100"
+          class="absolute inset-0 size-full [backface-visibility:hidden]"
+          :style="{ transform: `translateZ(${THICKNESS / 2 + level.raise}px)`, filter: `brightness(${level.brightness})` }"
+          aria-hidden="true"
+        >
+          <use href="#coin-relief-heads" :filter="level.brightness === 1 ? 'url(#coin-relief)' : undefined" />
         </svg>
 
-        <!-- Coroa: coroa real com joias -->
+        <!-- Coroa: fundo e relevo em três alturas, do lado de trás -->
         <svg viewBox="0 0 100 100" class="absolute inset-0 size-full [backface-visibility:hidden]" :style="{ transform: `rotateX(180deg) translateZ(${THICKNESS / 2}px)` }" role="img" aria-label="Coroa da moeda">
-          <circle cx="50" cy="50" r="49.5" fill="url(#coin-gold)" />
-          <circle cx="50" cy="50" r="47" fill="none" stroke="#7a4e0e" stroke-width="1.6" stroke-dasharray="0.9 1.5" opacity="0.65" />
-          <circle cx="50" cy="50" r="42.5" fill="url(#coin-field)" stroke="#fff0b0" stroke-opacity="0.8" stroke-width="0.8" />
-          <circle cx="50" cy="50" r="41.5" fill="none" stroke="#7a4e0e" stroke-opacity="0.55" stroke-width="0.8" />
-          <g filter="url(#coin-relief)">
-            <path v-for="branch in branches" :key="branch" :d="branch" fill="none" stroke="url(#coin-gold)" stroke-width="1.2" stroke-linecap="round" />
-            <path v-for="(leaf, index) in leaves" :key="index" d="M 0 -5.6 C 3.2 -2.8 3.2 2.8 0 5.6 C -3.2 2.8 -3.2 -2.8 0 -5.6 Z" fill="url(#coin-gold)" :transform="`translate(${leaf.x} ${leaf.y}) rotate(${leaf.rotate})`" />
-            <!-- Coroa -->
-            <path d="M 31 63 L 26.5 40 L 38.5 51 L 50 34 L 61.5 51 L 73.5 40 L 69 63 Z" fill="url(#coin-gold)" />
-            <rect x="31" y="63" width="38" height="8" rx="2" fill="url(#coin-gold)" />
-            <path d="M 31 63 L 69 63" stroke="#8a5a12" stroke-width="0.9" />
-            <g fill="#fff3bd" stroke="#8a5a12" stroke-width="0.7">
-              <circle cx="26.5" cy="38.5" r="2.7" />
-              <circle cx="50" cy="32" r="3.1" />
-              <circle cx="73.5" cy="38.5" r="2.7" />
-            </g>
-            <g fill="#c0392b" stroke="#6e4510" stroke-width="0.6">
-              <circle cx="38.5" cy="67" r="1.7" />
-              <circle cx="61.5" cy="67" r="1.7" />
-            </g>
-            <circle cx="50" cy="67" r="2" fill="#2f6fd0" stroke="#6e4510" stroke-width="0.6" />
-          </g>
-          <path d="M 12 38 A 42 42 0 0 1 60 8" fill="none" stroke="url(#coin-shine)" stroke-width="3" stroke-linecap="round" />
+          <use href="#coin-plate" />
+        </svg>
+        <svg
+          v-for="level in RELIEF"
+          :key="`tails-${level.raise}`"
+          viewBox="0 0 100 100"
+          class="absolute inset-0 size-full [backface-visibility:hidden]"
+          :style="{ transform: `rotateX(180deg) translateZ(${THICKNESS / 2 + level.raise}px)`, filter: `brightness(${level.brightness})` }"
+          aria-hidden="true"
+        >
+          <use href="#coin-relief-tails" :filter="level.brightness === 1 ? 'url(#coin-relief)' : undefined" />
         </svg>
       </div>
     </div>

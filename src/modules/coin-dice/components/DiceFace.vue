@@ -14,8 +14,8 @@ const props = defineProps<{ sides: number; value: number; rollKey: number; rolli
 const ROLL_MS = 900
 /** Metade da aresta do cubo (px): as faces ficam a essa distância do centro. */
 const HALF = 56
-const RADIUS = 52
-const RADIUS_PAIR = 42
+const RADIUS = 62
+const RADIUS_PAIR = 50
 
 const isCube = computed(() => props.sides === 6)
 const isPair = computed(() => props.sides === 100)
