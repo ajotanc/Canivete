@@ -25,7 +25,7 @@ import { Heart, LockKeyhole } from '@lucide/vue'
 
     <div class="relative mt-2 h-8 rounded-full bg-tool/15 p-1">
       <span
-        class="absolute inset-y-1 left-1 w-7 rounded-full bg-tool/30 transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:w-[calc(100%-0.5rem)] group-focus-visible:w-[calc(100%-0.5rem)] motion-reduce:transition-none"
+        class="absolute inset-y-1 left-1 w-0 rounded-full bg-tool/30 transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:w-[calc(100%-0.5rem)] group-focus-visible:w-[calc(100%-0.5rem)] motion-reduce:transition-none"
       />
       <span
         class="relative flex size-6 items-center justify-center rounded-full bg-tool text-tool-foreground shadow-sm transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-[7.5rem] group-focus-visible:translate-x-[7.5rem] motion-reduce:transition-none"
