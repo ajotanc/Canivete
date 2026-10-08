@@ -73,7 +73,7 @@ const limits = computed(() =>
             <dl class="divide-y">
               <div v-for="row in rows" :key="row.label" class="flex items-baseline justify-between py-2.5 first:pt-0 last:pb-0">
                 <dt class="text-sm text-muted-foreground">{{ row.label }}</dt>
-                <dd class="tabular-nums" :class="row.strong ? 'text-xl font-semibold' : 'font-medium'">{{ row.value }}</dd>
+                <dd class="tabular-nums" :class="row.strong ? 'font-semibold' : 'font-medium'">{{ row.value }}</dd>
               </div>
             </dl>
             <div class="grid grid-cols-2 gap-2">
