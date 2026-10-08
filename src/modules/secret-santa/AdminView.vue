@@ -491,7 +491,9 @@ async function onDraw() {
         </FactList>
       </PageHeader>
 
-      <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,23rem)]">
+      <div class="grid items-start gap-6 lg:grid-cols-2">
+        <!-- Coluna 1: quem participa e o sorteio -->
+        <div class="space-y-6">
         <!-- Pessoas -->
         <Card>
           <CardHeader>
@@ -590,51 +592,6 @@ async function onDraw() {
           </CardContent>
         </Card>
 
-        <div class="space-y-6">
-          <!-- Convite -->
-          <Card>
-            <CardHeader><CardHeading :icon="Link2">Convite</CardHeading></CardHeader>
-            <CardContent class="space-y-4">
-              <InputGroup class="h-11 bg-card">
-                <InputGroupInput :model-value="invite" readonly aria-label="Link do convite" />
-                <InputGroupAddon align="inline-end">
-                  <InputGroupButton size="sm" aria-label="Copiar convite" @click="copy(invite, 'Convite')">
-                    <Copy aria-hidden="true" />
-                    Copiar
-                  </InputGroupButton>
-                </InputGroupAddon>
-              </InputGroup>
-              <Button as-child size="lg" class="w-full bg-success text-white hover:bg-success/90">
-                <a :href="whatsappUrl(groupName, invite)" target="_blank" rel="noopener noreferrer">
-                  <WhatsappIcon class="size-4" />
-                  Enviar pelo WhatsApp
-                </a>
-              </Button>
-              <Separator />
-              <form @submit.prevent="onSaveSlug">
-                <Field>
-                  <FieldLabel for="slug">Texto do link</FieldLabel>
-                  <InputGroup class="h-11 bg-card">
-                    <InputGroupAddon><Link2 aria-hidden="true" /></InputGroupAddon>
-                    <InputGroupInput
-                      id="slug"
-                      :model-value="slugDraft"
-                      :maxlength="LIMITS.slugMax"
-                      autocomplete="off"
-                      placeholder="familia-da-bagunca"
-                      @input="onSlugInput"
-                      @blur="slugDraft = trimSlug(slugDraft)"
-                    />
-                    <InputGroupAddon align="inline-end">
-                      <InputGroupButton type="submit" variant="default" size="sm" :disabled="savingSlug || slugDraft.trim().length < LIMITS.slugMin">Salvar</InputGroupButton>
-                    </InputGroupAddon>
-                  </InputGroup>
-                  <FieldDescription class="break-all">{{ inviteUrl(origin, groupId, slugDraft ? trimSlug(slugDraft) : null) }}</FieldDescription>
-                </Field>
-              </form>
-            </CardContent>
-          </Card>
-
           <!-- Sorteio -->
           <Card v-if="status === 'open'">
             <CardHeader>
@@ -714,6 +671,54 @@ async function onDraw() {
             :exclusions="exclusions"
             @changed="refresh()"
           />
+
+        </div>
+
+        <!-- Coluna 2: convite, mural e ajustes do grupo -->
+        <div class="space-y-6">
+          <!-- Convite -->
+          <Card>
+            <CardHeader><CardHeading :icon="Link2">Convite</CardHeading></CardHeader>
+            <CardContent class="space-y-4">
+              <InputGroup class="h-11 bg-card">
+                <InputGroupInput :model-value="invite" readonly aria-label="Link do convite" />
+                <InputGroupAddon align="inline-end">
+                  <InputGroupButton size="sm" aria-label="Copiar convite" @click="copy(invite, 'Convite')">
+                    <Copy aria-hidden="true" />
+                    Copiar
+                  </InputGroupButton>
+                </InputGroupAddon>
+              </InputGroup>
+              <Button as-child size="lg" class="w-full bg-success text-white hover:bg-success/90">
+                <a :href="whatsappUrl(groupName, invite)" target="_blank" rel="noopener noreferrer">
+                  <WhatsappIcon class="size-4" />
+                  Enviar pelo WhatsApp
+                </a>
+              </Button>
+              <Separator />
+              <form @submit.prevent="onSaveSlug">
+                <Field>
+                  <FieldLabel for="slug">Texto do link</FieldLabel>
+                  <InputGroup class="h-11 bg-card">
+                    <InputGroupAddon><Link2 aria-hidden="true" /></InputGroupAddon>
+                    <InputGroupInput
+                      id="slug"
+                      :model-value="slugDraft"
+                      :maxlength="LIMITS.slugMax"
+                      autocomplete="off"
+                      placeholder="familia-da-bagunca"
+                      @input="onSlugInput"
+                      @blur="slugDraft = trimSlug(slugDraft)"
+                    />
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupButton type="submit" variant="default" size="sm" :disabled="savingSlug || slugDraft.trim().length < LIMITS.slugMin">Salvar</InputGroupButton>
+                    </InputGroupAddon>
+                  </InputGroup>
+                  <FieldDescription class="break-all">{{ inviteUrl(origin, groupId, slugDraft ? trimSlug(slugDraft) : null) }}</FieldDescription>
+                </Field>
+              </form>
+            </CardContent>
+          </Card>
 
           <!-- Mural -->
           <BoardPanel :credentials="{ groupId }" />
