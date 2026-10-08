@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ArrowRight, Download, Search, SearchX, Wrench, Zap } from '@lucide/vue'
+import { ArrowRight, Download, LayoutGrid, MessageCircle, Search, SearchX, TerminalSquare, Dices, Wrench, Zap } from '@lucide/vue'
+import type { Component } from 'vue'
 import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import FactList from '@/components/FactList.vue'
@@ -12,6 +13,9 @@ import { Kbd } from '@/components/ui/kbd'
 import { filterTools } from '@/core/home/filterTools'
 import { tools } from '@/core/modules/registry'
 
+/** Ícone de cada categoria no filtro; categorias novas caem no ícone genérico. */
+const CATEGORY_ICONS: Record<string, Component> = { Comunicação: MessageCircle, Desenvolvimento: TerminalSquare, Sorteios: Dices }
+
 const query = ref('')
 /** 'all' mostra tudo; qualquer outro valor é o nome de uma categoria. */
 const category = ref('all')
@@ -21,8 +25,8 @@ const visibleTools = computed(() => filterTools(tools, query.value, category.val
 
 /** "Todas" mais uma opção por categoria, cada uma com quantas ferramentas tem. */
 const options = computed(() => [
-  { value: 'all', label: 'Todas', count: tools.length },
-  ...categories.value.map((name) => ({ value: name, label: name, count: tools.filter((tool) => tool.category === name).length })),
+  { value: 'all', label: 'Todas', count: tools.length, icon: LayoutGrid },
+  ...categories.value.map((name) => ({ value: name, label: name, count: tools.filter((tool) => tool.category === name).length, icon: CATEGORY_ICONS[name] ?? LayoutGrid })),
 ])
 
 function clearFilters() {
@@ -57,18 +61,19 @@ function clearFilters() {
           <Kbd>/</Kbd>
         </InputGroupAddon>
       </InputGroup>
-      <div role="group" aria-label="Filtrar por categoria" class="flex flex-wrap gap-1.5">
+      <div role="group" aria-label="Filtrar por categoria" class="grid grid-cols-2 gap-1 rounded-2xl border bg-muted/60 p-1 sm:flex sm:w-fit">
         <button
           v-for="option in options"
           :key="option.value"
           type="button"
           :aria-pressed="category === option.value"
-          class="inline-flex h-10 items-center gap-1.5 rounded-full px-4 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
-          :class="category === option.value ? 'bg-foreground text-background' : 'text-muted-foreground hover:bg-foreground/5 hover:text-foreground'"
+          class="group flex h-11 items-center gap-1.5 rounded-xl px-2.5 text-sm font-medium sm:gap-2 sm:px-3 outline-none transition-[background-color,box-shadow,color] focus-visible:ring-3 focus-visible:ring-ring/50 motion-reduce:transition-none"
+          :class="category === option.value ? 'bg-card text-foreground shadow-sm ring-1 ring-border' : 'text-muted-foreground hover:bg-card/60 hover:text-foreground'"
           @click="category = option.value"
         >
-          {{ option.label }}
-          <span class="text-xs tabular-nums opacity-60">{{ option.count }}</span>
+          <component :is="option.icon" class="size-4 shrink-0" :class="category === option.value ? 'text-primary' : ''" aria-hidden="true" />
+          <span class="min-w-0 flex-1 truncate text-left">{{ option.label }}</span>
+          <span class="hidden rounded-md px-1.5 py-0.5 text-xs tabular-nums sm:inline" :class="category === option.value ? 'bg-primary/10 text-primary' : 'bg-foreground/5'">{{ option.count }}</span>
         </button>
       </div>
     </div>
