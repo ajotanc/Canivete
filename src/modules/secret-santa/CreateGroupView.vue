@@ -129,11 +129,18 @@ function onNext() {
 <template>
   <section class="mx-auto w-full max-w-xl space-y-8">
     <PageHeader filled :icon="Gift" title="Amigo secreto" description="Crie o grupo, cadastre as pessoas e sorteie. Cada uma vê só quem tirou.">
+      <template v-if="user" #actions>
+        <Button variant="ghost" size="sm" @click="onLogout">
+          <LogOut aria-hidden="true" />
+          Sair
+        </Button>
+      </template>
       <FactList>
         <FactTile :icon="ListChecks" label="Grupo">{{ stepTitles.length }} passos</FactTile>
         <FactTile :icon="KeyRound" label="PIN">{{ PIN_LENGTH }} números</FactTile>
         <FactTile :icon="Lock" label="Privacidade" tone="paper">Só você vê</FactTile>
       </FactList>
+      <p v-if="user" class="truncate text-sm text-primary-foreground/90">Conectado como {{ user.email }}</p>
     </PageHeader>
 
     <div v-if="!ready" class="flex items-center gap-2 py-8 text-muted-foreground">
@@ -146,14 +153,6 @@ function onNext() {
     </Card>
 
     <template v-else>
-      <div class="flex items-center justify-between gap-3 text-sm text-muted-foreground">
-        <span class="min-w-0 truncate">Conectado como {{ user.email }}</span>
-        <Button variant="ghost" size="sm" @click="onLogout">
-          <LogOut aria-hidden="true" />
-          Sair
-        </Button>
-      </div>
-
       <div v-if="myGroups.length > 0" class="space-y-3">
         <h2 class="text-lg">Seus amigos secretos</h2>
         <ItemGroup class="gap-2">
