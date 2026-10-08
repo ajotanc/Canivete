@@ -44,7 +44,7 @@ function host(url: string): string {
     </li>
   </ul>
   <div v-else class="flex flex-col items-center gap-2 rounded-xl border border-dashed px-4 py-6 text-center">
-    <span class="flex size-10 items-center justify-center rounded-[calc(var(--radius-xl)-1px)] bg-muted text-muted-foreground" aria-hidden="true"><Gift class="size-5" /></span>
+    <span class="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground" aria-hidden="true"><Gift class="size-5" /></span>
     <p class="font-medium">{{ name ? `${name} ainda não escreveu nada` : 'Ainda não escreveu nada' }}</p>
     <p class="text-sm text-muted-foreground">Dá para mandar uma pergunta anônima aqui embaixo e descobrir o que a pessoa gosta.</p>
   </div>
