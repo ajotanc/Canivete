@@ -155,8 +155,10 @@ async function onSave() {
           </template>
         </MeHeader>
 
-        <div class="grid items-start gap-6 lg:grid-cols-2">
-          <div class="space-y-6">
+        <div class="grid items-start gap-x-6 gap-y-8 lg:grid-cols-2">
+          <div class="space-y-4">
+            <h2 class="text-xl">Quem você tirou</h2>
+            <div class="space-y-6">
             <GiftTag
               :name="result.receiver.name"
               :revealed="revealed"
@@ -178,9 +180,12 @@ async function onSave() {
             </Card>
 
             <QuestionsPanel v-if="credentials" :credentials="{ groupId, ...credentials }" :receiver-name="landed ? result.receiver.name : 'quem você tirou'" />
+            </div>
           </div>
 
-          <div class="space-y-6">
+          <div class="space-y-4">
+            <h2 class="text-xl">Você e o grupo</h2>
+            <div class="space-y-6">
             <Card>
               <CardHeader>
                 <CardHeading :icon="Heart">Minha lista de presentes</CardHeading>
@@ -198,6 +203,7 @@ async function onSave() {
               </CardContent>
             </Card>
             <BoardPanel v-if="credentials" :credentials="{ groupId, ...credentials }" />
+            </div>
           </div>
         </div>
       </template>
