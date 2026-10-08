@@ -133,20 +133,29 @@ async function copy() {
           <Alert v-if="identical" variant="success">
             <AlertDescription>Os dois textos são iguais{{ ignoreCase || ignoreSpaces ? ' com as opções escolhidas' : '' }}.</AlertDescription>
           </Alert>
-          <ol v-if="rows.length" class="overflow-hidden rounded-xl border bg-card text-sm">
-            <li v-for="(row, index) in rows" :key="index" class="grid grid-cols-[2.25rem_2.25rem_1.25rem_1fr] items-baseline gap-x-1 border-b px-2 py-1 last:border-b-0 sm:grid-cols-[3rem_3rem_1.5rem_1fr]" :class="ROW_STYLE[row.type]">
-              <span class="text-right text-xs tabular-nums text-muted-foreground" aria-hidden="true">{{ row.oldNumber ?? '' }}</span>
-              <span class="text-right text-xs tabular-nums text-muted-foreground" aria-hidden="true">{{ row.newNumber ?? '' }}</span>
-              <span class="text-center font-semibold" :class="row.type === 'add' ? 'text-success' : row.type === 'remove' ? 'text-destructive' : 'text-muted-foreground'">
-                <span aria-hidden="true">{{ SIGN[row.type] }}</span>
-                <span class="sr-only">{{ row.type === 'add' ? 'Acrescentada:' : row.type === 'remove' ? 'Removida:' : 'Igual:' }}</span>
-              </span>
-              <span class="min-w-0 whitespace-pre-wrap break-words">
-                <template v-if="row.parts"><span v-for="(part, partIndex) in row.parts" :key="partIndex" :class="part.changed ? MARK_STYLE[row.type] : ''">{{ part.text }}</span></template>
-                <template v-else>{{ row.text || ' ' }}</template>
-              </span>
-            </li>
-          </ol>
+          <div v-if="rows.length" class="overflow-hidden rounded-xl border bg-card text-sm">
+            <!-- Cabeçalho das colunas: de qual texto é cada número -->
+            <div class="grid grid-cols-[2.25rem_2.25rem_1.25rem_1fr] gap-x-1 border-b bg-muted/60 px-2 py-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:grid-cols-[3rem_3rem_1.5rem_1fr] sm:text-xs" aria-hidden="true">
+              <span class="text-right">Orig.</span>
+              <span class="text-right">Novo</span>
+              <span />
+              <span>Texto</span>
+            </div>
+            <ol>
+              <li v-for="(row, index) in rows" :key="index" class="grid grid-cols-[2.25rem_2.25rem_1.25rem_1fr] items-baseline gap-x-1 border-b px-2 py-1 last:border-b-0 sm:grid-cols-[3rem_3rem_1.5rem_1fr]" :class="ROW_STYLE[row.type]">
+                <span class="text-right text-xs tabular-nums" :class="row.type === 'remove' ? 'font-semibold text-destructive' : 'text-muted-foreground'" :aria-label="row.oldNumber ? `Linha ${row.oldNumber} do original` : undefined">{{ row.oldNumber ?? '' }}</span>
+                <span class="text-right text-xs tabular-nums" :class="row.type === 'add' ? 'font-semibold text-success' : 'text-muted-foreground'" :aria-label="row.newNumber ? `Linha ${row.newNumber} do novo` : undefined">{{ row.newNumber ?? '' }}</span>
+                <span class="text-center font-semibold" :class="row.type === 'add' ? 'text-success' : row.type === 'remove' ? 'text-destructive' : 'text-muted-foreground'">
+                  <span aria-hidden="true">{{ SIGN[row.type] }}</span>
+                  <span class="sr-only">{{ row.type === 'add' ? 'Acrescentada:' : row.type === 'remove' ? 'Removida:' : 'Igual:' }}</span>
+                </span>
+                <span class="min-w-0 whitespace-pre-wrap break-words">
+                  <template v-if="row.parts"><span v-for="(part, partIndex) in row.parts" :key="partIndex" :class="part.changed ? MARK_STYLE[row.type] : ''">{{ part.text }}</span></template>
+                  <template v-else>{{ row.text || ' ' }}</template>
+                </span>
+              </li>
+            </ol>
+          </div>
         </template>
         <EmptyState v-else :icon="FileDiff" description="Cole os dois textos para ver as diferenças." />
       </CardContent>
