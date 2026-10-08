@@ -1,14 +1,9 @@
-export { parseDecimal } from '@/lib/number'
+import { formatNumber } from '@/lib/number'
 
-const plain = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 })
-const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+export { formatBrl, formatNumber, parseDecimal } from '@/lib/number'
 
-/** "1.234,5" (até 2 casas, sem zeros sobrando). */
-export const formatNumber = (value: number): string => plain.format(value)
-/** "R$ 1.234,50". */
-export const formatBrl = (value: number): string => money.format(value)
 /** "12,5%". */
-export const formatPercent = (value: number): string => `${plain.format(value)}%`
+export const formatPercent = (value: number): string => `${formatNumber(value)}%`
 
 /** Quanto é `percent`% de `value`. */
 export const percentOf = (percent: number, value: number): number => (value * percent) / 100

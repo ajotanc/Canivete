@@ -41,6 +41,13 @@ npm run build
 | Cronômetro, timer e Pomodoro (aviso sonoro ao fim) | `timer` | não |
 | Conversor de unidades (comprimento, peso, volume, temperatura, área, velocidade, tempo, dados) | `units` | não |
 | Formatador de JSON (valida, formata, compacta, ordena chaves) | `json` | não |
+| Racha-conta (gorjeta, centavos que fecham, texto para o grupo) | `split-bill` | não |
+| Gasolina ou etanol (regra dos 70% ou consumo do carro, custo da viagem) | `fuel` | não |
+| Valor por extenso (reais e números, até 999 bilhões) | `amount-words` | não |
+| UUID e hash (v4, v7, SHA-1/256/384/512 e HMAC) | `hash` | não |
+| Lorem ipsum (parágrafos, frases ou palavras; latim ou português; HTML) | `lorem` | não |
+| Comprimir imagem (reduz peso e largura; JPEG, WebP, PNG) | `image` | não |
+| Cara ou coroa e dados (D4 a D100) | `coin-dice` | não |
 
 A consulta de CEP é a única que chama um serviço externo (`viacep.com.br`, direto do navegador); as outras rodam só no aparelho.
 

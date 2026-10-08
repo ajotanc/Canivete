@@ -12,3 +12,11 @@ export function parseDecimal(text: string): number | null {
   const value = Number(normalized)
   return Number.isFinite(value) ? value : null
 }
+
+const plain = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 })
+const money = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+
+/** "1.234,5" (até 2 casas, sem zeros sobrando). */
+export const formatNumber = (value: number): string => plain.format(value)
+/** "R$ 1.234,50". */
+export const formatBrl = (value: number): string => money.format(value)

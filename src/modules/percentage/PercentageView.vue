@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { parseMoney } from '@/lib/money'
 import { applyDiscount, applyIncrease, compoundInterest, formatBrl, formatNumber, formatPercent, parseDecimal, percentChange, percentOf, simpleInterest, whatPercent } from './lib/percentage'
 
 const tab = ref('percent')
@@ -42,7 +43,7 @@ const whatTotal = computed(() => {
 const price = ref('')
 const rate = ref('')
 const discount = computed(() => {
-  const value = parseDecimal(price.value)
+  const value = parseMoney(price.value)
   const percent = parseDecimal(rate.value)
   if (value === null || percent === null) return null
   return { off: applyDiscount(value, percent), on: applyIncrease(value, percent) }
@@ -64,7 +65,7 @@ const principal = ref('')
 const interestRate = ref('')
 const periods = ref('')
 const interest = computed(() => {
-  const value = parseDecimal(principal.value)
+  const value = parseMoney(principal.value)
   const percent = parseDecimal(interestRate.value)
   const count = parseDecimal(periods.value)
   if (value === null || percent === null || count === null || count < 0 || count > 1200) return null
@@ -125,7 +126,7 @@ const interest = computed(() => {
 
           <TabsContent value="discount" class="mt-5 space-y-5">
             <div class="grid gap-3 sm:grid-cols-2">
-              <Field><FieldLabel for="price">Preço</FieldLabel><Input id="price" v-model="price" inputmode="decimal" autocomplete="off" placeholder="R$ 80,00" class="tabular-nums" /></Field>
+              <Field><FieldLabel for="price">Preço</FieldLabel><Input id="price" v-model="price" v-money placeholder="R$ 80,00" inputmode="numeric" autocomplete="off" class="tabular-nums" /></Field>
               <Field><FieldLabel for="rate">Porcentagem</FieldLabel><Input id="rate" v-model="rate" inputmode="decimal" autocomplete="off" placeholder="25" class="tabular-nums" /></Field>
             </div>
             <div v-if="discount" role="status" class="grid gap-3 sm:grid-cols-2">
@@ -157,7 +158,7 @@ const interest = computed(() => {
 
           <TabsContent value="interest" class="mt-5 space-y-5">
             <div class="grid gap-3 sm:grid-cols-3">
-              <Field><FieldLabel for="principal">Valor inicial</FieldLabel><Input id="principal" v-model="principal" inputmode="decimal" autocomplete="off" placeholder="R$ 1.000,00" class="tabular-nums" /></Field>
+              <Field><FieldLabel for="principal">Valor inicial</FieldLabel><Input id="principal" v-model="principal" v-money placeholder="R$ 1.000,00" inputmode="numeric" autocomplete="off" class="tabular-nums" /></Field>
               <Field><FieldLabel for="interest-rate">Taxa por período (%)</FieldLabel><Input id="interest-rate" v-model="interestRate" inputmode="decimal" autocomplete="off" placeholder="2" class="tabular-nums" /></Field>
               <Field><FieldLabel for="periods">Períodos (meses)</FieldLabel><Input id="periods" v-model="periods" inputmode="decimal" autocomplete="off" placeholder="12" class="tabular-nums" /></Field>
             </div>
