@@ -24,21 +24,21 @@ function host(url: string): string {
         :href="item.url"
         :target="item.url ? '_blank' : undefined"
         :rel="item.url ? 'noopener noreferrer nofollow' : undefined"
-        class="group flex min-h-14 items-center gap-3 rounded-xl border bg-card p-2 outline-none"
-        :class="item.url && 'transition-colors hover:border-primary/50 focus-visible:ring-3 focus-visible:ring-ring/60 motion-reduce:transition-none'"
+        class="group flex min-h-14 items-center gap-3 rounded-xl border p-2 outline-none"
+        :class="item.url ? 'border-primary/30 bg-primary/10 transition-colors hover:border-primary/60 hover:bg-primary/15 focus-visible:ring-3 focus-visible:ring-ring/60 motion-reduce:transition-none' : 'bg-card'"
       >
         <span
           class="flex size-10 shrink-0 items-center justify-center rounded-[calc(var(--radius-xl)-9px)]"
-          :class="item.url ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'"
+          :class="item.url ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'"
           aria-hidden="true"
         >
           <Gift class="size-5" />
         </span>
         <span class="min-w-0 flex-1">
           <span class="block break-words font-semibold">{{ item.text }}</span>
-          <span v-if="item.url && host(item.url)" class="block truncate text-sm text-primary">{{ host(item.url) }}</span>
+          <span v-if="item.url && host(item.url)" class="block truncate text-sm text-muted-foreground">{{ host(item.url) }}</span>
         </span>
-        <ExternalLink v-if="item.url" class="mr-2 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary group-focus-visible:text-primary motion-reduce:transition-none" aria-hidden="true" />
+        <ExternalLink v-if="item.url" class="mr-2 size-4 shrink-0 text-primary" aria-hidden="true" />
         <span v-if="item.url" class="sr-only">(abre o produto em outra aba)</span>
       </component>
     </li>
