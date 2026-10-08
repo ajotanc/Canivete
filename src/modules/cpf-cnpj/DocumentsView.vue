@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Check, Copy, IdCard, RefreshCw, ShieldCheck, Sparkles, Zap } from '@lucide/vue'
+import { Check, CircleCheck, CircleX, Copy, IdCard, RefreshCw, ScanSearch, ShieldCheck, Sparkles, Zap } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import CopyField from '@/components/CopyField.vue'
@@ -9,12 +9,22 @@ import PageHeader from '@/components/PageHeader.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
 import { COPIED_FEEDBACK_MS, DOCUMENT_TYPES, QUANTITIES } from './constants'
 import { useDocumentGenerator } from './composables/useDocumentGenerator'
+import { checkDocument } from './lib/document'
 
 const { type, quantity, formatted, items, generate } = useDocumentGenerator()
+
+/** Validador: CPF (11) ou CNPJ (14, inclusive alfanumérico); a máscara troca sozinha pelo tamanho. */
+const toCheck = ref('')
+const check = computed(() => checkDocument(toCheck.value))
+const MASK = {
+  mask: ['###.###.###-##', 'NN.NNN.NNN/NNNN-##'],
+  tokens: { N: { pattern: /[0-9A-Za-z]/, transform: (char: string) => char.toUpperCase() } },
+}
 
 const selected = computed(() => DOCUMENT_TYPES.find((option) => option.value === type.value))
 const typeLabel = computed(() => selected.value?.label ?? '')
@@ -133,5 +143,24 @@ onBeforeUnmount(() => clearTimeout(copiedTimer))
         </CardContent>
       </Card>
     </div>
+
+    <Card>
+      <CardHeader>
+        <CardTitle class="text-lg">Validar um número</CardTitle>
+        <CardDescription>Digite ou cole um CPF ou CNPJ, com ou sem pontuação, e veja se os dígitos verificadores conferem.</CardDescription>
+      </CardHeader>
+      <CardContent class="space-y-3">
+        <Field :data-invalid="toCheck && check.kind && !check.valid ? true : undefined">
+          <FieldLabel for="to-check">CPF ou CNPJ</FieldLabel>
+          <Input id="to-check" v-model="toCheck" v-maska="MASK" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="000.000.000-00" class="tabular-nums" :aria-invalid="toCheck && check.kind && !check.valid ? true : undefined" />
+        </Field>
+        <p v-if="check.message" role="status" class="flex items-start gap-2 text-sm" :class="check.valid ? 'font-medium text-success' : check.kind ? 'font-medium text-destructive' : 'text-muted-foreground'">
+          <CircleCheck v-if="check.valid" class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <CircleX v-else-if="check.kind" class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          <ScanSearch v-else class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+          {{ check.message }}
+        </p>
+      </CardContent>
+    </Card>
   </section>
 </template>

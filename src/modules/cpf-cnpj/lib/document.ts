@@ -101,3 +101,37 @@ export function isValidCnpj(value: string): boolean {
   if (!/^[0-9A-Z]{12}\d{2}$/.test(chars) || isRepeated(chars)) return false
   return withCnpjCheckDigits(chars.slice(0, 12)) === chars
 }
+
+export interface DocumentCheck {
+  /** O que foi reconhecido pelo tamanho: CPF (11), CNPJ (14) ou nada ainda. */
+  kind: 'cpf' | 'cnpj' | null
+  valid: boolean
+  /** Mensagem curta para a pessoa, em português. Vazia quando não há nada digitado. */
+  message: string
+}
+
+/**
+ * Descobre se o texto digitado é um CPF ou CNPJ e se passa na conta dos dígitos verificadores.
+ * Aceita pontuação e letras minúsculas; o tipo vem do tamanho (11 = CPF, 14 = CNPJ).
+ */
+export function checkDocument(input: string): DocumentCheck {
+  const chars = input.replace(/[.\/\-\s]/g, '').toUpperCase()
+  if (!chars) return { kind: null, valid: false, message: '' }
+  if (/[^0-9A-Z]/.test(chars)) return { kind: null, valid: false, message: 'Use só números e letras, com ou sem pontuação.' }
+  if (chars.length === 11) {
+    if (!/^\d+$/.test(chars)) return { kind: 'cpf', valid: false, message: 'CPF só tem números.' }
+    return isValidCpf(chars)
+      ? { kind: 'cpf', valid: true, message: 'CPF válido: os dígitos verificadores conferem.' }
+      : { kind: 'cpf', valid: false, message: isRepeated(chars) ? 'CPF inválido: todos os dígitos são iguais.' : 'CPF inválido: os dígitos verificadores não conferem.' }
+  }
+  if (chars.length === 14) {
+    return isValidCnpj(chars)
+      ? { kind: 'cnpj', valid: true, message: /[A-Z]/.test(chars.slice(0, 12)) ? 'CNPJ alfanumérico válido: os dígitos verificadores conferem.' : 'CNPJ válido: os dígitos verificadores conferem.' }
+      : { kind: 'cnpj', valid: false, message: 'CNPJ inválido: os dígitos verificadores não conferem.' }
+  }
+  return {
+    kind: null,
+    valid: false,
+    message: chars.length < 11 ? `Faltam ${11 - chars.length} para um CPF (11) ou ${14 - chars.length} para um CNPJ (14).` : chars.length < 14 ? `Faltam ${14 - chars.length} para um CNPJ (14).` : 'Tem caracteres demais: CPF tem 11 e CNPJ tem 14.',
+  }
+}

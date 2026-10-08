@@ -62,11 +62,12 @@ function clearFilters() {
         variant="outline"
         :model-value="category"
         aria-label="Filtrar por categoria"
-        class="w-full justify-start overflow-x-auto bg-card sm:w-auto"
+        :spacing="2"
+        class="w-full flex-wrap justify-start sm:w-auto"
         @update:model-value="onCategory"
       >
-        <ToggleGroupItem value="all" class="shrink-0 px-4">Todas</ToggleGroupItem>
-        <ToggleGroupItem v-for="item in categories" :key="item" :value="item" class="shrink-0 px-4">{{ item }}</ToggleGroupItem>
+        <ToggleGroupItem value="all" class="bg-card px-4 data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">Todas</ToggleGroupItem>
+        <ToggleGroupItem v-for="item in categories" :key="item" :value="item" class="bg-card px-4 data-[state=on]:border-primary data-[state=on]:bg-primary data-[state=on]:text-primary-foreground">{{ item }}</ToggleGroupItem>
       </ToggleGroup>
     </div>
 

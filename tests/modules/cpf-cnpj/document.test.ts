@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   formatCnpj,
   formatCpf,
+  checkDocument,
   formatDocument,
   generateAlphanumericCnpj,
   generateCnpj,
@@ -123,5 +124,27 @@ describe('formatação', () => {
     expect(formatDocument('cpf', '52998224725')).toBe('529.982.247-25')
     expect(formatDocument('cnpj', '11222333000181')).toBe('11.222.333/0001-81')
     expect(formatDocument('cnpj-alfa', '12ABC34501DE35')).toBe('12.ABC.345/01DE-35')
+  })
+})
+
+describe('checkDocument', () => {
+  it('reconhece CPF válido e inválido', () => {
+    expect(checkDocument('529.982.247-25')).toMatchObject({ kind: 'cpf', valid: true })
+    expect(checkDocument('52998224726')).toMatchObject({ kind: 'cpf', valid: false })
+    expect(checkDocument('111.111.111-11').message).toContain('iguais')
+  })
+
+  it('reconhece CNPJ numérico e alfanumérico, em qualquer caixa', () => {
+    expect(checkDocument('12.ABC.345/01DE-35')).toMatchObject({ kind: 'cnpj', valid: true })
+    expect(checkDocument('12.abc.345/01de-35')).toMatchObject({ kind: 'cnpj', valid: true })
+    expect(checkDocument('12.ABC.345/01DE-36')).toMatchObject({ kind: 'cnpj', valid: false })
+  })
+
+  it('orienta quando falta ou sobra caractere e ignora campo vazio', () => {
+    expect(checkDocument('')).toEqual({ kind: null, valid: false, message: '' })
+    expect(checkDocument('1234').message).toContain('Faltam')
+    expect(checkDocument('123456789012').message).toContain('Faltam 2')
+    expect(checkDocument('123456789012345').message).toContain('demais')
+    expect(checkDocument('12@34').kind).toBeNull()
   })
 })
