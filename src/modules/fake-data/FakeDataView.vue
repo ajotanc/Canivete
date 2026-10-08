@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Braces, Copy, RefreshCw, ShieldCheck, UsersRound, Zap } from '@lucide/vue'
+import { Braces, RefreshCw, ShieldCheck, UsersRound, Zap } from '@lucide/vue'
 import { ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
+import CopyRows from '@/components/CopyRows.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
@@ -88,17 +89,7 @@ async function copy(text: string, message: string) {
             </CardAction>
           </CardHeader>
           <CardContent>
-            <dl class="grid gap-x-6 gap-y-1 sm:grid-cols-2">
-              <div v-for="field in FIELD_LABELS" :key="field.key" class="flex items-center justify-between gap-2 border-b py-1.5 last:border-b-0 sm:[&:nth-last-child(2):nth-child(odd)]:border-b-0">
-                <div class="min-w-0">
-                  <dt class="text-xs text-muted-foreground">{{ field.label }}</dt>
-                  <dd class="truncate font-medium tabular-nums">{{ person[field.key] }}</dd>
-                </div>
-                <Button variant="ghost" size="icon-sm" :aria-label="`Copiar ${field.label.toLowerCase()}`" @click="copy(person[field.key], `${field.label} copiado.`)">
-                  <Copy aria-hidden="true" />
-                </Button>
-              </div>
-            </dl>
+            <CopyRows :rows="FIELD_LABELS.map((field) => ({ label: field.label, value: person[field.key] }))" />
           </CardContent>
         </Card>
       </div>

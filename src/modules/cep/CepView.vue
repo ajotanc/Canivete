@@ -2,6 +2,7 @@
 import { MapPin, MapPinOff, Search, Zap, Navigation, Globe } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import CopyField from '@/components/CopyField.vue'
+import CopyRows from '@/components/CopyRows.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
@@ -135,12 +136,7 @@ const fields = (address: Address) =>
               <CardDescription>{{ address.neighborhood ? `${address.neighborhood}, ` : '' }}{{ address.city }} - {{ address.state }}</CardDescription>
             </CardHeader>
             <CardContent class="space-y-4">
-              <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2">
-                <div v-for="field in fields(address)" :key="field.label">
-                  <dt class="text-xs text-muted-foreground">{{ field.label }}</dt>
-                  <dd class="font-medium tabular-nums">{{ field.value }}</dd>
-                </div>
-              </dl>
+              <CopyRows :rows="fields(address)" />
               <CopyField :value="addressLine(address)" label="Endereço" message="Endereço copiado." />
             </CardContent>
           </Card>
