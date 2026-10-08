@@ -2,6 +2,8 @@
 import { Heart, LockKeyhole } from '@lucide/vue'
 // Miniatura do amigo secreto: a carta confidencial. Ao passar o mouse (ou focar o card), o lacre de coração
 // desliza pelo trilho, como no produto, e o nome do par aparece no lugar do aviso.
+// O rastro atrás do lacre tem a largura do lacre em repouso, então a ponta dele acompanha o círculo na ida e na volta.
+// O atraso do nome só vale na entrada; na saída os dois textos trocam juntos, sem se sobrepor.
 </script>
 
 <template>
@@ -17,7 +19,7 @@ import { Heart, LockKeyhole } from '@lucide/vue'
       <p class="absolute inset-0 flex items-center text-xs leading-tight text-muted-foreground transition-opacity duration-300 group-hover:opacity-0 group-focus-visible:opacity-0 motion-reduce:transition-none">
         Para abrir quando estiver pronto
       </p>
-      <p class="absolute inset-0 flex flex-col justify-center opacity-0 transition-opacity delay-300 duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 motion-reduce:transition-none">
+      <p class="absolute inset-0 flex flex-col justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:delay-300 group-focus-visible:opacity-100 group-focus-visible:delay-300 motion-reduce:transition-none">
         <span class="text-xs leading-tight text-muted-foreground">Você vai presentear</span>
         <span class="text-sm font-semibold leading-tight">Ana Beatriz</span>
       </p>
@@ -25,7 +27,7 @@ import { Heart, LockKeyhole } from '@lucide/vue'
 
     <div class="relative mt-2 h-8 rounded-full bg-tool/15 p-1">
       <span
-        class="absolute inset-y-1 left-1 w-0 rounded-full bg-tool/30 transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:w-[calc(100%-0.5rem)] group-focus-visible:w-[calc(100%-0.5rem)] motion-reduce:transition-none"
+        class="absolute inset-y-1 left-1 w-6 rounded-full bg-tool/30 transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:w-[calc(100%-0.5rem)] group-focus-visible:w-[calc(100%-0.5rem)] motion-reduce:transition-none"
       />
       <span
         class="relative flex size-6 items-center justify-center rounded-full bg-tool text-tool-foreground shadow-sm transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-[7.5rem] group-focus-visible:translate-x-[7.5rem] motion-reduce:transition-none"
