@@ -13,8 +13,6 @@ const LIFT_PX = 100
 /** Espessura da moeda em px: as faces ficam a metade para cada lado do centro. */
 const THICKNESS = 12
 const RIM_LAYERS = 11
-/** Inclinação da moeda parada, para a borda aparecer e ela parecer um objeto, não uma figura. */
-const TILT = 26
 /** Eixo do giro no ar, inclinado para a moeda rolar de lado também, e não só virar de ponta a ponta. */
 const AXIS = '1, 0.35, 0.15'
 const TURNS = 5
@@ -36,8 +34,8 @@ const resting = ref<CoinSide>('heads')
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
 const flipOf = (side: CoinSide): number => (side === 'heads' ? 0 : 180)
-/** `transform` da moeda: inclinação, voltas em volta do eixo e a virada que escolhe o lado. As duas pontas da animação têm a mesma lista de funções. */
-const orientation = (degrees: number, side: CoinSide): string => `rotateX(${TILT}deg) rotate3d(${AXIS}, ${degrees}deg) rotateX(${flipOf(side)}deg)`
+/** `transform` da moeda: voltas em volta do eixo e a virada que escolhe o lado. Parada, ela fica de frente, um círculo perfeito. As duas pontas da animação têm a mesma lista de funções. */
+const orientation = (degrees: number, side: CoinSide): string => `rotate3d(${AXIS}, ${degrees}deg) rotateX(${flipOf(side)}deg)`
 
 async function toss(side: CoinSide): Promise<void> {
   const from = resting.value
