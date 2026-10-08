@@ -24,7 +24,7 @@ function host(url: string): string {
         :href="item.url"
         :target="item.url ? '_blank' : undefined"
         :rel="item.url ? 'noopener noreferrer nofollow' : undefined"
-        class="flex min-h-14 items-center gap-3 rounded-xl border bg-card p-2 outline-none"
+        class="group flex min-h-14 items-center gap-3 rounded-xl border bg-card p-2 outline-none"
         :class="item.url && 'transition-colors hover:border-primary/50 focus-visible:ring-3 focus-visible:ring-ring/60 motion-reduce:transition-none'"
       >
         <span
@@ -38,13 +38,8 @@ function host(url: string): string {
           <span class="block break-words font-medium">{{ item.text }}</span>
           <span v-if="item.url && host(item.url)" class="block truncate text-sm text-muted-foreground">{{ host(item.url) }}</span>
         </span>
-        <span
-          v-if="item.url"
-          class="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-[calc(var(--radius-xl)-9px)] border border-primary/40 px-3 text-sm font-semibold text-primary"
-        >
-          Ver<span class="sr-only"> produto</span>
-          <ExternalLink class="size-4" aria-hidden="true" />
-        </span>
+        <ExternalLink v-if="item.url" class="mr-2 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary group-focus-visible:text-primary motion-reduce:transition-none" aria-hidden="true" />
+        <span v-if="item.url" class="sr-only">(abre o produto em outra aba)</span>
       </component>
     </li>
   </ul>
