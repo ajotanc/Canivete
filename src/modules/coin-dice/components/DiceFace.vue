@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { CUBE_FACES, cubeOrientation, dieShape, pipCells, spinTo, toPoints } from '../lib/shapes'
 
 /**
@@ -31,24 +31,32 @@ function hop(): void {
   )
 }
 
-watch(
-  () => props.rollKey,
-  () => {
-    if (isCube.value) {
-      const base = cubeOrientation(props.value)
-      const from = rotation.value
-      const to = { x: spinTo(from.x, base.x), y: spinTo(from.y, base.y) }
-      rotation.value = to
-      if (!reducedMotion() && body.value) {
-        body.value.animate([{ transform: `rotateX(${from.x}deg) rotateY(${from.y}deg)` }, { transform: `rotateX(${to.x}deg) rotateY(${to.y}deg)` }], { duration: ROLL_MS, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' })
-      }
-    } else if (!reducedMotion() && body.value) {
-      body.value.animate([{ transform: 'rotate(0deg) scale(1)' }, { transform: 'rotate(380deg) scale(1.15)', offset: 0.5 }, { transform: 'rotate(720deg) scale(1)' }], { duration: ROLL_MS, easing: 'ease-in-out' })
+/**
+ * Toca a animação da jogada. O cubo gira de `from` até a orientação da face sorteada; os poliedros giram no lugar.
+ * Sem `from`, o cubo parte do giro em que está.
+ */
+function play(from?: { x: number; y: number }): void {
+  if (isCube.value) {
+    const base = cubeOrientation(props.value)
+    const start = from ?? rotation.value
+    const to = { x: spinTo(start.x, base.x), y: spinTo(start.y, base.y) }
+    rotation.value = to
+    if (!reducedMotion() && body.value) {
+      body.value.animate([{ transform: `rotateX(${start.x}deg) rotateY(${start.y}deg)` }, { transform: `rotateX(${to.x}deg) rotateY(${to.y}deg)` }], { duration: ROLL_MS, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' })
     }
-    hop()
-  },
-  { flush: 'post' },
-)
+  } else if (!reducedMotion() && body.value) {
+    body.value.animate([{ transform: 'rotate(0deg) scale(1)' }, { transform: 'rotate(380deg) scale(1.15)', offset: 0.5 }, { transform: 'rotate(720deg) scale(1)' }], { duration: ROLL_MS, easing: 'ease-in-out' })
+  }
+  hop()
+}
+
+// Dados que já estavam na tela giram quando a jogada muda.
+watch(() => props.rollKey, () => play(), { flush: 'post' })
+
+// Dados que aparecem junto com a jogada (a primeira, ou quando a quantidade cresce) não têm mudança para observar: giram ao montar.
+onMounted(() => {
+  if (props.rolling) play({ x: rotation.value.x - 720, y: rotation.value.y - 720 })
+})
 
 // Poliedros: números aleatórios enquanto rola.
 const shown = ref(props.value)
