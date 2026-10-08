@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CUBE_FACES, cubeOrientation, dieShape, pipCells, regularPolygon, spinTo, toPoints } from '@/modules/coin-dice/lib/shapes'
+import { CUBE_FACES, cubeOrientation, pipCells, spinTo } from '@/modules/coin-dice/lib/shapes'
 
 describe('pipCells', () => {
   it('cada face tem tantos pontos quanto o valor', () => {
@@ -59,55 +59,5 @@ describe('spinTo', () => {
         expect(next - current).toBeLessThan(720 + 360)
       }
     }
-  })
-})
-
-describe('polígonos', () => {
-  it('um triângulo tem 3 vértices a uma distância igual do centro', () => {
-    const points = regularPolygon(3, 48)
-    expect(points).toHaveLength(3)
-    expect(points[0]).toEqual([50, 2])
-    for (const [x, y] of points) expect(Math.hypot(x - 50, y - 50)).toBeCloseTo(48, 1)
-  })
-
-  it('escreve os pontos para o SVG', () => {
-    expect(toPoints([[1, 2], [3, 4]])).toBe('1,2 3,4')
-  })
-})
-
-describe('dieShape', () => {
-  it('tem a silhueta certa de cada dado', () => {
-    expect(dieShape(4).outline).toHaveLength(3)
-    expect(dieShape(8).outline).toHaveLength(4)
-    expect(dieShape(10).outline).toHaveLength(4)
-    expect(dieShape(12).outline).toHaveLength(5)
-    expect(dieShape(20).outline).toHaveLength(6)
-    expect(dieShape(100).outline).toEqual(dieShape(10).outline)
-  })
-
-  it('todo dado tem arestas por dentro e tudo cabe na caixa 100×100', () => {
-    for (const sides of [4, 8, 10, 12, 20, 100]) {
-      const shape = dieShape(sides)
-      expect(shape.edges.length).toBeGreaterThan(0)
-      for (const [x1, y1, x2, y2] of shape.edges) for (const value of [x1, y1, x2, y2]) {
-        expect(value).toBeGreaterThanOrEqual(0)
-        expect(value).toBeLessThanOrEqual(100)
-      }
-      for (const [x, y] of shape.outline) {
-        expect(x).toBeGreaterThanOrEqual(0)
-        expect(x).toBeLessThanOrEqual(100)
-        expect(y).toBeGreaterThanOrEqual(0)
-        expect(y).toBeLessThanOrEqual(100)
-      }
-    }
-  })
-
-  it('o d20 liga cada vértice de dentro a 3 de fora', () => {
-    // 3 arestas do triângulo de dentro + 3 vértices × 3 ligações.
-    expect(dieShape(20).edges).toHaveLength(12)
-  })
-
-  it('o d12 tem 5 arestas internas + 10 ligações', () => {
-    expect(dieShape(12).edges).toHaveLength(15)
   })
 })

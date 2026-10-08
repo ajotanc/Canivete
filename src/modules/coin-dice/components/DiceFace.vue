@@ -1,19 +1,24 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { CUBE_FACES, cubeOrientation, dieShape, pipCells, spinTo, toPoints } from '../lib/shapes'
+import { computed, onMounted, ref, watch } from 'vue'
+import { CUBE_FACES, cubeOrientation, pipCells, spinTo } from '../lib/shapes'
+import type { PolyKind } from '../lib/polyhedra'
+import DicePolyhedron from './DicePolyhedron.vue'
 
 /**
- * Um dado na tela. O d6 é um cubo de verdade, com pontos, que gira até a face sorteada ficar de frente.
- * Os outros (d4, d8, d10, d12, d20 e d100) são desenhados como poliedros e giram no lugar, mostrando números aleatórios até parar.
- * `rollKey` muda a cada jogada; é ele que dispara a animação.
+ * Um dado na tela, sempre em 3D. O d6 é um cubo com pontos; os outros são poliedros de faces planas (d4, d8, d10, d12, d20).
+ * O d100 é um par de d10, como o dado de porcentagem de verdade: dezenas (00 a 90) e unidades (0 a 9).
+ * Ao rolar, o dado pula e gira até a face sorteada ficar de frente. `rollKey` muda a cada jogada.
  */
 const props = defineProps<{ sides: number; value: number; rollKey: number; rolling: boolean }>()
 
 const ROLL_MS = 900
 /** Metade da aresta do cubo (px): as faces ficam a essa distância do centro. */
-const HALF = 48
+const HALF = 56
+const RADIUS = 52
+const RADIUS_PAIR = 42
 
 const isCube = computed(() => props.sides === 6)
+const isPair = computed(() => props.sides === 100)
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
 const lift = ref<HTMLElement>()
@@ -26,80 +31,79 @@ const rotation = ref(cubeOrientation(props.value))
 function hop(): void {
   if (!lift.value || reducedMotion()) return
   lift.value.animate(
-    [{ transform: 'translateY(0)', easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' }, { transform: 'translateY(-28px)', offset: 0.4, easing: 'cubic-bezier(0.6, 0, 0.8, 0.4)' }, { transform: 'translateY(0)' }],
+    [{ transform: 'translateY(0)', easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' }, { transform: 'translateY(-32px)', offset: 0.4, easing: 'cubic-bezier(0.6, 0, 0.8, 0.4)' }, { transform: 'translateY(0)' }],
     { duration: ROLL_MS },
   )
 }
 
-/**
- * Toca a animação da jogada. O cubo gira de `from` até a orientação da face sorteada; os poliedros giram no lugar.
- * Sem `from`, o cubo parte do giro em que está.
- */
-function play(from?: { x: number; y: number }): void {
-  if (isCube.value) {
-    const base = cubeOrientation(props.value)
-    const start = from ?? rotation.value
-    const to = { x: spinTo(start.x, base.x), y: spinTo(start.y, base.y) }
-    rotation.value = to
-    if (!reducedMotion() && body.value) {
-      body.value.animate([{ transform: `rotateX(${start.x}deg) rotateY(${start.y}deg)` }, { transform: `rotateX(${to.x}deg) rotateY(${to.y}deg)` }], { duration: ROLL_MS, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' })
-    }
-  } else if (!reducedMotion() && body.value) {
-    body.value.animate([{ transform: 'rotate(0deg) scale(1)' }, { transform: 'rotate(380deg) scale(1.15)', offset: 0.5 }, { transform: 'rotate(720deg) scale(1)' }], { duration: ROLL_MS, easing: 'ease-in-out' })
+/** Gira o cubo de `from` até a orientação da face sorteada. Sem `from`, parte do giro em que está. */
+function spinCube(from?: { x: number; y: number }): void {
+  const base = cubeOrientation(props.value)
+  const start = from ?? rotation.value
+  const to = { x: spinTo(start.x, base.x), y: spinTo(start.y, base.y) }
+  rotation.value = to
+  if (!reducedMotion() && body.value) {
+    body.value.animate([{ transform: `rotateX(${start.x}deg) rotateY(${start.y}deg)` }, { transform: `rotateX(${to.x}deg) rotateY(${to.y}deg)` }], { duration: ROLL_MS, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' })
   }
-  hop()
 }
 
-// Dados que já estavam na tela giram quando a jogada muda.
-watch(() => props.rollKey, () => play(), { flush: 'post' })
+// Dados que já estavam na tela giram quando a jogada muda; os poliedros cuidam do próprio giro.
+watch(
+  () => props.rollKey,
+  () => {
+    if (isCube.value) spinCube()
+    hop()
+  },
+  { flush: 'post' },
+)
 
 // Dados que aparecem junto com a jogada (a primeira, ou quando a quantidade cresce) não têm mudança para observar: giram ao montar.
 onMounted(() => {
-  if (props.rolling) play({ x: rotation.value.x - 720, y: rotation.value.y - 720 })
+  if (!props.rolling) return
+  if (isCube.value) spinCube({ x: rotation.value.x - 720, y: rotation.value.y - 720 })
+  hop()
 })
 
-// Poliedros: números aleatórios enquanto rola.
-const shown = ref(props.value)
-let timer: ReturnType<typeof setInterval> | undefined
-watch(
-  () => props.rolling,
-  (rolling) => {
-    clearInterval(timer)
-    if (rolling && !isCube.value) timer = setInterval(() => (shown.value = 1 + Math.floor(Math.random() * props.sides)), 70)
-    else shown.value = props.value
-  },
-  { immediate: true },
-)
-watch(() => props.value, (value) => !props.rolling && (shown.value = value))
-onBeforeUnmount(() => clearInterval(timer))
+const range = (length: number, label: (index: number) => string) => Array.from({ length }, (_, index) => label(index))
+const LABELS: Record<PolyKind, string[]> = {
+  d4: range(4, (index) => String(index + 1)),
+  d8: range(8, (index) => String(index + 1)),
+  d10: range(10, (index) => String(index + 1)),
+  d12: range(12, (index) => String(index + 1)),
+  d20: range(20, (index) => String(index + 1)),
+}
+const TENS = range(10, (index) => String(index * 10).padStart(2, '0'))
+const ONES = range(10, (index) => String(index))
 
-const shape = computed(() => dieShape(props.sides))
-/** Tamanho do número: com mais algarismos a letra diminui, para sempre caber dentro do poliedro. */
-const fontSize = computed(() => (shown.value >= 100 ? 22 : shown.value >= 10 ? 27 : 34))
-const label = computed(() => (props.sides === 100 ? 'd%' : `d${props.sides}`))
+const kind = computed<PolyKind>(() => (isPair.value ? 'd10' : (`d${props.sides}` as PolyKind)))
+/** Face de cada dado: o d100 usa dezenas e unidades (100 é 00 e 0). */
+const faceIndex = computed(() => props.value - 1)
+const tensIndex = computed(() => Math.floor((props.value % 100) / 10))
+const onesIndex = computed(() => props.value % 10)
+const label = computed(() => (isPair.value ? 'd%' : `d${props.sides}`))
 </script>
 
 <template>
-  <div ref="lift" class="size-24 [perspective:700px]" role="img" :aria-label="`Dado ${label}: ${value}`">
+  <div ref="lift" :class="isCube ? 'size-28 [perspective:800px]' : ''" role="img" :aria-label="`Dado ${label}: ${value}`">
     <!-- d6: cubo -->
     <div v-if="isCube" ref="body" class="relative size-full [transform-style:preserve-3d]" :style="{ transform: `rotateX(${rotation.x}deg) rotateY(${rotation.y}deg)` }">
       <div
         v-for="face in CUBE_FACES"
         :key="face.value"
-        class="absolute inset-0 grid grid-cols-3 grid-rows-3 rounded-xl border border-foreground/15 bg-card p-3 shadow-inner [backface-visibility:hidden]"
+        class="absolute inset-0 grid grid-cols-3 grid-rows-3 rounded-xl border border-foreground/15 bg-card p-3.5 shadow-inner [backface-visibility:hidden]"
         :style="{ transform: `${face.place} translateZ(${HALF}px)` }"
       >
-        <span v-for="cell in 9" :key="cell" class="m-auto size-3.5 rounded-full" :class="pipCells(face.value).includes(cell) ? 'bg-foreground' : ''" />
+        <span v-for="cell in 9" :key="cell" class="m-auto size-4 rounded-full" :class="pipCells(face.value).includes(cell) ? 'bg-foreground' : ''" />
       </div>
     </div>
 
-    <!-- Outros dados: poliedro desenhado -->
-    <div v-else ref="body" class="relative size-full">
-      <svg viewBox="0 0 100 100" class="size-full overflow-visible drop-shadow-sm" aria-hidden="true">
-        <polygon :points="toPoints(shape.outline)" class="fill-primary/15 stroke-primary" stroke-width="3" stroke-linejoin="round" />
-        <line v-for="(edge, index) in shape.edges" :key="index" :x1="edge[0]" :y1="edge[1]" :x2="edge[2]" :y2="edge[3]" class="stroke-primary/50" stroke-width="1.5" stroke-linecap="round" />
-        <text x="50" :y="shape.labelY" text-anchor="middle" dominant-baseline="central" :font-size="fontSize" font-weight="700" stroke-width="4" stroke-linejoin="round" class="fill-foreground stroke-card tabular-nums [paint-order:stroke]">{{ shown }}</text>
-      </svg>
+    <!-- d100: dois d10, dezenas e unidades -->
+    <div v-else-if="isPair" class="flex items-end gap-2">
+      <DicePolyhedron kind="d10" :labels="TENS" :face="tensIndex" :roll-key="rollKey" :rolling="rolling" :radius="RADIUS_PAIR" />
+      <DicePolyhedron kind="d10" :labels="ONES" :face="onesIndex" :roll-key="rollKey" :rolling="rolling" :radius="RADIUS_PAIR" />
     </div>
+
+    <!-- d4, d8, d10, d12, d20 -->
+    <DicePolyhedron v-else :kind="kind" :labels="LABELS[kind]" :face="faceIndex" :roll-key="rollKey" :rolling="rolling" :radius="RADIUS" />
   </div>
 </template>

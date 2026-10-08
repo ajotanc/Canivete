@@ -12,6 +12,8 @@ const LIFT_PX = 100
 /** Espessura da moeda em px: as faces ficam a metade para cada lado do centro. */
 const THICKNESS = 12
 const RIM_LAYERS = 11
+/** Inclinação da moeda parada, para a borda aparecer e ela parecer um objeto, não uma figura. */
+const TILT = 26
 
 const lift = ref<HTMLElement>()
 const coin = ref<HTMLElement>()
@@ -30,12 +32,12 @@ async function toss(side: CoinSide): Promise<void> {
 
   const duration = { duration: TOSS_MS }
   const animations = [
-    coin.value.animate([{ transform: `rotateX(${from}deg)` }, { transform: `rotateX(${to}deg)` }], { ...duration, easing: 'cubic-bezier(0.3, 0.1, 0.3, 1)' }),
+    coin.value.animate([{ transform: `rotateX(${from + TILT}deg)` }, { transform: `rotateX(${to + TILT}deg)` }], { ...duration, easing: 'cubic-bezier(0.3, 0.1, 0.3, 1)' }),
     lift.value.animate(
       [
-        { transform: 'translateY(0)', easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' },
-        { transform: `translateY(-${LIFT_PX}px)`, offset: 0.45, easing: 'cubic-bezier(0.6, 0, 0.8, 0.4)' },
-        { transform: 'translateY(0)' },
+        { transform: 'translateY(0) rotateZ(0deg)', easing: 'cubic-bezier(0.2, 0.7, 0.4, 1)' },
+        { transform: `translateY(-${LIFT_PX}px) rotateZ(7deg)`, offset: 0.45, easing: 'cubic-bezier(0.6, 0, 0.8, 0.4)' },
+        { transform: 'translateY(0) rotateZ(0deg)' },
       ],
       duration,
     ),
@@ -115,7 +117,7 @@ const rays = Array.from({ length: 24 }, (_, index) => {
     </svg>
 
     <div ref="lift" class="size-44">
-      <div ref="coin" class="relative size-full [transform-style:preserve-3d]" :style="{ transform: `rotateX(${angle}deg)` }">
+      <div ref="coin" class="relative size-full [transform-style:preserve-3d]" :style="{ transform: `rotateX(${angle + TILT}deg)` }">
         <!-- Borda: discos serrilhados empilhados entre as duas faces -->
         <span
           v-for="layer in RIM_LAYERS"
