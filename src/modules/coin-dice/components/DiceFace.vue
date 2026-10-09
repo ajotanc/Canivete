@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { motionReduced } from '@/core/effects/motion'
 import { CUBE_FACES, cubeOrientation, pipCells, spinTo } from '../lib/shapes'
 import type { PolyKind } from '../lib/polyhedra'
 import { DICE_ROLL_MS, DICE_TABLE_HITS } from '../lib/roll'
@@ -20,7 +21,6 @@ const RADIUS_PAIR = 50
 
 const isCube = computed(() => props.sides === 6)
 const isPair = computed(() => props.sides === 100)
-const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
 const lift = ref<HTMLElement>()
 const body = ref<HTMLElement>()
@@ -33,7 +33,7 @@ const rotation = ref(cubeOrientation(props.value))
  * O som de `dice` tem as batidas nesses mesmos instantes.
  */
 function hop(): void {
-  if (!lift.value || reducedMotion()) return
+  if (!lift.value || motionReduced()) return
   const up = 'cubic-bezier(0.2, 0.7, 0.4, 1)'
   const down = 'cubic-bezier(0.6, 0, 0.8, 0.4)'
   lift.value.animate(
@@ -55,7 +55,7 @@ function spinCube(from?: { x: number; y: number }): void {
   const start = from ?? rotation.value
   const to = { x: spinTo(start.x, base.x), y: spinTo(start.y, base.y) }
   rotation.value = to
-  if (!reducedMotion() && body.value) {
+  if (!motionReduced() && body.value) {
     body.value.animate([{ transform: `rotateX(${start.x}deg) rotateY(${start.y}deg)` }, { transform: `rotateX(${to.x}deg) rotateY(${to.y}deg)` }], { duration: ROLL_MS, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' })
   }
 }

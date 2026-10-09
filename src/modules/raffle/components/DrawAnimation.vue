@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Trophy } from '@lucide/vue'
 import { onBeforeUnmount, ref, watch } from 'vue'
+import { motionReduced } from '@/core/effects/motion'
 import { play } from '@/core/effects/sound'
 import { DRAW_ANIMATION } from '../constants'
 
@@ -29,7 +30,7 @@ function finish() {
 function start() {
   stop()
   revealed.value = false
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (motionReduced()) {
     finish()
     return
   }

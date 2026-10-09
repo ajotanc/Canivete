@@ -5,6 +5,7 @@ import EmptyState from '@/components/EmptyState.vue'
 import { play } from '@/core/effects/sound'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
+import MotionNotice from '@/components/MotionNotice.vue'
 import NumberInput from '@/components/NumberInput.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Button } from '@/components/ui/button'
@@ -91,6 +92,8 @@ onBeforeUnmount(() => {
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>
+
+    <MotionNotice />
 
     <Card>
       <CardContent class="pt-6">

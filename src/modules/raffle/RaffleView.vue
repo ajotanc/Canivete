@@ -5,6 +5,7 @@ import { toast } from 'vue-sonner'
 import ConfirmDelete from '@/components/ConfirmDelete.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
+import MotionNotice from '@/components/MotionNotice.vue'
 import NumberInput from '@/components/NumberInput.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -75,6 +76,8 @@ async function onCopy() {
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>
+
+    <MotionNotice />
 
     <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
       <Card>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { motionReduced } from '@/core/effects/motion'
 import { faceMatrix, faceToFrontMatrix, frameOf, polyhedron, shade, type PolyKind } from '../lib/polyhedra'
 
 /**
@@ -27,7 +28,6 @@ const PAD = 3
 /** Inclinação leve do dado parado: sem ela, de frente, só se vê uma face e o d4 vira um triângulo chapado. */
 const TILT = 'rotateX(-18deg) rotateY(-24deg)'
 
-const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
 const faces = computed(() =>
   polyhedron(props.kind).map((face, index) => {
@@ -63,7 +63,7 @@ function spun(orientation: string, degrees: number): string {
 
 function play(): void {
   const to = target.value
-  if (!reducedMotion() && body.value) {
+  if (!motionReduced() && body.value) {
     body.value.animate(
       [{ transform: spun(resting, 0) }, { transform: spun(to, 1080) }],
       { duration: ROLL_MS, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' },
