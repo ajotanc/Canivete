@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { motionReduced } from '@/core/effects/motion'
 import { faceMatrix, faceToFrontMatrix, frameOf, polyhedron, shade, type PolyKind } from '../lib/polyhedra'
 
 /**
@@ -63,7 +62,7 @@ function spun(orientation: string, degrees: number): string {
 
 function play(): void {
   const to = target.value
-  if (!motionReduced() && body.value) {
+  if (body.value) {
     body.value.animate(
       [{ transform: spun(resting, 0) }, { transform: spun(to, 1080) }],
       { duration: ROLL_MS, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' },

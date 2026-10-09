@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { CircleDot, Dices, RotateCw, Trophy, Zap } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref } from 'vue'
-import { motionReduced } from '@/core/effects/motion'
 import { triggerConfetti } from '@/core/effects/confetti'
 import { play } from '@/core/effects/sound'
 import EmptyState from '@/components/EmptyState.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
-import MotionNotice from '@/components/MotionNotice.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import TagInput from '@/components/TagInput.vue'
 import { Badge } from '@/components/ui/badge'
@@ -91,7 +89,7 @@ async function spin() {
   winnerIndex.value = null
   spinning.value = true
   play('whoosh')
-  if (!motionReduced() && wheel.value) {
+  if (wheel.value) {
     watchTicks(list.length)
     await wheel.value.animate([{ transform: `rotate(${from}deg)` }, { transform: `rotate(${to}deg)` }], { duration: SPIN_MS, easing: 'cubic-bezier(0.1, 0.55, 0.05, 1)' }).finished.catch(() => undefined)
     cancelAnimationFrame(frame)
@@ -101,7 +99,7 @@ async function spin() {
   winnerIndex.value = index
   history.value = [list[index], ...history.value].slice(0, 8)
   play('win')
-  if (!motionReduced()) triggerConfetti({ colors: PALETTE.map((name) => getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim()).filter(Boolean), durationMs: 1800 })
+  triggerConfetti({ colors: PALETTE.map((name) => getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim()).filter(Boolean), durationMs: 1800 })
   if (removeWinner.value && options.value.length > MIN_OPTIONS - 1) {
     // Tira a fatia sorteada depois de um instante, para dar tempo de ver onde a roleta parou.
     clearTimeout(timer)
@@ -128,8 +126,6 @@ onBeforeUnmount(() => {
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>
-
-    <MotionNotice />
 
     <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
       <Card>

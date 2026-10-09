@@ -1,4 +1,3 @@
-import { motionReduced } from '@/core/effects/motion'
 import { Confetti } from 'vue-confetti'
 import type { ConfettiStartOptions } from 'vue-confetti'
 import { CONFETTI } from '@/core/config'
@@ -66,7 +65,7 @@ export function disposeConfetti(): void {
  */
 export function triggerConfetti({ colors = [...CONFETTI.colors], durationMs = CONFETTI.durationMs }: ConfettiOptions = {}): void {
   if (typeof window === 'undefined') return
-  const reduced = motionReduced()
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   window.clearTimeout(stopTimer)
   window.clearTimeout(removeTimer)
 

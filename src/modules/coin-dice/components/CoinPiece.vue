@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { motionReduced } from '@/core/effects/motion'
 import { COIN_TABLE_HITS, TOSS_MS, type CoinSide } from '../lib/roll'
 
 /**
@@ -43,7 +42,7 @@ async function toss(side: CoinSide): Promise<void> {
   const from = resting.value
   // O estado final já vale; a animação só cobre o caminho até ele.
   resting.value = side
-  if (motionReduced() || !coin.value || !lift.value || !shadow.value) return
+  if (!coin.value || !lift.value || !shadow.value) return
 
   const duration = { duration: TOSS_MS }
   const hits = COIN_TABLE_HITS
