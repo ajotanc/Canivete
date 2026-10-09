@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Calculadora de datas',
   description: 'Calcule a diferença entre datas, some prazos em dias corridos ou úteis (com feriados) e descubra uma idade exata.',
   icon: CalendarDays,
-  color: 'amber',
   preview: PreviewDates,
   category: 'Calculadoras',
   usesBackend: false,

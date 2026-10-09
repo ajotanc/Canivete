@@ -218,7 +218,7 @@ O organizador escolhe a cor do grupo no painel (`setColor`), guardada em `santa_
 ### Named Rules
 **The Um Papel Rule.** Cada hero tem exatamente um `FactTile` `paper`, o fato-chave da página: branco no tema claro e card escuro sobre a placa clara do hero no dark. Nenhuma outra caixa do hero usa a superfície do card.
 
-**The Cabo Rule.** Cada ferramenta tem exatamente uma cor de cabo; ela serve de primário da página e é usada nas miniaturas, no bloco de abertura e no ponto da paleta de comandos. Ferramenta nova declara `color` no manifest e uma entrada `[data-tool]` em `src/style.css`.
+**The Cabo Rule.** A cor de cabo de cada ferramenta é a cor da sua categoria (10 categorias, `--cat-*` em `src/style.css`, texto branco no claro e grafite no escuro): serve de primário da página e é usada na faixa e no ícone do card, na tag, no bloco de abertura e no ponto da paleta de comandos. O manifest não declara cor; `toolColor` resolve pela categoria. Cobalto, framboesa, pinho, violeta e âmbar continuam como cores do grupo do amigo secreto e dos jogadores do placar.
 
 **The Selo do Módulo Rule.** Selo de status dentro de um módulo usa a cor do módulo (`tool`) ou uma cor semântica (success, warning, danger). O `info` cobalto nunca entra no módulo framboesa.
 
@@ -243,7 +243,7 @@ O organizador escolhe a cor do grupo no painel (`setColor`), guardada em `santa_
 
 ## Layout
 
-Contêiner de `max-w-6xl` com 16px laterais; cabeçalho fixo de 56px; conteúdo com `py-8` (celular) e `py-12` (sm+). A home empilha título, busca (InputGroup de 44px com Kbd) e filtros (ToggleGroup), depois uma grade de cards: 1 coluna, 2 em sm, 3 em lg, com gap de 20px. Espaçamento em múltiplos de 4px, seções com `space-y-8`. Todo controle tem 44px de altura (h-11) em qualquer largura. No celular, toda grade de fatos do hero tem 2 colunas e o fato `paper` ocupa as duas (`col-span-2`); nos heroes de 3 fatos (home e sorteador) a grade vira 3 colunas a partir de sm e o `paper` volta a uma coluna. Todas as páginas abrem com o `PageHeader filled` (home, sorteador, resultado compartilhado, criar grupo, convite, painel do organizador e Meu par), com `space-y-4` entre a linha de voltar/ações (altura mínima 44px), a linha título + descrição (com o chip do ícone da ferramenta sempre visível: acima do título no celular, em coluna, e ao lado dele a partir de sm) e, abaixo, o conteúdo extra (fatos, selos) em largura total. Telas estreitas (criar grupo, convite do grupo, cartão de login do organizador) ficam centralizadas com `mx-auto` e `max-w-xl`; o painel do organizador e Meu par também usam `mx-auto`, com `max-w-5xl`. O rodapé tem uma linha de apoio e a dica do atalho "/".
+Contêiner de `max-w-6xl` com 16px laterais; cabeçalho fixo de 56px; conteúdo com `py-8` (celular) e `py-12` (sm+). A home empilha título, busca (InputGroup de 48px com Kbd) com dois botões de ícone de 48px ao lado (ordem: cada toque passa para a próxima, aleatória, A a Z e Z a A, o ícone mostra a atual e o botão fica cheio fora da aleatória; e "separar por categoria", que fica cheio quando ligado e divide a lista em seções com o nome da categoria, um quadradinho na cor dela e a contagem), a seção "Suas favoritas" quando há favoritas e a grade com as outras ferramentas, as duas em ordem aleatória sorteada a cada visita: 1 coluna, 2 em sm, 3 em lg, com gap de 20px. Espaçamento em múltiplos de 4px, seções com `space-y-8`. Todo controle tem 44px de altura (h-11) em qualquer largura. No celular, toda grade de fatos do hero tem 2 colunas e o fato `paper` ocupa as duas (`col-span-2`); nos heroes de 3 fatos (home e sorteador) a grade vira 3 colunas a partir de sm e o `paper` volta a uma coluna. Todas as páginas abrem com o `PageHeader filled` (home, sorteador, resultado compartilhado, criar grupo, convite, painel do organizador e Meu par), com `space-y-4` entre a linha de voltar/ações (altura mínima 44px), a linha título + descrição (com o chip do ícone da ferramenta sempre visível: acima do título no celular, em coluna, e ao lado dele a partir de sm) e, abaixo, o conteúdo extra (fatos, selos) em largura total. A página inicial do amigo secreto segue o molde das ferramentas: lateral de 24rem ("Como funciona" em 3 passos e "Seus amigos secretos") e o login ou o formulário de criar grupo na coluna principal, que vem primeiro no celular. O convite do grupo fica centralizado com `mx-auto` e `max-w-xl`; o painel do organizador e Meu par usam `mx-auto` com `max-w-5xl`. O rodapé (`AppFooter`) tem a marca com a contagem de ferramentas, "Instalar o app" (quando o navegador permite; no iPhone, o caminho pelo menu Compartilhar), o botão de busca, Atalhos, Sobre (privacidade, termos, contato) e "Voltar ao topo".
 
 ## Elevation & Depth
 
@@ -275,7 +275,7 @@ Raio-base de 0,75rem (`--radius`). Escala: sm 8px, md 10px, lg 12px, xl 16px, 2x
 
 ### Cards / Containers (card de ferramenta)
 - **Corner Style:** 16px (`rounded-xl`), borda 1px, fundo `surface`.
-- **Estrutura:** faixa de cabo de 176px de altura (`bg-tool`) com a miniatura da ferramenta, depois bloco de 20px de padding com o ícone da ferramenta num chip de 48px na cor do cabo (`rounded-chip`) ao lado do título (Gabarito 20px), descrição, Badge de categoria e "Abrir" com seta.
+- **Estrutura:** faixa de cabo de 176px de altura (`bg-tool`) com a miniatura da ferramenta e, no canto, a estrela de favoritar (círculo de 44px em `bg-card/90`, preenchida na cor do cabo quando favorita), depois bloco de 20px de padding com o ícone da ferramenta num chip de 48px na cor do cabo (`rounded-chip`) ao lado do título (Gabarito 20px), descrição, Badge de categoria na cor da categoria (`variant="category"`) e "Abrir" com seta.
 - **Hover:** sobe 2px, sombra elevada, seta anda 4px; sem transformação com `prefers-reduced-motion`.
 
 ### Inputs / Fields
@@ -334,7 +334,7 @@ Cartões de configuração em `Card`: **Cor do grupo** (6 círculos de 36px numa
 ## Do's and Don'ts
 
 ### Do:
-- **Do** colocar uma ferramenta nova sob a Cabo Rule: `color` no manifest, entrada `[data-tool]` e `preview` próprio.
+- **Do** colocar uma ferramenta nova sob a Cabo Rule: `category` existente no manifest (a cor vem dela) e `preview` próprio.
 - **Do** usar tokens (`bg-primary`, `text-muted-foreground`, `border-border`) em vez de hex nas telas.
 - **Do** manter 44px de alvo de toque no celular e anel de foco visível em todo controle.
 - **Do** usar Gabarito só em `h1`-`h3` e Onest no resto, com números tabulares.

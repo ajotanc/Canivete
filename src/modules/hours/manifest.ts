@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Calculadora de horas',
   description: 'Calcule as horas trabalhadas entre dois horários, some e subtraia durações e descubra a hora de saída.',
   icon: Clock,
-  color: 'pine',
   preview: PreviewHours,
   category: 'Calculadoras',
   usesBackend: false,

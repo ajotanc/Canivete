@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Racha-conta',
   description: 'Divida a conta entre as pessoas, com gorjeta e os centavos fechando certinho, e copie o texto para o grupo.',
   icon: HandCoins,
-  color: 'pine',
   preview: PreviewSplitBill,
   category: 'Calculadoras',
   usesBackend: false,

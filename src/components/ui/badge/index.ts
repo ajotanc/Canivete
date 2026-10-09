@@ -18,6 +18,8 @@ export const badgeVariants = cva(
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         tool: "border-primary/20 bg-primary/15 text-primary",
         "tool-tint": "border-tool/30 bg-tool/20 text-foreground",
+        /** Cor da categoria (`data-category` no próprio Badge ou num pai): tags de categoria da home e do rodapé. */
+        category: "border-category/30 bg-category/12 text-category",
         glass: "border-primary-foreground/25 bg-primary-foreground/20 text-primary-foreground",
         success: "border-success/20 bg-success/15 text-success",
         warning: "border-warning/20 bg-warning/15 text-warning",

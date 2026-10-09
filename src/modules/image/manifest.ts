@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Comprimir imagem',
   description: 'Reduza o peso e a largura de uma foto ou SVG, converta entre JPEG, WebP e PNG e baixe sem enviar nada para a internet.',
   icon: ImageDown,
-  color: 'amber',
   preview: PreviewImage,
   category: 'Imagem',
   usesBackend: false,

@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Contador de texto',
   description: 'Conte caracteres, palavras e frases, veja o tempo de leitura e se o texto cabe nos limites do X, SMS e Google.',
   icon: Type,
-  color: 'amber',
   preview: PreviewTextCounter,
   category: 'Texto',
   usesBackend: false,

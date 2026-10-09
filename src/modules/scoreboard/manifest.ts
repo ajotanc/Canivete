@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Placar',
   description: 'Marque os pontos de cada jogador e jogue até uma meta. Fica salvo neste aparelho.',
   icon: Trophy,
-  color: 'amber',
   preview: PreviewScoreboard,
   category: 'Diversão',
   usesBackend: false,

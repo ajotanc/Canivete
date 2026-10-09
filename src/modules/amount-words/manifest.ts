@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Valor por extenso',
   description: 'Escreva um valor em reais ou um número por extenso, em português, para recibos, cheques e contratos.',
   icon: ReceiptText,
-  color: 'berry',
   preview: PreviewAmountWords,
   category: 'Texto',
   usesBackend: false,

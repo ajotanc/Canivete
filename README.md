@@ -36,7 +36,7 @@ pnpm build
 | Calculadora de datas (diferença, dias úteis com feriados nacionais, idade) | `dates` | não |
 | Ferramentas de texto (caixa, camelCase, slug, linhas, Base64, URL) | `text-tools` | não |
 | Calculadora de porcentagem (%, desconto, variação, juros) | `percentage` | não |
-| Dados fictícios (pessoa com CPF válido, e-mail, telefone, endereço; copia em JSON) | `fake-data` | não |
+| Dados fictícios (pessoa com CPF válido, e-mail, telefone, endereço e avatar; copia em JSON) | `fake-data` | não |
 | Cores (HEX, RGB, HSL, tons e contraste WCAG) | `colors` | não |
 | Cronômetro, timer e Pomodoro (aviso sonoro ao fim) | `timer` | não |
 | Conversor de unidades (comprimento, peso, volume, temperatura, área, velocidade, tempo, dados) | `units` | não |
@@ -58,6 +58,14 @@ pnpm build
 
 Três ferramentas chamam um serviço externo, direto do navegador: a consulta de CEP (`viacep.com.br`), o conversor de moeda (`economia.awesomeapi.com.br`) e os feriados (`brasilapi.com.br`). As outras rodam só no aparelho.
 
+## Home, favoritas e categorias
+
+A home lista as ferramentas em ordem aleatória, sorteada a cada visita, com as favoritas sempre em cima (na busca, por relevância). Dois botões ao lado da busca alternam a ordem a cada toque (aleatória, A a Z, Z a A) e separam a lista por categoria; as escolhas ficam no navegador (`canivete:home-sort` e `canivete:home-grouped`). A estrela de cada card marca a ferramenta como favorita: as favoritas ficam numa seção no topo e primeiro na busca (Ctrl/⌘ K), guardadas só no navegador (`canivete:favorites`). A cor de cada ferramenta vem da categoria dela (`src/core/modules/categories.ts` e `--cat-*` em `src/style.css`), então ferramentas da mesma categoria têm a mesma cor.
+
+## PWA
+
+O service worker e o manifesto também são gerados no servidor de desenvolvimento (`devOptions` em `vite.config.ts`), então dá para instalar o app pelo endereço de desenvolvimento. O rodapé mostra "Instalar o app" quando o navegador permite e, no iPhone, o caminho pelo menu Compartilhar.
+
 ## Som
 
 Os efeitos sonoros (roleta, dados, moeda, carta do amigo secreto) são sintetizados na hora pelo Web Audio, em `src/core/effects/sound.ts`; não há arquivos de áudio. O botão de som no cabeçalho liga e desliga, e a escolha fica no `localStorage` (`canivete:sound`). Para criar um efeito novo, acrescente o nome em `SoundName` e a receita em `SOUNDS`.
@@ -68,7 +76,7 @@ Código (nomes de arquivos, funções, variáveis, tipos, rotas) em inglês. Tex
 
 ## Adicionar uma ferramenta
 
-Crie `src/modules/<id>/manifest.ts` exportando um `ToolManifest` (ver `src/core/modules/types.ts`).
+Crie `src/modules/<id>/manifest.ts` exportando um `ToolManifest` (ver `src/core/modules/types.ts`). A cor vem da `category`; categoria nova precisa de entrada em `src/core/modules/categories.ts` e da cor em `src/style.css`.
 As rotas do módulo devem começar com `/<id>`. Nada no `core` precisa ser editado. Crie os testes em `tests/modules/<id>/`.
 
 ## Configurar o Appwrite (sorteador)

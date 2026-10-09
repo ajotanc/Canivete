@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Consulta de CEP',
   description: 'Descubra o endereço de um CEP ou o CEP de uma rua, com bairro, cidade, estado, IBGE e DDD.',
   icon: MapPin,
-  color: 'cobalt',
   preview: PreviewCep,
   category: 'Utilidades',
   usesBackend: false,

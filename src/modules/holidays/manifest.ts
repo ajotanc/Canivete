@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Feriados do ano',
   description: 'Veja todos os feriados nacionais do ano, o dia da semana de cada um e quantos dias faltam para o próximo.',
   icon: PartyPopper,
-  color: 'berry',
   preview: PreviewHolidays,
   category: 'Utilidades',
   usesBackend: false,

@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Calculadora de porcentagem',
   description: 'Calcule porcentagens, descontos, acréscimos, variações e juros simples ou compostos.',
   icon: Percent,
-  color: 'pine',
   preview: PreviewPercentage,
   category: 'Calculadoras',
   usesBackend: false,

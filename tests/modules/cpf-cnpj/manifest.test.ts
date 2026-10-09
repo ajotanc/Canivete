@@ -9,7 +9,6 @@ describe('módulo cpf-cnpj', () => {
     expect(tool?.title).toBe('Gerador de CPF e CNPJ')
     expect(tool?.usesBackend).toBe(false)
     expect(tool?.category).toBe('Desenvolvimento')
-    expect(tool?.color).toBe('pine')
   })
 
   it('tem a rota com o prefixo do módulo', () => {

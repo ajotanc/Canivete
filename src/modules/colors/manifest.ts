@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Cores',
   description: 'Converta cores entre HEX, RGB e HSL, veja os tons e confira o contraste do texto pelas regras WCAG.',
   icon: Palette,
-  color: 'berry',
   preview: PreviewColors,
   category: 'Design',
   usesBackend: false,

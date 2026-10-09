@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Cronômetro e timer',
   description: 'Cronometre com voltas, faça uma contagem regressiva com aviso sonoro ou foque com o método Pomodoro.',
   icon: Timer,
-  color: 'amber',
   preview: PreviewTimer,
   category: 'Utilidades',
   usesBackend: false,

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Braces, RefreshCw, ShieldCheck, UsersRound, Zap } from '@lucide/vue'
+import { Braces, Download, RefreshCw, ShieldCheck, UsersRound, Zap } from '@lucide/vue'
 import { ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 import CopyRows from '@/components/CopyRows.vue'
@@ -7,9 +7,11 @@ import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Button } from '@/components/ui/button'
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldContent, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import BeamAvatar from './components/BeamAvatar.vue'
+import { beamSvg } from './lib/avatar'
 import { FIELD_LABELS, generatePerson, peopleToJson, type Person } from './lib/person'
 
 const QUANTITIES = [1, 5, 10] as const
@@ -25,6 +27,16 @@ watch(quantity, generate, { immediate: true, flush: 'sync' })
 function onQuantity(value: unknown) {
   const amount = Number(value)
   if ((QUANTITIES as readonly number[]).includes(amount)) quantity.value = amount
+}
+
+/** Baixa o avatar da pessoa como SVG, com o nome no arquivo. */
+function downloadAvatar(person: Person) {
+  const url = URL.createObjectURL(new Blob([beamSvg(person.name, 512)], { type: 'image/svg+xml' }))
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `avatar-${person.name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-')}.svg`
+  link.click()
+  URL.revokeObjectURL(url)
 }
 
 async function copy(text: string, message: string) {
@@ -78,15 +90,21 @@ async function copy(text: string, message: string) {
       <div class="space-y-4">
         <p class="sr-only" role="status">{{ people.length }} {{ people.length === 1 ? 'pessoa gerada' : 'pessoas geradas' }}.</p>
         <Card v-for="(person, index) in people" :key="`${index}-${person.cpf}`">
-          <CardHeader>
-            <CardTitle class="text-lg">{{ person.name }}</CardTitle>
-            <CardDescription class="tabular-nums">{{ person.city }} - {{ person.state }}</CardDescription>
-            <CardAction>
+          <CardHeader class="flex flex-wrap items-center gap-4">
+            <BeamAvatar :name="person.name" />
+            <div class="min-w-0 flex-1 space-y-1">
+              <CardTitle class="text-lg">{{ person.name }}</CardTitle>
+              <CardDescription class="tabular-nums">{{ person.city }} - {{ person.state }}</CardDescription>
+            </div>
+            <div class="flex gap-2">
+              <Button variant="outline" size="icon" :aria-label="`Baixar o avatar de ${person.name}`" title="Baixar avatar (SVG)" @click="downloadAvatar(person)">
+                <Download aria-hidden="true" />
+              </Button>
               <Button variant="outline" size="sm" @click="copy(peopleToJson([person]), 'Pessoa copiada em JSON.')">
                 <Braces aria-hidden="true" />
                 JSON
               </Button>
-            </CardAction>
+            </div>
           </CardHeader>
           <CardContent>
             <CopyRows :rows="FIELD_LABELS.map((field) => ({ label: field.label, value: person[field.key] }))" />

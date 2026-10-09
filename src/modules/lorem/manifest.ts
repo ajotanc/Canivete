@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Lorem ipsum',
   description: 'Gere texto de preenchimento em latim ou português: parágrafos, frases ou palavras, em texto puro ou HTML.',
   icon: TextQuote,
-  color: 'cobalt',
   preview: PreviewLorem,
   category: 'Texto',
   usesBackend: false,

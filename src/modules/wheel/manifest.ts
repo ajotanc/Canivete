@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Roleta',
   description: 'Gire uma roleta com as suas opções e, se quiser, tire cada sorteada até sobrar uma.',
   icon: CircleDot,
-  color: 'violet',
   preview: PreviewWheel,
   category: 'Sorteios',
   usesBackend: false,

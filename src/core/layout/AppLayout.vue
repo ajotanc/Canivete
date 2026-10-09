@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Kbd } from '@/components/ui/kbd'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { soundEnabled, toggleSound } from '@/core/effects/sound'
+import AppFooter from '@/core/layout/AppFooter.vue'
 import CommandPalette from '@/core/layout/CommandPalette.vue'
 import CookieNotice from '@/core/layout/CookieNotice.vue'
+import { toolColor } from '@/core/modules/categories'
 import { tools } from '@/core/modules/registry'
 import { useTheme } from '@/core/theme/useTheme'
 
@@ -19,7 +21,7 @@ const hasTool = computed(() => tools.some((item) => item.id === route.path.split
 // A cor de cabo da ferramenta aberta vale para a página toda, inclusive diálogos fora do layout.
 watchEffect(() => {
   const tool = tools.find((item) => item.id === route.path.split('/')[1])
-  if (tool) document.documentElement.dataset.tool = tool.color ?? 'cobalt'
+  if (tool) document.documentElement.dataset.tool = toolColor(tool)
   else delete document.documentElement.dataset.tool
 })
 </script>
@@ -81,16 +83,7 @@ watchEffect(() => {
       <RouterView />
     </main>
 
-    <footer class="border-t">
-      <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-sm text-muted-foreground">
-        <p>Canivete: ferramentas simples para o dia a dia.</p>
-        <nav class="flex items-center gap-4" aria-label="Documentos">
-          <RouterLink to="/privacy" class="underline-offset-4 hover:text-foreground hover:underline">Privacidade</RouterLink>
-          <RouterLink to="/terms" class="underline-offset-4 hover:text-foreground hover:underline">Termos de uso</RouterLink>
-          <span class="max-sm:hidden">Aperte <Kbd>/</Kbd> para buscar</span>
-        </nav>
-      </div>
-    </footer>
+    <AppFooter @search="paletteOpen = true" />
 
     <CommandPalette v-model:open="paletteOpen" />
     <CookieNotice />

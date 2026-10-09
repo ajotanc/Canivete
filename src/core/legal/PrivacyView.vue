@@ -36,6 +36,7 @@ const mail = `mailto:${LEGAL.contactEmail}`
         </p>
         <ul>
           <li>o tema claro ou escuro e o som ligado ou desligado;</li>
+          <li>as ferramentas que você marcou como favoritas e a ordem que escolheu para a lista;</li>
           <li>os jogadores e os pontos do placar, e os tempos do Pomodoro;</li>
           <li>que você já viu o aviso de cookies.</li>
         </ul>

@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Formatador de JSON',
   description: 'Valide, formate, compacte e ordene um JSON, com o erro apontado na linha e na coluna.',
   icon: FileJson,
-  color: 'pine',
   preview: PreviewJson,
   category: 'Desenvolvimento',
   usesBackend: false,

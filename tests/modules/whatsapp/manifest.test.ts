@@ -16,7 +16,7 @@ describe('módulos de comunicação', () => {
 
   it('text-counter é descoberto pelo registro, sem backend', () => {
     const tool = tools.find((item) => item.id === 'text-counter')
-    expect(tool).toMatchObject({ title: 'Contador de texto', category: 'Texto', usesBackend: false, color: 'amber' })
+    expect(tool).toMatchObject({ title: 'Contador de texto', category: 'Texto', usesBackend: false })
     expect(tool?.routes.map((route) => route.path)).toEqual(['/text-counter'])
   })
 })

@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Dados fictícios',
   description: 'Gere pessoas de mentira com CPF válido, e-mail, telefone, nascimento e endereço, e copie em JSON.',
   icon: UsersRound,
-  color: 'violet',
   preview: PreviewFakeData,
   category: 'Desenvolvimento',
   usesBackend: false,

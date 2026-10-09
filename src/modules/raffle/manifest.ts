@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Sorteador de nomes',
   description: 'Sorteie um ou vários nomes, com animação, histórico e link verificável.',
   icon: Dices,
-  color: 'cobalt',
   preview: PreviewRaffle,
   category: 'Sorteios',
   usesBackend: true,

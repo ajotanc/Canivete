@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Amigo secreto',
   description: 'Crie um grupo, cadastre as pessoas e sorteie. Cada uma vê só quem tirou.',
   icon: Gift,
-  color: 'berry',
   preview: PreviewSanta,
   category: 'Sorteios',
   usesBackend: true,

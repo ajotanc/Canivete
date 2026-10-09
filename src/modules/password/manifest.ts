@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Gerador de senhas',
   description: 'Crie senhas e frases aleatórias fortes, escolha o tamanho e os caracteres, e veja a força de cada uma.',
   icon: KeyRound,
-  color: 'violet',
   preview: PreviewPassword,
   category: 'Segurança',
   usesBackend: false,

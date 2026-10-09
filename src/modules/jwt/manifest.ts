@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Decodificador de JWT',
   description: 'Leia o cabeçalho e o conteúdo de um token JWT, veja se expirou e confira a assinatura HS256, HS384 ou HS512.',
   icon: FileKey,
-  color: 'berry',
   preview: PreviewJwt,
   category: 'Desenvolvimento',
   usesBackend: false,

@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Conversor de unidades',
   description: 'Converta comprimento, peso, volume, temperatura, área, velocidade, tempo e dados entre as unidades mais usadas.',
   icon: Ruler,
-  color: 'cobalt',
   preview: PreviewUnits,
   category: 'Calculadoras',
   usesBackend: false,

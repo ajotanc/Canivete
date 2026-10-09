@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Gerador de QR Code',
   description: 'Crie QR Codes de links, textos, redes Wi-Fi e cartões de contato, e baixe em PNG ou SVG.',
   icon: QrCode,
-  color: 'violet',
   preview: PreviewQrCode,
   category: 'Comunicação',
   usesBackend: false,

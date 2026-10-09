@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { FileText, House, Moon, SearchX, ShieldCheck, Sun } from '@lucide/vue'
+import { FileText, House, Moon, SearchX, ShieldCheck, Star, Sun } from '@lucide/vue'
 import { useEventListener } from '@vueuse/core'
 import { DialogClose } from 'reka-ui'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import EmptyState from '@/components/EmptyState.vue'
 import {
@@ -14,12 +15,18 @@ import {
   CommandSeparator,
 } from '@/components/ui/command'
 import { Kbd } from '@/components/ui/kbd'
+import { favorites } from '@/core/home/favorites'
+import { toolColor } from '@/core/modules/categories'
 import { tools } from '@/core/modules/registry'
 import { useTheme } from '@/core/theme/useTheme'
 
 const open = defineModel<boolean>('open', { required: true })
 
 const router = useRouter()
+const groups = computed(() => [
+  { heading: 'Favoritas', items: tools.filter((tool) => favorites.value.includes(tool.id)) },
+  { heading: 'Ferramentas', items: tools.filter((tool) => !favorites.value.includes(tool.id)) },
+].filter((group) => group.items.length > 0))
 const { isDark, toggle } = useTheme()
 
 /**
@@ -68,13 +75,13 @@ function switchTheme() {
       <CommandEmpty class="p-3">
         <EmptyState :icon="SearchX" description="Nada encontrado. Tente outra palavra." />
       </CommandEmpty>
-      <CommandGroup heading="Ferramentas">
-        <CommandItem v-for="tool in tools" :key="tool.id" :value="tool.id" class="gap-3 rounded-lg px-2 py-2" @select="go(`/${tool.id}`)">
-          <span data-slot="tool-dot" :data-tool="tool.color ?? 'cobalt'" class="flex size-9 shrink-0 items-center justify-center rounded-chip border border-tool/20 bg-tool">
+      <CommandGroup v-for="group in groups" :key="group.heading" :heading="group.heading">
+        <CommandItem v-for="tool in group.items" :key="tool.id" :value="tool.id" class="gap-3 rounded-lg px-2 py-2" @select="go(`/${tool.id}`)">
+          <span data-slot="tool-dot" :data-tool="toolColor(tool)" class="flex size-9 shrink-0 items-center justify-center rounded-chip border border-tool/20 bg-tool">
             <component :is="tool.icon" class="size-4.5 text-tool-foreground" aria-hidden="true" />
           </span>
           <span class="min-w-0 flex-1">
-            <span class="block truncate font-medium text-foreground">{{ tool.title }}</span>
+            <span class="flex items-center gap-1.5 truncate font-medium text-foreground">{{ tool.title }}<Star v-if="group.heading === 'Favoritas'" class="size-3.5 shrink-0 fill-current text-muted-foreground" aria-label="favorita" /></span>
             <span class="block truncate text-xs text-muted-foreground">{{ tool.description }}</span>
           </span>
           <span class="shrink-0 text-xs text-muted-foreground max-sm:hidden">{{ tool.category }}</span>

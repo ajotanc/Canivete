@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowLeft, ChevronRight, CircleAlert, Gift, KeyRound, ListChecks, Lock, LogOut } from '@lucide/vue'
+import { ArrowLeft, ChevronRight, CircleAlert, Dices, Gift, KeyRound, ListChecks, Lock, LogOut, Send, Users } from '@lucide/vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -10,15 +10,13 @@ import PinField from '@/components/PinField.vue'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from '@/components/ui/input-group'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
 import { Progress } from '@/components/ui/progress'
 import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
-import HeaderSkeleton from '@/components/skeletons/HeaderSkeleton.vue'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { Switch } from '@/components/ui/switch'
 import { loadUser, logout, useAuth } from '@/core/services/auth'
@@ -79,6 +77,13 @@ async function onLogout() {
 }
 
 const stepTitles = CREATE_STEP_TITLES
+
+/** Os três passos do amigo secreto, no cartão "Como funciona". */
+const HOW_IT_WORKS = [
+  { icon: Users, title: 'Crie o grupo', text: 'Dê um nome, o valor sugerido e a data, e cadastre as pessoas pelo nome.' },
+  { icon: Send, title: 'Mande o link', text: 'Cada pessoa escolhe o próprio nome e cria um PIN de 4 números.' },
+  { icon: Dices, title: 'Sorteie', text: 'Cada uma abre a carta e vê só quem tirou. Nem você vê os pares dos outros.' },
+] as const
 const lastStep = stepTitles.length
 const canContinue = computed(() => {
   if (step.value === 1) return name.value.trim().length > 0
@@ -115,7 +120,7 @@ function onNext() {
 </script>
 
 <template>
-  <section class="mx-auto w-full max-w-xl space-y-8">
+  <section class="space-y-8">
     <PageHeader filled :icon="Gift" title="Amigo secreto" description="Crie o grupo, cadastre as pessoas e sorteie. Cada uma vê só quem tirou.">
       <template v-if="user" #actions>
         <Button variant="ghost" size="sm" @click="onLogout">
@@ -131,108 +136,136 @@ function onNext() {
       <p v-if="user" class="truncate text-sm text-primary-foreground/90">Conectado como {{ user.email }}</p>
     </PageHeader>
 
-    <div v-if="!ready" class="space-y-6" role="status" aria-label="Carregando">
-      <Skeleton class="h-6 w-44" />
-      <Skeleton class="h-[76px] w-full rounded-xl" />
-      <CardSkeleton :lines="0" :rows="2" button />
-    </div>
+    <div class="grid items-start gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
+      <!-- Coluna lateral: como funciona e os grupos da conta -->
+      <div class="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle class="text-lg">Como funciona</CardTitle>
+            <CardDescription>Três passos, e quem participa não precisa de conta.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ol class="space-y-4">
+              <li v-for="(item, index) in HOW_IT_WORKS" :key="item.title" class="flex gap-3">
+                <span class="flex size-10 shrink-0 items-center justify-center rounded-chip border border-primary/20 bg-primary/10 text-primary">
+                  <component :is="item.icon" class="size-5" aria-hidden="true" />
+                </span>
+                <div class="space-y-0.5">
+                  <p class="font-semibold"><span class="text-muted-foreground tabular-nums">{{ index + 1 }}.</span> {{ item.title }}</p>
+                  <p class="text-sm text-pretty text-muted-foreground">{{ item.text }}</p>
+                </div>
+              </li>
+            </ol>
+          </CardContent>
+        </Card>
 
-    <Card v-else-if="!user">
-      <CardContent><AuthForm /></CardContent>
-    </Card>
-
-    <template v-else>
-      <div v-if="myGroups.length > 0" class="space-y-3">
-        <h2 class="text-lg">Seus amigos secretos</h2>
-        <ItemGroup class="gap-2">
-          <Item v-for="group in myGroups" :key="group.id" as-child variant="outline" class="bg-card hover:bg-accent">
-            <RouterLink :to="adminPath(group.id)">
-              <ItemContent>
-                <ItemTitle>{{ group.name }}</ItemTitle>
-                <ItemDescription>Abrir painel do organizador</ItemDescription>
-              </ItemContent>
-              <ItemActions>
-                <Badge :variant="group.status === 'drawn' ? 'success' : 'tool'">
-                  {{ group.status === 'drawn' ? 'Sorteado' : 'Aberto' }}
-                </Badge>
-                <ChevronRight class="size-4 text-muted-foreground" aria-hidden="true" />
-              </ItemActions>
-            </RouterLink>
-          </Item>
-        </ItemGroup>
-        <p class="text-sm text-muted-foreground">Ou crie um novo grupo abaixo.</p>
+        <Card v-if="user && myGroups.length > 0">
+          <CardHeader>
+            <CardTitle class="text-lg">Seus amigos secretos</CardTitle>
+            <CardDescription>Abra o painel de um grupo ou crie outro ao lado.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ItemGroup class="gap-2">
+              <Item v-for="group in myGroups" :key="group.id" as-child variant="outline" class="bg-card hover:bg-accent">
+                <RouterLink :to="adminPath(group.id)">
+                  <ItemContent>
+                    <ItemTitle>{{ group.name }}</ItemTitle>
+                    <ItemDescription>Abrir painel do organizador</ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <Badge :variant="group.status === 'drawn' ? 'success' : 'tool'">
+                      {{ group.status === 'drawn' ? 'Sorteado' : 'Aberto' }}
+                    </Badge>
+                    <ChevronRight class="size-4 text-muted-foreground" aria-hidden="true" />
+                  </ItemActions>
+                </RouterLink>
+              </Item>
+            </ItemGroup>
+          </CardContent>
+        </Card>
       </div>
 
-      <Card>
-        <CardContent>
-          <form class="space-y-6" @submit.prevent="onNext">
-            <div class="space-y-3">
-              <Progress :model-value="(step / lastStep) * 100" :aria-label="`Passo ${step} de ${lastStep}`" class="h-1.5" />
-              <p class="text-sm font-medium text-muted-foreground">Passo {{ step }} de {{ lastStep }}</p>
-              <h2 class="text-xl">{{ stepTitles[step - 1] }}</h2>
-            </div>
+      <!-- Coluna principal: entrar ou criar o grupo (no celular, vem primeiro) -->
+      <div class="max-lg:order-first">
+        <div v-if="!ready" class="space-y-6" role="status" aria-label="Carregando">
+          <CardSkeleton :lines="1" :rows="2" button />
+        </div>
 
-            <FieldGroup v-if="step === 1">
-              <Field>
-                <FieldLabel for="group-name">Nome do grupo</FieldLabel>
-                <Input id="group-name" v-model="name" :maxlength="LIMITS.groupName" autocomplete="off" placeholder="Família Silva" />
-              </Field>
-            </FieldGroup>
+        <Card v-else-if="!user">
+          <CardContent><AuthForm /></CardContent>
+        </Card>
 
-            <FieldGroup v-else-if="step === 2">
-              <Field>
-                <FieldLabel for="budget">Valor sugerido</FieldLabel>
-                <Input id="budget" v-model="budget" v-money :maxlength="LIMITS.budgetInput" placeholder="R$ 50,00" inputmode="numeric" />
-              </Field>
-              <Field>
-                <FieldLabel for="event-date">Data da troca</FieldLabel>
-                <DateField id="event-date" v-model="eventDate" min-today :past="0" :future="DATE_PICKER.yearsAhead" />
-              </Field>
-            </FieldGroup>
+        <Card v-else>
+          <CardContent>
+            <form class="space-y-6" @submit.prevent="onNext">
+              <div class="space-y-3">
+                <Progress :model-value="(step / lastStep) * 100" :aria-label="`Passo ${step} de ${lastStep}`" class="h-1.5" />
+                <p class="text-sm font-medium text-muted-foreground">Passo {{ step }} de {{ lastStep }}</p>
+                <h2 class="text-xl">{{ stepTitles[step - 1] }}</h2>
+              </div>
 
-            <FieldGroup v-else>
-              <Field orientation="horizontal">
-                <Switch id="participates" v-model="participates" />
-                <FieldLabel for="participates">Quero entrar no sorteio</FieldLabel>
-              </Field>
-              <template v-if="participates">
+              <FieldGroup v-if="step === 1">
                 <Field>
-                  <FieldLabel for="my-name">Seu nome</FieldLabel>
-                  <Input id="my-name" v-model="myName" :maxlength="LIMITS.personName" autocomplete="off" data-1p-ignore data-lpignore="true" />
+                  <FieldLabel for="group-name">Nome do grupo</FieldLabel>
+                  <Input id="group-name" v-model="name" :maxlength="LIMITS.groupName" autocomplete="off" placeholder="Família Silva" />
+                </Field>
+              </FieldGroup>
+
+              <FieldGroup v-else-if="step === 2">
+                <Field>
+                  <FieldLabel for="budget">Valor sugerido</FieldLabel>
+                  <Input id="budget" v-model="budget" v-money :maxlength="LIMITS.budgetInput" placeholder="R$ 50,00" inputmode="numeric" />
                 </Field>
                 <Field>
-                  <FieldLabel for="my-pin">PIN de {{ PIN_LENGTH }} números</FieldLabel>
-                  <PinField id="my-pin" v-model="myPin" :length="PIN_LENGTH" label="PIN" />
-                  <FieldDescription>Você usa o PIN para ver quem tirou. Anote, não dá para recuperar.</FieldDescription>
+                  <FieldLabel for="event-date">Data da troca</FieldLabel>
+                  <DateField id="event-date" v-model="eventDate" min-today :past="0" :future="DATE_PICKER.yearsAhead" />
                 </Field>
-                <Field>
-                  <FieldLabel>O que você gostaria de ganhar</FieldLabel>
-                  <WishlistEditor v-model="myWishlist" />
+              </FieldGroup>
+
+              <FieldGroup v-else>
+                <Field orientation="horizontal">
+                  <Switch id="participates" v-model="participates" />
+                  <FieldLabel for="participates">Quero entrar no sorteio</FieldLabel>
                 </Field>
-              </template>
-              <p v-else class="text-sm text-muted-foreground">
-                Você organiza o grupo e não entra no sorteio. Mesmo participando, você não vê os pares dos outros.
-              </p>
-            </FieldGroup>
+                <template v-if="participates">
+                  <Field>
+                    <FieldLabel for="my-name">Seu nome</FieldLabel>
+                    <Input id="my-name" v-model="myName" :maxlength="LIMITS.personName" autocomplete="off" data-1p-ignore data-lpignore="true" />
+                  </Field>
+                  <Field>
+                    <FieldLabel for="my-pin">PIN de {{ PIN_LENGTH }} números</FieldLabel>
+                    <PinField id="my-pin" v-model="myPin" :length="PIN_LENGTH" label="PIN" />
+                    <FieldDescription>Você usa o PIN para ver quem tirou. Anote, não dá para recuperar.</FieldDescription>
+                  </Field>
+                  <Field>
+                    <FieldLabel>O que você gostaria de ganhar</FieldLabel>
+                    <WishlistEditor v-model="myWishlist" />
+                  </Field>
+                </template>
+                <p v-else class="text-sm text-muted-foreground">
+                  Você organiza o grupo e não entra no sorteio. Mesmo participando, você não vê os pares dos outros.
+                </p>
+              </FieldGroup>
 
-            <Alert v-if="error" variant="destructive">
-              <CircleAlert aria-hidden="true" />
-              <AlertDescription>{{ error }}</AlertDescription>
-            </Alert>
+              <Alert v-if="error" variant="destructive">
+                <CircleAlert aria-hidden="true" />
+                <AlertDescription>{{ error }}</AlertDescription>
+              </Alert>
 
-            <div class="flex items-center gap-3">
-              <Button v-if="step > 1" type="button" variant="outline" size="lg" @click="step -= 1">
-                <ArrowLeft aria-hidden="true" />
-                Voltar
-              </Button>
-              <Button type="submit" size="lg" class="flex-1" :disabled="!canContinue || loading">
-                <Spinner v-if="loading" />
-                {{ step < lastStep ? 'Continuar' : loading ? 'Criando...' : 'Criar grupo' }}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </template>
+              <div class="flex items-center gap-3">
+                <Button v-if="step > 1" type="button" variant="outline" size="lg" @click="step -= 1">
+                  <ArrowLeft aria-hidden="true" />
+                  Voltar
+                </Button>
+                <Button type="submit" size="lg" class="flex-1" :disabled="!canContinue || loading">
+                  <Spinner v-if="loading" />
+                  {{ step < lastStep ? 'Continuar' : loading ? 'Criando...' : 'Criar grupo' }}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   </section>
 </template>

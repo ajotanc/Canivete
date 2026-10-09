@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Ferramentas de texto',
   description: 'Troque maiúsculas e minúsculas, converta para camelCase ou slug, limpe listas e codifique em Base64 ou URL.',
   icon: CaseSensitive,
-  color: 'berry',
   preview: PreviewTextTools,
   category: 'Texto',
   usesBackend: false,

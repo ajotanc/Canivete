@@ -32,7 +32,15 @@ export default defineConfig({
       workbox: {
         // Rotas do app (ex.: /raffle/r/abc) abrem o index.html mesmo sem rede.
         navigateFallback: '/index.html',
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        // As fontes entram no cache para o app abrir offline com a letra certa. O .wasm do WebP (só Safari) fica de fora.
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,webmanifest}'],
+      },
+      // O site também roda pelo servidor de desenvolvimento (dev.ajotanc.com.br): sem isto, lá não há manifesto
+      // nem service worker, e o navegador não oferece instalar o app.
+      devOptions: {
+        enabled: true,
+        type: 'module',
+        navigateFallback: 'index.html',
       },
     }),
   ],

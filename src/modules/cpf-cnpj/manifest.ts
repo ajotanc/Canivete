@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Gerador de CPF e CNPJ',
   description: 'Gere CPF, CNPJ ou o novo CNPJ com letras, com dígitos verificadores válidos.',
   icon: IdCard,
-  color: 'pine',
   preview: PreviewDocuments,
   category: 'Desenvolvimento',
   usesBackend: false,

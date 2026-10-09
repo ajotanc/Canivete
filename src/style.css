@@ -11,6 +11,7 @@
   --color-pivot: var(--pivot);
   --color-tool: var(--tool);
   --color-tool-foreground: var(--tool-foreground);
+  --color-category: var(--category);
   --color-cobalt: var(--cobalt);
   --color-berry: var(--berry);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -117,6 +118,22 @@
   --violet-foreground: #FFFFFF;
   --amber: #B45309;
   --amber-foreground: #FFFFFF;
+  /*
+   * Cores das categorias. A cor da categoria é a cor da ferramenta (faixa e ícone do card, primário da página, tag).
+   * Tom escuro o bastante para texto branco por cima e para o texto da tag sobre o próprio fundo tingido.
+   */
+  --cat-calculators: #1D4ED8;
+  --cat-communication: #166534;
+  --cat-development: #4338CA;
+  --cat-design: #BE185D;
+  --cat-fun: #9A3412;
+  --cat-image: #0F766E;
+  --cat-security: #475569;
+  --cat-draws: #7E22CE;
+  --cat-text: #0E7490;
+  --cat-utilities: #854D0E;
+  --cat-other: #55607A;
+  --cat-foreground: #FFFFFF;
 }
 
 .dark {
@@ -166,6 +183,18 @@
   --violet-foreground: #140B33;
   --amber: #F5B14C;
   --amber-foreground: #2B1600;
+  --cat-calculators: #93C5FD;
+  --cat-communication: #86EFAC;
+  --cat-development: #A5B4FC;
+  --cat-design: #F9A8D4;
+  --cat-fun: #FDBA74;
+  --cat-image: #5EEAD4;
+  --cat-security: #CBD5E1;
+  --cat-draws: #D8B4FE;
+  --cat-text: #67E8F9;
+  --cat-utilities: #FDE047;
+  --cat-other: #93A0B5;
+  --cat-foreground: #111823;
 }
 
 /* Cor de cabo da ferramenta: em qualquer elemento define --tool; no <html> também troca o primário da página. */
@@ -189,6 +218,31 @@
   --tool: var(--amber);
   --tool-foreground: var(--amber-foreground);
 }
+/* Cor de ferramenta pela categoria (`toolColor` no manifest): mesmo mecanismo das cores de cabo acima. */
+[data-tool='calculators'] { --tool: var(--cat-calculators); --tool-foreground: var(--cat-foreground); }
+[data-tool='communication'] { --tool: var(--cat-communication); --tool-foreground: var(--cat-foreground); }
+[data-tool='development'] { --tool: var(--cat-development); --tool-foreground: var(--cat-foreground); }
+[data-tool='design'] { --tool: var(--cat-design); --tool-foreground: var(--cat-foreground); }
+[data-tool='fun'] { --tool: var(--cat-fun); --tool-foreground: var(--cat-foreground); }
+[data-tool='image'] { --tool: var(--cat-image); --tool-foreground: var(--cat-foreground); }
+[data-tool='security'] { --tool: var(--cat-security); --tool-foreground: var(--cat-foreground); }
+[data-tool='draws'] { --tool: var(--cat-draws); --tool-foreground: var(--cat-foreground); }
+[data-tool='text'] { --tool: var(--cat-text); --tool-foreground: var(--cat-foreground); }
+[data-tool='utilities'] { --tool: var(--cat-utilities); --tool-foreground: var(--cat-foreground); }
+
+/* Cor da categoria: em qualquer elemento, `data-category` define --category (usada pela variante `category` do Badge). */
+[data-category='calculators'] { --category: var(--cat-calculators); }
+[data-category='communication'] { --category: var(--cat-communication); }
+[data-category='development'] { --category: var(--cat-development); }
+[data-category='design'] { --category: var(--cat-design); }
+[data-category='fun'] { --category: var(--cat-fun); }
+[data-category='image'] { --category: var(--cat-image); }
+[data-category='security'] { --category: var(--cat-security); }
+[data-category='draws'] { --category: var(--cat-draws); }
+[data-category='text'] { --category: var(--cat-text); }
+[data-category='utilities'] { --category: var(--cat-utilities); }
+[data-category='other'] { --category: var(--cat-other); }
+
 /* Cor livre escolhida pelo organizador (--custom vem do grupo). No escuro, clareia para não sumir no fundo. */
 [data-tool='custom'] {
   --tool: var(--custom);

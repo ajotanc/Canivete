@@ -7,7 +7,6 @@ const manifest: ToolManifest = {
   title: 'Link de WhatsApp',
   description: 'Gere o link e o QR Code para abrir uma conversa no WhatsApp sem salvar o contato.',
   icon: WhatsappIcon,
-  color: 'pine',
   preview: PreviewWhatsapp,
   category: 'Comunicação',
   usesBackend: false,
