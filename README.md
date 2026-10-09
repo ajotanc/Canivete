@@ -112,3 +112,7 @@ O módulo `secret-santa` guarda segredos (PINs e pares do sorteio), então o nav
 ## Hospedagem
 
 O site usa rotas por histórico (`/raffle/r/abc`). A hospedagem precisa devolver `index.html` para qualquer rota desconhecida (fallback de SPA). Em HTTPS, o service worker do PWA também faz esse fallback no navegador.
+
+## Licença
+
+[PolyForm Noncommercial 1.0.0](LICENSE): o código é livre para usar, estudar, modificar e contribuir, desde que sem fins comerciais. Uso comercial precisa de autorização do autor.
