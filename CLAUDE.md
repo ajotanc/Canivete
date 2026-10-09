@@ -1,6 +1,6 @@
 # Canivete
 
-- Cabeçalho das ferramentas: três FactTile numa linha só em cada caixa (rótulo e valor curtos, sem quebrar), duas `glass` e uma `paper`.
+- Cabeçalho das ferramentas: três FactTile, duas `glass` e uma `paper`. Nas `glass`, rótulo e valor ficam numa linha só num celular de 360px: cabem 83px, uns 12 caracteres no rótulo e 9 no valor ("Faces" / "4 a 100", "Prazos" / "Dias úteis"). Número dinâmico vai sozinho no valor, com a unidade no rótulo ("Pessoas" / "12"). O texto longo vai na `paper`. O teste `tests/components/factTiles.test.ts` mede os textos fixos: rode-o ao criar ou mudar um cabeçalho.
 - Campos com formato conhecido (telefone, CPF, CNPJ, CEP, data) usam a máscara `v-maska` com `data-maska`.
 - Números e links usam a fonte padrão do app (nada de `font-mono`), com `tabular-nums` quando precisam alinhar.
 - Todo identificador de código, rota e parâmetro de URL em inglês; só o texto que a pessoa lê fica em português.

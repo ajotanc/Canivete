@@ -65,7 +65,7 @@ const landed = ref(false)
 /** Nomes do grupo (menos o seu) que passam na roleta antes do sorteado. */
 const pool = ref<string[]>([])
 /** Dados do grupo para o cabeçalho (nome, valor e data da troca). */
-const groupInfo = ref<{ name: string; budget: number | null; eventDate: string; participantCount: number } | null>(null)
+const groupInfo = ref<{ name: string; budget: number | null; eventDate: string; participantCount: number; cover?: string | null } | null>(null)
 
 function onLanded() {
   landed.value = true
@@ -92,7 +92,7 @@ onMounted(async () => {
       .then((group) => {
         applyGroupColor(group.color)
         pool.value = group.members.map((m) => m.name).filter((n) => n !== credentials.name)
-        groupInfo.value = { name: group.name, budget: group.budget, eventDate: group.eventDate, participantCount: group.participantCount }
+        groupInfo.value = { name: group.name, budget: group.budget, eventDate: group.eventDate, participantCount: group.participantCount, cover: group.cover }
       })
       .catch(() => {})
     state.value = 'ready'

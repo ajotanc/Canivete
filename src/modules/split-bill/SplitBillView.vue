@@ -51,7 +51,7 @@ async function copyMessage() {
     <PageHeader filled :icon="HandCoins" title="Racha-conta" description="Divida a conta do restaurante entre todo mundo, com gorjeta, sem sobrar nem faltar um centavo.">
       <FactList>
         <FactTile :icon="Percent" label="Gorjeta">Opcional</FactTile>
-        <FactTile :icon="Calculator" label="Centavos">Fecham certo</FactTile>
+        <FactTile :icon="Calculator" label="Centavos">Exatos</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>

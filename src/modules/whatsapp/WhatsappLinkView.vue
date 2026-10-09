@@ -29,7 +29,7 @@ const tooLong = computed(() => message.value.length > MESSAGE_LIMIT)
     <PageHeader filled :icon="WhatsappIcon" title="Link de WhatsApp" description="Crie o link para abrir uma conversa sem salvar o contato, com a mensagem já escrita, e o QR Code para imprimir.">
       <FactList>
         <FactTile :icon="Link2" label="Link">WhatsApp</FactTile>
-        <FactTile :icon="QrCode" label="QR Code">PNG e SVG</FactTile>
+        <FactTile :icon="QrCode" label="QR Code">PNG, SVG</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>

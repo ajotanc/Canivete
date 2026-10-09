@@ -10,6 +10,7 @@ export interface SiteEnv {
   databaseId: string | undefined
   rafflesTableId: string | undefined
   santaFunctionId: string | undefined
+  santaCoversBucketId: string | undefined
 }
 
 /**
@@ -23,6 +24,7 @@ export function readEnv(): SiteEnv {
     databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,
     rafflesTableId: import.meta.env.VITE_APPWRITE_RAFFLES_TABLE_ID,
     santaFunctionId: import.meta.env.VITE_APPWRITE_SANTA_FUNCTION_ID,
+    santaCoversBucketId: import.meta.env.VITE_APPWRITE_SANTA_COVERS_BUCKET_ID,
   }
 }
 
@@ -36,6 +38,20 @@ export const ENV_NAMES = {
 
 /** Id da tabela de sorteios quando `VITE_APPWRITE_RAFFLES_TABLE_ID` não está definida. */
 export const DEFAULT_RAFFLES_TABLE_ID = 'raffles'
+
+/** Bucket das capas do amigo secreto quando `VITE_APPWRITE_SANTA_COVERS_BUCKET_ID` não está definida (igual ao da Function). */
+export const DEFAULT_SANTA_COVERS_BUCKET_ID = 'santa_covers'
+
+/**
+ * Política de privacidade e termos de uso (`/privacy` e `/terms`).
+ * `updatedAt` aparece nas duas páginas; ao mudar o texto de uma delas, troque a data, e o aviso de cookies volta a aparecer.
+ */
+export const LEGAL = {
+  contactEmail: 'ajotanc@gmail.com',
+  updatedAt: '2026-10-09',
+  /** Onde fica guardado que a pessoa já viu o aviso de cookies (vale a data de `updatedAt`). */
+  noticeStorageKey: 'canivete:cookie-notice',
+} as const
 
 /** Chave onde o tema escolhido fica salvo no navegador. */
 export const THEME_STORAGE_KEY = 'canivete-theme'

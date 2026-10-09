@@ -33,6 +33,28 @@ export function parseGroupColor(value: unknown): string {
   throw new SantaError('INVALID_INPUT', 'Escolha uma das cores disponíveis.')
 }
 
+/**
+ * Imagem de capa do grupo: WebP em base64 (com ou sem o prefixo `data:image/webp;base64,`).
+ * O navegador já converte e reduz a foto; aqui só conferimos que é um WebP inteiro e dentro do tamanho.
+ */
+export function parseCoverImage(value: unknown): Uint8Array {
+  const text = typeof value === 'string' ? value.replace(/^data:image\/webp;base64,/, '').replace(/\s+/g, '') : ''
+  if (!text || !/^[A-Za-z0-9+/]+={0,2}$/.test(text)) throw new SantaError('INVALID_INPUT', 'Envie uma imagem.')
+  if (Math.floor((text.length * 3) / 4) > LIMITS.coverBytes + 2) {
+    throw new SantaError('INVALID_INPUT', `A imagem ficou grande demais. Use uma de até ${(LIMITS.coverBytes / 1_000_000).toLocaleString('pt-BR')} MB.`)
+  }
+  const bytes = Buffer.from(text, 'base64')
+  const ascii = (start: number) => bytes.subarray(start, start + 4).toString('latin1')
+  // Cabeçalho RIFF/WEBP, com o tamanho declarado batendo com o arquivo (arquivo cortado não passa).
+  if (bytes.length < 16 || ascii(0) !== 'RIFF' || ascii(8) !== 'WEBP' || bytes.readUInt32LE(4) + 8 !== bytes.length) {
+    throw new SantaError('INVALID_INPUT', 'A imagem precisa estar em WebP.')
+  }
+  if (bytes.length > LIMITS.coverBytes) {
+    throw new SantaError('INVALID_INPUT', `A imagem ficou grande demais. Use uma de até ${(LIMITS.coverBytes / 1_000_000).toLocaleString('pt-BR')} MB.`)
+  }
+  return new Uint8Array(bytes)
+}
+
 /** Texto de uma linha: NFC, espaços nas pontas removidos e espaços repetidos colapsados. */
 export function cleanLine(value: unknown): string {
   if (typeof value !== 'string') return ''

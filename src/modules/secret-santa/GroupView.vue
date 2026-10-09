@@ -7,6 +7,7 @@ import HeaderSkeleton from '@/components/skeletons/HeaderSkeleton.vue'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import { santaCoverUrl } from '@/core/services/appwrite'
 import PinField from '@/components/PinField.vue'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -16,7 +17,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { InputGroup, InputGroupAddon, InputGroupInput } from '@/components/ui/input-group'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
-import { formatMoney } from '@/lib/money'
+import { formatMoneyShort } from '@/lib/money'
 import AddToCalendar from './components/AddToCalendar.vue'
 import WishlistEditor from './components/WishlistEditor.vue'
 import { applyGroupColor } from './lib/groupColor'
@@ -152,6 +153,7 @@ async function onSubmit() {
       <PageHeader
         filled
         :icon="Gift"
+        :image="santaCoverUrl(group.cover)"
         :title="group.name"
         :description="
           group.status === 'open'
@@ -160,8 +162,8 @@ async function onSubmit() {
         "
       >
         <FactList>
-          <FactTile :icon="Users" label="Participantes">{{ group.participantCount }} {{ group.participantCount === 1 ? 'pessoa' : 'pessoas' }}</FactTile>
-          <FactTile :icon="Coins" label="Valor sugerido">{{ group.budget !== null ? formatMoney(group.budget) : 'A definir' }}</FactTile>
+          <FactTile :icon="Users" label="Pessoas">{{ group.participantCount }}</FactTile>
+          <FactTile :icon="Coins" label="Valor sugerido">{{ group.budget !== null ? formatMoneyShort(group.budget) : 'A definir' }}</FactTile>
           <FactTile :icon="CalendarDays" :label="group.eventDate ? eventCountdown(group.eventDate) : 'Data da troca'" tone="paper">{{ group.eventDate ? formatEventDate(group.eventDate) : 'A combinar' }}</FactTile>
         </FactList>
         <div v-if="(returning && !selected) || group.eventDate" class="-ml-3 flex flex-wrap gap-2">
@@ -175,7 +177,7 @@ async function onSubmit() {
       <!-- Passo 1: quem é você -->
       <div v-if="!selected" class="space-y-4">
         <h2 class="text-xl">{{ returning ? 'Ou entre como outra pessoa' : 'Quem é você?' }}</h2>
-        <EmptyState v-if="group.members.length === 0" :icon="Users" description="Ninguém foi adicionado ainda. O organizador ainda não cadastrou as pessoas. Volte mais tarde." />
+        <EmptyState v-if="group.members.length === 0" :icon="Users" description="O organizador ainda não cadastrou ninguém. Volte mais tarde." />
         <InputGroup v-if="group.members.length >= NAME_SEARCH_FROM" class="h-11 bg-card">
           <InputGroupAddon><Search aria-hidden="true" /></InputGroupAddon>
           <InputGroupInput v-model="query" type="search" autocomplete="off" placeholder="Buscar seu nome" aria-label="Buscar seu nome" />

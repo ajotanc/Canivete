@@ -87,6 +87,8 @@ export interface GroupInfo {
   participantCount: number
   /** Cor do grupo: uma da lista ou #RRGGBB; framboesa quando o organizador não escolheu. */
   color: string
+  /** Id da imagem de capa no bucket (`santaCoverUrl` monta o endereço); null sem imagem. Ausente numa Function antiga. */
+  cover?: string | null
   /** Nomes do grupo e se cada pessoa já criou o PIN (primeiro acesso). */
   members: { name: string; hasPin: boolean }[]
 }
@@ -196,6 +198,11 @@ export function resetDraw(input: { groupId: string }, execute?: Execute) {
 
 export function setColor(input: { groupId: string; color: string }, execute?: Execute) {
   return callSanta<{ color: string }>('setColor', { ...input }, execute)
+}
+
+/** Põe ou troca a imagem de capa (`image`: WebP em base64) ou tira (`image: null`); a anterior sai do bucket. */
+export function setCover(input: { groupId: string; image: string | null }, execute?: Execute) {
+  return callSanta<{ cover: string | null }>('setCover', { ...input }, execute)
 }
 
 export function addParticipant(input: { groupId: string; name: string }, execute?: Execute) {

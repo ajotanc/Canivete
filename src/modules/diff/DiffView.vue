@@ -66,8 +66,8 @@ async function copy() {
   <section class="space-y-8">
     <PageHeader filled :icon="FileDiff" title="Comparador de texto" description="Cole duas versões de um texto e veja o que foi acrescentado, removido ou trocado, linha a linha e palavra a palavra.">
       <FactList>
-        <FactTile :icon="Plus" label="Mostra">O que mudou</FactTile>
-        <FactTile :icon="ArrowLeftRight" label="Detalhe">Por palavra</FactTile>
+        <FactTile :icon="Plus" label="Mostra">Mudanças</FactTile>
+        <FactTile :icon="ArrowLeftRight" label="Destaca">Palavras</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Fica no aparelho</FactTile>
       </FactList>
     </PageHeader>

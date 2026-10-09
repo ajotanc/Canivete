@@ -58,7 +58,7 @@ const css = (rgb: Rgb | null, fallback: string) => (rgb ? toHex(rgb) : fallback)
   <section class="space-y-8">
     <PageHeader filled :icon="Palette" title="Cores" description="Escolha uma cor, copie em HEX, RGB ou HSL e confira se o contraste do texto passa nas regras de acessibilidade.">
       <FactList>
-        <FactTile :icon="Pipette" label="Formatos">HEX, RGB, HSL</FactTile>
+        <FactTile :icon="Pipette" label="Formatos">HEX, RGB</FactTile>
         <FactTile :icon="Contrast" label="Contraste">WCAG</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>

@@ -63,7 +63,7 @@ async function copy(value: string, message: string) {
     <PageHeader filled :icon="FileKey" title="Decodificador de JWT" description="Cole um token JWT para ler o cabeçalho e o conteúdo, ver se expirou e conferir a assinatura com a chave.">
       <FactList>
         <FactTile :icon="BadgeCheck" label="Lê">Conteúdo</FactTile>
-        <FactTile :icon="KeyRound" label="Assinatura">HS256 a 512</FactTile>
+        <FactTile :icon="KeyRound" label="Assinatura">HMAC</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Fica no aparelho</FactTile>
       </FactList>
     </PageHeader>

@@ -61,7 +61,7 @@ function onMode(next: unknown) {
     <PageHeader filled :icon="KeyRound" title="Gerador de senhas" description="Crie senhas e frases aleatórias fortes, com o tamanho e os caracteres que o site pedir.">
       <FactList>
         <FactTile :icon="Dices" label="Sorteio">Seguro</FactTile>
-        <FactTile :icon="ShieldCheck" label="Senha">Não sai daqui</FactTile>
+        <FactTile :icon="ShieldCheck" label="Senha">Fica aqui</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>

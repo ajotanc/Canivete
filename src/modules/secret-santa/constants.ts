@@ -19,6 +19,8 @@ export const LIMITS = {
   post: 300,
   slugMin: 3,
   slugMax: 40,
+  /** Imagem de capa já convertida para WebP, em bytes (igual à Function). */
+  coverBytes: 1_500_000,
   /** Só da tela: tamanho máximo do texto digitado no campo de valor ("R$ 1.000.000,00"). */
   budgetInput: 20,
 } as const

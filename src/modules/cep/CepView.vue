@@ -74,7 +74,7 @@ const fields = (address: Address) =>
   <section class="space-y-8">
     <PageHeader filled :icon="MapPin" title="Consulta de CEP" description="Descubra o endereço de um CEP, ou o CEP de uma rua, com dados dos Correios.">
       <FactList>
-        <FactTile :icon="Navigation" label="Busca">CEP ou rua</FactTile>
+        <FactTile :icon="Navigation" label="Busca por">CEP, rua</FactTile>
         <FactTile :icon="Globe" label="Fonte">ViaCEP</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>

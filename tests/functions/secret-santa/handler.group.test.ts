@@ -94,6 +94,7 @@ describe('getGroup', () => {
       eventDate: '',
       status: 'open',
       color: 'berry',
+      cover: null,
       participantCount: 2,
       members: [
         { name: 'Lia', hasPin: true },

@@ -41,7 +41,7 @@ function swap() {
     <PageHeader filled :icon="Ruler" title="Conversor de unidades" description="Converta comprimento, peso, volume, temperatura, área, velocidade, tempo e dados.">
       <FactList>
         <FactTile :icon="Layers" label="Grupos">8 tipos</FactTile>
-        <FactTile :icon="Scale" label="Medidas">Do dia a dia</FactTile>
+        <FactTile :icon="Scale" label="Medidas">Comuns</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>

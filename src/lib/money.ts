@@ -1,9 +1,30 @@
-const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+const formatters = new Map<string, Intl.NumberFormat>()
 
-/** Formata um valor em reais para exibir: 50 vira "R$ 50,00". Vazio (null/NaN) vira "". */
-export function formatMoney(value: number | null | undefined): string {
+/** Formatador da moeda, sempre com 2 casas (a máscara conta os dígitos em centavos, inclusive no iene). */
+function formatter(currency: string): Intl.NumberFormat {
+  let found = formatters.get(currency)
+  if (!found) {
+    found = new Intl.NumberFormat('pt-BR', { style: 'currency', currency, minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    formatters.set(currency, found)
+  }
+  return found
+}
+
+/**
+ * Formata um valor para exibir: 50 vira "R$ 50,00" (ou "US$ 50,00" com `currency` 'USD').
+ * Vazio (null/NaN) vira "".
+ */
+export function formatMoney(value: number | null | undefined, currency = 'BRL'): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return ''
-  return BRL.format(value)
+  return formatter(currency).format(value)
+}
+
+const BRL_WHOLE = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
+
+/** Valor em reais para caber em espaço curto (caixa de fato do cabeçalho): sem centavos quando é redondo ("R$ 100"). */
+export function formatMoneyShort(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return ''
+  return Number.isInteger(value) ? BRL_WHOLE.format(value) : formatMoney(value)
 }
 
 /**
@@ -17,7 +38,7 @@ export function parseMoney(text: string | null | undefined): number | null {
   return Number(digits) / 100
 }
 
-/** Máscara de digitação: aplica o formato de moeda ao texto atual do campo. */
-export function maskMoney(text: string): string {
-  return formatMoney(parseMoney(text))
+/** Máscara de digitação: aplica o formato da moeda (real por padrão) ao texto atual do campo. */
+export function maskMoney(text: string, currency = 'BRL'): string {
+  return formatMoney(parseMoney(text), currency)
 }

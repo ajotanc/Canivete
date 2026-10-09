@@ -12,7 +12,7 @@ Qualquer pessoa no Brasil, quase sempre no celular. O caso típico: alguém rece
 
 ## Product Purpose
 
-Canivete é um hub público de ferramentas utilitárias pequenas. Cada ferramenta resolve uma única tarefa e é um módulo independente. Hoje: sorteador de nomes (animação, histórico, link verificável) e amigo secreto (grupo, PIN por pessoa, lista de desejos, perguntas anônimas, mural). Sucesso: a pessoa abre, resolve e sai sem atrito, e tem vontade de voltar e de mandar o link para outras pessoas.
+Canivete é um hub público de ferramentas utilitárias pequenas. Cada ferramenta resolve uma única tarefa e é um módulo independente. Hoje são 30, de calculadoras e conversores a sorteios; as duas que usam servidor são o sorteador de nomes (com link verificável) e o amigo secreto (grupo, PIN por pessoa, lista de desejos, perguntas anônimas, mural). A lista completa está no `README.md`. Sucesso é a pessoa resolver o que veio fazer sem tropeçar, voltar outras vezes e mandar o link para outras pessoas.
 
 ## Positioning
 
@@ -23,11 +23,11 @@ Uma caixa de ferramentas sem cadastro para usar (hoje também sem anúncios, mas
 - Abertura por links compartilhados no WhatsApp; uso em telas pequenas, rede móvel, sessões curtas.
 - Convidados entram no amigo secreto com nome e PIN de 4 a 6 números, sem conta.
 - Organizador entra com e-mail e senha (Appwrite). O sorteio do amigo secreto roda no servidor (Appwrite Function); o sorteador de nomes roda no navegador e grava um registro com hash verificável.
-- Crescimento esperado: muitas ferramentas (10 ou mais). A home precisa escalar com busca, categorias e acesso rápido; adicionar uma ferramenta é criar uma pasta em `src/modules/` com um `manifest.ts`.
+- A lista de ferramentas continua crescendo. A home escala com busca (por palavras, no campo da página e na paleta Ctrl/⌘ K); adicionar uma ferramenta é criar uma pasta em `src/modules/` com um `manifest.ts`.
 
 ## Capabilities and Constraints
 
-- Stack existente: Vue 3, Vite, TypeScript, Vue Router, Tailwind CSS v4, shadcn-vue (Reka UI), @lucide/vue, Appwrite. Estilo apenas com classes utilitárias do Tailwind (sem `<style>` nos componentes); componentes de UI do shadcn-vue em `src/components/ui/`.
+- Stack existente: Vue 3, Vite, TypeScript, Vue Router, Tailwind CSS v4, shadcn-vue (Reka UI), @lucide/vue, Appwrite. Estilo com classes utilitárias do Tailwind; `<style>` só para animação que o Tailwind não cobre (transições do Vue e keyframes, como na carta do amigo secreto e no placar). Componentes de UI do shadcn-vue em `src/components/ui/`.
 - Convenções: código, rotas e chaves em inglês; textos, mensagens e comentários em português (pt-BR).
 - Um módulo nunca importa de outro; o núcleo nunca importa de um módulo específico.
 - Tema claro e escuro; PWA com atualização por aviso.
@@ -35,11 +35,11 @@ Uma caixa de ferramentas sem cadastro para usar (hoje também sem anúncios, mas
 
 ## Brand Commitments
 
-Nome: Canivete. Metáfora de canivete suíço (várias ferramentas, uma só peça) é a ideia de produto; a identidade visual atual (neutra, padrão shadcn) é provisória e será substituída. O usuário exige aparência profissional, moderna e tecnológica, sem cara de interface gerada por IA, e quer que as pessoas tenham vontade de usar.
+Nome: Canivete. A ideia de produto vem do canivete suíço: várias ferramentas numa peça só. A identidade visual está em `DESIGN.md` (cada ferramenta com a sua cor de cabo). O dono quer uma aparência profissional e moderna, sem cara de interface gerada por IA, que dê vontade de usar.
 
 ## Evidence on Hand
 
-Duas ferramentas funcionando em `src/modules/raffle` e `src/modules/secret-santa`. Não há depoimentos, números de uso, clientes ou logotipo definitivo; nada disso deve ser inventado.
+As 30 ferramentas funcionando em `src/modules/`. Não há depoimentos, números de uso nem clientes, e nada disso deve ser inventado.
 
 ## Product Principles
 
@@ -51,4 +51,4 @@ Duas ferramentas funcionando em `src/modules/raffle` e `src/modules/secret-santa
 
 ## Accessibility & Inclusion
 
-Contraste legível em telas pequenas ao sol, foco visível, alvos de toque confortáveis, respeito a prefers-reduced-motion, formulários com rótulos e erros claros. Português do Brasil, sem jargão técnico.
+Contraste legível em telas pequenas ao sol, foco visível, alvos de toque confortáveis, formulários com rótulos e erros claros. Movimento respeita prefers-reduced-motion, com uma exceção decidida pelo dono: nas ferramentas em que o giro é o conteúdo (moeda, dados, roleta, sorteio) a animação sempre acontece. Português do Brasil, sem jargão técnico.

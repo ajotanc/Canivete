@@ -57,7 +57,7 @@ const age = computed(() => {
   <section class="space-y-8">
     <PageHeader filled :icon="CalendarDays" title="Calculadora de datas" description="Descubra quantos dias faltam, some prazos em dias corridos ou úteis e calcule uma idade exata.">
       <FactList>
-        <FactTile :icon="CalendarRange" label="Dias">Corridos e úteis</FactTile>
+        <FactTile :icon="CalendarRange" label="Prazos">Dias úteis</FactTile>
         <FactTile :icon="PartyPopper" label="Feriados">Nacionais</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>

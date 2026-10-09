@@ -82,8 +82,8 @@ function onSecurity(next: unknown) {
   <section class="space-y-8">
     <PageHeader filled :icon="QrCode" title="Gerador de QR Code" description="Transforme um link, um texto, o Wi-Fi ou um cartão de contato em QR Code e baixe a imagem.">
       <FactList>
-        <FactTile :icon="Link2" label="Tipos">Link e mais</FactTile>
-        <FactTile :icon="QrCode" label="Imagem">PNG e SVG</FactTile>
+        <FactTile :icon="Link2" label="Tipos">Link, Wi-Fi</FactTile>
+        <FactTile :icon="QrCode" label="Baixa em">PNG, SVG</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>
@@ -202,7 +202,7 @@ function onSecurity(next: unknown) {
       <Card class="lg:sticky lg:top-20">
         <CardHeader>
           <CardTitle class="text-lg">QR Code</CardTitle>
-          <CardDescription>Gerado no seu navegador; nada é enviado a nenhum servidor.</CardDescription>
+          <CardDescription>Gerado no seu navegador, sem passar por servidor.</CardDescription>
         </CardHeader>
         <CardContent>
           <QrCodeCard :value="value" :dark="dark" :filename="filename" label="QR Code gerado" />

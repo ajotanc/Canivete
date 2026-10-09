@@ -33,4 +33,11 @@ describe('maskMoney', () => {
     expect(nbsp(maskMoney('R$ 0,555'))).toBe('R$ 5,55')
     expect(maskMoney('abc')).toBe('')
   })
+
+  it('usa o símbolo da moeda pedida, sempre com 2 casas', () => {
+    expect(nbsp(maskMoney('R$ 10,00', 'USD'))).toBe('US$ 10,00')
+    expect(nbsp(maskMoney('US$ 10,00', 'EUR'))).toBe('€ 10,00')
+    expect(nbsp(maskMoney('1000', 'JPY'))).toBe('JP¥ 10,00')
+    expect(parseMoney(maskMoney('1234', 'CAD'))).toBe(12.34)
+  })
 })

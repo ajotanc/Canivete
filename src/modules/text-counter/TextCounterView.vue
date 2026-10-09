@@ -45,7 +45,7 @@ const limits = computed(() =>
       <Card>
         <CardHeader>
           <CardTitle class="text-lg">Seu texto</CardTitle>
-          <CardDescription>O texto fica só no seu aparelho; nada é enviado.</CardDescription>
+          <CardDescription>O texto não sai do seu aparelho.</CardDescription>
         </CardHeader>
         <CardContent>
           <Field>

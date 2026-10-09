@@ -165,8 +165,8 @@ onBeforeUnmount(() => {
   <section class="space-y-8">
     <PageHeader filled :icon="ImageDown" title="Comprimir imagem" description="Reduza o peso e o tamanho de uma foto, escolha o formato e baixe pronta para enviar ou publicar.">
       <FactList>
-        <FactTile :icon="Minimize2" label="Reduz">Peso e tamanho</FactTile>
-        <FactTile :icon="Sliders" label="Formatos">JPEG, WebP, PNG</FactTile>
+        <FactTile :icon="Minimize2" label="Reduz">O peso</FactTile>
+        <FactTile :icon="Sliders" label="Formatos">3 tipos</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem enviar nada</FactTile>
       </FactList>
     </PageHeader>

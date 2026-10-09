@@ -58,8 +58,8 @@ async function copy() {
   <section class="space-y-8">
     <PageHeader filled :icon="ReceiptText" title="Valor por extenso" description="Escreva um valor em reais ou um número por extenso, pronto para recibo, cheque e contrato.">
       <FactList>
-        <FactTile :icon="Hash" label="Até">999 bilhões</FactTile>
-        <FactTile :icon="TextCursorInput" label="Texto">Em português</FactTile>
+        <FactTile :icon="Hash" label="Limite">999 bi</FactTile>
+        <FactTile :icon="TextCursorInput" label="Idioma">Português</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>

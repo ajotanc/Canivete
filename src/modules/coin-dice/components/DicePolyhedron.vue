@@ -16,6 +16,8 @@ const props = defineProps<{
   rollKey: number
   /** Verdadeiro se o dado já nasce no meio de uma jogada (a primeira, ou dados novos) e deve girar ao aparecer. */
   rolling: boolean
+  /** Atraso do início do giro (ms), para os dados não saírem exatamente juntos. */
+  delay?: number
   /** Distância do centro até o vértice mais longe, em px. */
   radius: number
 }>()
@@ -65,7 +67,7 @@ function play(): void {
   if (body.value) {
     body.value.animate(
       [{ transform: spun(resting, 0) }, { transform: spun(to, 1080) }],
-      { duration: ROLL_MS, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' },
+      { duration: ROLL_MS, delay: props.delay ?? 0, fill: 'backwards', easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' },
     )
   }
   resting = to

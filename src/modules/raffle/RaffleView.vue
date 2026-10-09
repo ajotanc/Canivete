@@ -70,7 +70,7 @@ async function onCopy() {
   <section class="space-y-8">
     <PageHeader filled :icon="Dices" title="Sorteador de nomes" description="Cole a lista, escolha quantos vencedores e sorteie.">
       <FactList>
-        <FactTile :icon="ListChecks" label="Na lista">{{ parsed.names.length }} {{ parsed.names.length === 1 ? 'nome' : 'nomes' }}</FactTile>
+        <FactTile :icon="ListChecks" label="Nomes">{{ parsed.names.length }}</FactTile>
         <FactTile :icon="ShieldCheck" label="Resultado">Verificável</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>

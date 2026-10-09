@@ -45,7 +45,7 @@ function useAsInput() {
     <PageHeader filled :icon="CaseSensitive" title="Ferramentas de texto" description="Troque maiúsculas e minúsculas, gere slugs, limpe listas e codifique em Base64 ou URL.">
       <FactList>
         <FactTile :icon="Replace" label="Opções">17 ações</FactTile>
-        <FactTile :icon="Braces" label="Códigos">Base64 e URL</FactTile>
+        <FactTile :icon="Braces" label="Base64 e URL">Codifica</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>
@@ -77,7 +77,7 @@ function useAsInput() {
         <Card>
           <CardHeader>
             <CardTitle class="text-lg">Seu texto</CardTitle>
-            <CardDescription>O texto fica só no seu aparelho; nada é enviado.</CardDescription>
+            <CardDescription>O texto não sai do seu aparelho.</CardDescription>
           </CardHeader>
           <CardContent>
             <Field>

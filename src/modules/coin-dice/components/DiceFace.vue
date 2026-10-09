@@ -21,6 +21,15 @@ const RADIUS_PAIR = 50
 const isCube = computed(() => props.sides === 6)
 const isPair = computed(() => props.sides === 100)
 
+/** Cada dado sai uma fração depois do outro, como se não tivessem sido soltos no mesmo instante (ms, bem pouco). */
+const STAGGER_MS = 160
+const delay = ref(Math.round(Math.random() * STAGGER_MS))
+watch(
+  () => props.rollKey,
+  () => (delay.value = Math.round(Math.random() * STAGGER_MS)),
+  { flush: 'pre' },
+)
+
 const lift = ref<HTMLElement>()
 const body = ref<HTMLElement>()
 
@@ -44,7 +53,7 @@ function hop(): void {
       { transform: 'translateY(0)', offset: DICE_TABLE_HITS[1] },
       { transform: 'translateY(0)' },
     ],
-    { duration: ROLL_MS },
+    { duration: ROLL_MS, delay: delay.value, fill: 'backwards' },
   )
 }
 
@@ -55,7 +64,7 @@ function spinCube(from?: { x: number; y: number }): void {
   const to = { x: spinTo(start.x, base.x), y: spinTo(start.y, base.y) }
   rotation.value = to
   if (body.value) {
-    body.value.animate([{ transform: `rotateX(${start.x}deg) rotateY(${start.y}deg)` }, { transform: `rotateX(${to.x}deg) rotateY(${to.y}deg)` }], { duration: ROLL_MS, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' })
+    body.value.animate([{ transform: `rotateX(${start.x}deg) rotateY(${start.y}deg)` }, { transform: `rotateX(${to.x}deg) rotateY(${to.y}deg)` }], { duration: ROLL_MS, delay: delay.value, fill: 'backwards', easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' })
   }
 }
 
@@ -111,11 +120,11 @@ const label = computed(() => (isPair.value ? 'd%' : `d${props.sides}`))
 
     <!-- d100: dois d10, dezenas e unidades -->
     <div v-else-if="isPair" class="flex items-end gap-2">
-      <DicePolyhedron kind="d10" :labels="TENS" :face="tensIndex" :roll-key="rollKey" :rolling="rolling" :radius="RADIUS_PAIR" />
-      <DicePolyhedron kind="d10" :labels="ONES" :face="onesIndex" :roll-key="rollKey" :rolling="rolling" :radius="RADIUS_PAIR" />
+      <DicePolyhedron kind="d10" :labels="TENS" :face="tensIndex" :roll-key="rollKey" :rolling="rolling" :delay="delay" :radius="RADIUS_PAIR" />
+      <DicePolyhedron kind="d10" :labels="ONES" :face="onesIndex" :roll-key="rollKey" :rolling="rolling" :delay="Math.round(delay / 2 + 50)" :radius="RADIUS_PAIR" />
     </div>
 
     <!-- d4, d8, d10, d12, d20 -->
-    <DicePolyhedron v-else :kind="kind" :labels="LABELS[kind]" :face="faceIndex" :roll-key="rollKey" :rolling="rolling" :radius="RADIUS" />
+    <DicePolyhedron v-else :kind="kind" :labels="LABELS[kind]" :face="faceIndex" :roll-key="rollKey" :rolling="rolling" :delay="delay" :radius="RADIUS" />
   </div>
 </template>

@@ -16,6 +16,8 @@ export interface GroupRow {
   exclusions: string[]
   /** Cor do grupo; null vale framboesa. */
   color: string | null
+  /** Id do arquivo da imagem de capa no bucket de capas; null sem imagem. */
+  cover: string | null
 }
 
 export interface ParticipantRow {
@@ -68,6 +70,11 @@ export interface SantaDb {
   setGroupSlug(id: string, slug: string): Promise<void>
   setGroupExclusions(id: string, exclusions: string[]): Promise<void>
   setGroupColor(id: string, color: string): Promise<void>
+  setGroupCover(id: string, cover: string | null): Promise<void>
+  /** Guarda a imagem de capa (WebP) no bucket e devolve o id do arquivo. */
+  saveCoverFile(image: Uint8Array): Promise<string>
+  /** Apaga uma imagem de capa do bucket; arquivo que já não existe não é erro. */
+  deleteCoverFile(fileId: string): Promise<void>
   /** Apaga o grupo e tudo dele: participantes, perguntas e recados. */
   deleteGroup(id: string): Promise<void>
   createParticipant(participant: Omit<ParticipantRow, 'id'>): Promise<string>

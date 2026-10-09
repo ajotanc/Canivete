@@ -65,8 +65,8 @@ function formatDate(iso: string): string {
           <Badge variant="glass" class="gap-1.5 py-1"><ShieldCheck aria-hidden="true" />Registro verificado</Badge>
         </template>
         <FactList>
-          <FactTile :icon="Users" label="Participantes">{{ raffle.participants.length }} {{ raffle.participants.length === 1 ? 'nome' : 'nomes' }}</FactTile>
-          <FactTile :icon="Trophy" label="Sorteados">{{ raffle.winners.length }} {{ raffle.winners.length === 1 ? 'vencedor' : 'vencedores' }}</FactTile>
+          <FactTile :icon="Users" label="Nomes">{{ raffle.participants.length }}</FactTile>
+          <FactTile :icon="Trophy" label="Vencedores">{{ raffle.winners.length }}</FactTile>
           <FactTile v-if="verified" :icon="ShieldCheck" label="Registro" tone="paper">Não foi alterado depois de criado</FactTile>
           <FactTile v-else :icon="AlertTriangle" label="Registro" tone="paper">Não confere com o original</FactTile>
         </FactList>

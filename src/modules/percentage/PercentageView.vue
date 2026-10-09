@@ -78,7 +78,7 @@ const interest = computed(() => {
     <PageHeader filled :icon="Percent" title="Calculadora de porcentagem" description="Calcule porcentagens, descontos, variações e juros sem abrir a planilha.">
       <FactList>
         <FactTile :icon="Calculator" label="Contas">4 tipos</FactTile>
-        <FactTile :icon="PiggyBank" label="Juros">Simples e compostos</FactTile>
+        <FactTile :icon="PiggyBank" label="Calcula">Juros</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>

@@ -5,14 +5,14 @@ Hub público de ferramentas. Vue 3 + Vite + TypeScript + Tailwind v4 + shadcn-vu
 ## Desenvolvimento
 
 ```bash
-npm install
+pnpm install
 cp .env.example .env.local   # preencha as variáveis do Appwrite
-npm run dev
-npm test                     # Vitest; todos os testes ficam em tests/
-npm run build
+pnpm dev
+pnpm test                    # Vitest; todos os testes ficam em tests/
+pnpm build
 ```
 
-Ícones do PWA: edite `public/icon.svg` e rode `npm run generate-pwa-assets`.
+Ícones do PWA: edite `public/icon.svg` e rode `pnpm generate-pwa-assets`.
 
 ## Estrutura
 
@@ -47,13 +47,16 @@ npm run build
 | UUID e hash (v4, v7, SHA-1/256/384/512 e HMAC) | `hash` | não |
 | Lorem ipsum (parágrafos, frases ou palavras; latim ou português; HTML) | `lorem` | não |
 | Comprimir imagem (reduz peso e largura; aceita JPEG, PNG, WebP, GIF, BMP, AVIF e SVG; saída JPEG, WebP ou PNG) | `image` | não |
-| Cara ou coroa e dados (D4 a D100) | `coin-dice` | não |
+| Cara ou coroa e dados (toque na moeda; dados de D4 a D100) | `coin-dice` | não |
 | Roleta (2 a 24 opções, com opção de tirar cada sorteada) | `wheel` | não |
 | Calculadora de horas (entre horários, somar e subtrair, hora de saída) | `hours` | não |
 | Decodificador de JWT (cabeçalho, conteúdo, validade e assinatura HS256/384/512) | `jwt` | não |
 | Comparador de texto (diff por linha e por palavra) | `diff` | não |
+| Conversor de moeda (cotação atualizada a cada minuto) | `currency` | não |
+| Feriados do ano (nacionais, dia da semana e quantos dias faltam) | `holidays` | não |
+| Placar (cores por jogador, meta da partida, vitórias, desfazer e telão) | `scoreboard` | não |
 
-A consulta de CEP é a única que chama um serviço externo (`viacep.com.br`, direto do navegador); as outras rodam só no aparelho.
+Três ferramentas chamam um serviço externo, direto do navegador: a consulta de CEP (`viacep.com.br`), o conversor de moeda (`economia.awesomeapi.com.br`) e os feriados (`brasilapi.com.br`). As outras rodam só no aparelho.
 
 ## Som
 
@@ -91,9 +94,10 @@ O projeto usa o serviço `TablesDB` do SDK do Appwrite (`createRow` / `getRow`).
 O módulo `secret-santa` guarda segredos (PINs e pares do sorteio), então o navegador nunca lê as tabelas. Toda leitura e escrita passa por uma Appwrite Function (`functions/secret-santa/`), que valida os dados, confere nome e PIN, sorteia e devolve a cada pessoa só o próprio par. As tabelas `santa_groups`, `santa_participants`, `santa_questions` e `santa_posts` não têm permissão para ninguém.
 
 - O organizador entra com uma conta do Appwrite Auth (e-mail e senha), cria o grupo, cadastra as pessoas pelo nome no painel e manda um único link para o grupo. Cada pessoa escolhe o próprio nome e, no primeiro acesso, cria o PIN. Se alguém escolher o nome errado ou esquecer o PIN, o organizador zera o PIN no painel.
-- O painel do organizador também define o endereço amigável do link, a cor do grupo, o valor sugerido, a data e as regras de quem não pode tirar quem, faz e refaz o sorteio e apaga o grupo. Cada pessoa tem lista de desejos, perguntas anônimas para quem tirou e o mural do grupo.
-- No front, defina `VITE_APPWRITE_SANTA_FUNCTION_ID` (normalmente `secret-santa`) além de `VITE_APPWRITE_ENDPOINT` e `VITE_APPWRITE_PROJECT_ID`.
-- Tabelas, variáveis e publicação da Function estão em [`functions/secret-santa/README.md`](functions/secret-santa/README.md).
+- O painel do organizador também define o endereço amigável do link, a cor do grupo, a imagem do cabeçalho, o valor sugerido, a data e as regras de quem não pode tirar quem, faz e refaz o sorteio e apaga o grupo. Cada pessoa tem lista de desejos, perguntas anônimas para quem tirou e o mural do grupo.
+- No front, defina `VITE_APPWRITE_SANTA_FUNCTION_ID` (normalmente `secret-santa`) além de `VITE_APPWRITE_ENDPOINT` e `VITE_APPWRITE_PROJECT_ID`. `VITE_APPWRITE_SANTA_COVERS_BUCKET_ID` só é preciso se o bucket das capas não se chamar `santa_covers`.
+- A imagem do cabeçalho vira WebP no navegador e sobe pela Function, que grava no bucket `santa_covers` (leitura pública, só a Function grava) e apaga a anterior quando o organizador troca ou tira a foto.
+- Tabelas, bucket, variáveis e publicação da Function estão em [`functions/secret-santa/README.md`](functions/secret-santa/README.md).
 - O PIN serve só para a pessoa ver o próprio par, editar a lista de desejos, perguntar e escrever no mural. Ele é guardado como hash `scrypt`, nunca vai para a URL e só fica no `sessionStorage` da aba enquanto ela está aberta.
 - As ações de administração só valem para o dono do grupo: a Function compara o `ownerId` do grupo com o id da conta que fez a chamada (cabeçalho `x-appwrite-user-id`, preenchido pela Appwrite).
 

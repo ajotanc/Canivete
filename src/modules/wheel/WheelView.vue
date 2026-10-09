@@ -119,7 +119,7 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="space-y-8">
-    <PageHeader filled :icon="CircleDot" title="Roleta" description="Coloque as opções, gire a roleta e deixe a sorte decidir. Serve para o almoço, o filme, a vez de quem lava a louça.">
+    <PageHeader filled :icon="CircleDot" title="Roleta" description="Escreva as opções e gire para decidir o almoço, o filme ou quem lava a louça.">
       <FactList>
         <FactTile :icon="Dices" label="Opções">2 a 24</FactTile>
         <FactTile :icon="RotateCw" label="Giro">Sem vício</FactTile>

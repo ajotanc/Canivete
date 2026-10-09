@@ -7,6 +7,7 @@ import { Kbd } from '@/components/ui/kbd'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { soundEnabled, toggleSound } from '@/core/effects/sound'
 import CommandPalette from '@/core/layout/CommandPalette.vue'
+import CookieNotice from '@/core/layout/CookieNotice.vue'
 import { tools } from '@/core/modules/registry'
 import { useTheme } from '@/core/theme/useTheme'
 
@@ -83,10 +84,15 @@ watchEffect(() => {
     <footer class="border-t">
       <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-sm text-muted-foreground">
         <p>Canivete: ferramentas simples para o dia a dia.</p>
-        <p class="max-sm:hidden">Aperte <Kbd>/</Kbd> para buscar</p>
+        <nav class="flex items-center gap-4" aria-label="Documentos">
+          <RouterLink to="/privacy" class="underline-offset-4 hover:text-foreground hover:underline">Privacidade</RouterLink>
+          <RouterLink to="/terms" class="underline-offset-4 hover:text-foreground hover:underline">Termos de uso</RouterLink>
+          <span class="max-sm:hidden">Aperte <Kbd>/</Kbd> para buscar</span>
+        </nav>
       </div>
     </footer>
 
     <CommandPalette v-model:open="paletteOpen" />
+    <CookieNotice />
   </div>
 </template>

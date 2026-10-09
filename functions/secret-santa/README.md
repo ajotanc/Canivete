@@ -1,10 +1,10 @@
 # Function `secret-santa` (amigo secreto)
 
-Appwrite Function em Node 22 + TypeScript. É a única porta de entrada do módulo de amigo secreto: as tabelas não têm permissão para ninguém e só a Function lê e grava nelas.
+Appwrite Function em Node 22 + TypeScript. É a única porta de entrada do módulo de amigo secreto: as tabelas não têm permissão para ninguém e só a Function lê e grava nelas. O bucket das capas só libera leitura; quem grava e apaga é a Function.
 
 ## Tabelas
 
-As duas ficam no mesmo banco do sorteador. Nenhuma tem permissões (nem para `any`), e a segurança por linha fica desligada.
+As quatro ficam no mesmo banco do sorteador. Nenhuma tem permissões (nem para `any`), e a segurança por linha fica desligada.
 
 ### `santa_groups`
 
@@ -18,10 +18,11 @@ As duas ficam no mesmo banco do sorteador. Nenhuma tem permissões (nem para `an
 | `slug` | string | 40 | não (padrão `null`) |
 | `exclusions` | string, **array** | 80 por item (`"idA|idB"`, em ordem) | não (padrão `null`) |
 | `color` | string | 20 | não (padrão `null`, vale framboesa; nome da paleta ou `#rrggbb`) |
+| `cover` | string | 36 | não (padrão `null`; id do arquivo da imagem de capa no bucket `santa_covers`) |
 
 Índice: `idx_owner` (key) em `ownerId`. O `slug` não tem índice único: vários grupos podem repetir o texto do link. A data de criação não tem coluna própria: use o `$createdAt` que o Appwrite já guarda em toda linha.
 
-`ownerId` é o id da conta (Appwrite Auth, e-mail e senha) do organizador que criou o grupo. Só ele administra o grupo e a lista "meus grupos" vem dele; a Function lê o id no cabeçalho `x-appwrite-user-id`. O id do grupo é um código curto aleatório (6 caracteres, ex.: `k7x2m9`). `slug` é o texto opcional e repetível do link (`/secret-santa/g/k7x2m9/familia-da-bagunca`); quem identifica o grupo é o id. `deleteGroup` apaga o grupo com participantes, perguntas e recados.
+`ownerId` é o id da conta (Appwrite Auth, e-mail e senha) do organizador que criou o grupo. Só ele administra o grupo e a lista "meus grupos" vem dele; a Function lê o id no cabeçalho `x-appwrite-user-id`. O id do grupo é um código curto aleatório (6 caracteres, ex.: `k7x2m9`). `slug` é o texto opcional e repetível do link (`/secret-santa/g/k7x2m9/familia-da-bagunca`); quem identifica o grupo é o id. `deleteGroup` apaga o grupo com participantes, perguntas, recados e a imagem de capa.
 
 ### `santa_participants`
 
@@ -68,12 +69,25 @@ O `pinHash` e a `wishlist` ficam `null` até a pessoa fazer o primeiro acesso e 
 
 As colunas de texto são `string`, porque o servidor (1.8.1) não tem a rota de `varchar`. As colunas obrigatórias não têm valor padrão, porque o Appwrite não aceita padrão em coluna obrigatória. O código sempre grava `failedAttempts` e `isOrganizer`.
 
+## Bucket `santa_covers` (imagem de capa)
+
+Guarda a imagem que o organizador põe atrás do cabeçalho do grupo. O navegador converte a foto para WebP (até 1600 x 1000) antes de enviar; a Function confere que é um WebP inteiro de até 1,5 MB (`LIMITS.coverBytes`), grava no bucket e só então troca a coluna `cover` do grupo. Quando o organizador troca ou tira a imagem, ou exclui o grupo, o arquivo antigo sai do bucket.
+
+| Ajuste | Valor |
+|---|---|
+| Id | `santa_covers` |
+| Permissões | só **Read** para `any` (qualquer pessoa vê a capa pelo link); ninguém tem Create, Update ou Delete: só a Function grava |
+| Segurança por arquivo | desligada |
+| Tamanho máximo | 2 MB |
+| Extensões permitidas | `webp` |
+| Compressão e criptografia | desligadas (o WebP já vem comprimido) |
+
 ## Function
 
 - Id `secret-santa`, runtime `node-22`, timeout de 15 segundos.
 - Permissão de execução: `any` (os participantes entram sem conta, só com nome e PIN). O organizador usa conta e senha do *Auth* do Appwrite (e-mail/senha ativado); cadastre o domínio do site como plataforma Web. A Function só aceita `createGroup` e as ações de administração com o cabeçalho `x-appwrite-user-id` do dono.
 - Entrypoint `dist/main.js`, com os comandos de build `npm install && npm run build`.
-- Escopos da chave gerada por execução: `databases.read`, `databases.write`, `tables.read`, `tables.write`, `rows.read`, `rows.write`.
+- Escopos da chave gerada por execução: `databases.read`, `databases.write`, `tables.read`, `tables.write`, `rows.read`, `rows.write`, `files.read`, `files.write` (os dois últimos são da imagem de capa).
 
 ### Variáveis
 
@@ -86,6 +100,7 @@ Os nomes das variáveis, os ids padrão das tabelas, os cabeçalhos, os limites 
 | `SANTA_PARTICIPANTS_TABLE_ID` | não | padrão `santa_participants` |
 | `SANTA_QUESTIONS_TABLE_ID` | não | padrão `santa_questions` |
 | `SANTA_POSTS_TABLE_ID` | não | padrão `santa_posts` |
+| `SANTA_COVERS_BUCKET_ID` | não | padrão `santa_covers` |
 | `APPWRITE_API_KEY` | não | veja abaixo |
 
 A Function usa a chave temporária que a Appwrite gera a cada execução (cabeçalho `x-appwrite-key`), limitada aos escopos acima. Por isso não é preciso criar nem guardar uma chave de API. Se `APPWRITE_API_KEY` for definida, ela tem prioridade; nesse caso, use uma chave só com os escopos de banco. Endpoint e projeto vêm das variáveis que a Appwrite injeta (`APPWRITE_FUNCTION_API_ENDPOINT` e `APPWRITE_FUNCTION_PROJECT_ID`).
@@ -108,4 +123,4 @@ O deployment precisa chegar ao estado `ready`. Se o build falhar, os logs aparec
 
 ## Front-end
 
-O site chama a Function pelo id, configurado em `VITE_APPWRITE_SANTA_FUNCTION_ID=secret-santa`.
+O site chama a Function pelo id, configurado em `VITE_APPWRITE_SANTA_FUNCTION_ID=secret-santa`. A capa é lida direto do bucket; se ele tiver outro id, defina também `VITE_APPWRITE_SANTA_COVERS_BUCKET_ID` (padrão `santa_covers`).

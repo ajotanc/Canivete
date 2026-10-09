@@ -7,7 +7,10 @@ export function createFakeDb() {
   const participants = new Map<string, ParticipantRow>()
   const questions = new Map<string, QuestionRow>()
   const posts: PostRow[] = []
+  /** Bucket de capas: id do arquivo e os bytes. */
+  const covers = new Map<string, Uint8Array>()
   let counter = 0
+  let failCoverUpdate = false
   let updatesLeft: number | null = null
 
   const db: SantaDb & {
@@ -15,12 +18,18 @@ export function createFakeDb() {
     participants: typeof participants
     questions: typeof questions
     posts: typeof posts
+    covers: typeof covers
     failUpdateParticipantAfter(n: number): void
+    failNextCoverUpdate(): void
   } = {
     groups,
     participants,
     questions,
     posts,
+    covers,
+    failNextCoverUpdate() {
+      failCoverUpdate = true
+    },
     failUpdateParticipantAfter(n) {
       updatesLeft = n
     },
@@ -40,6 +49,22 @@ export function createFakeDb() {
     async setGroupColor(id, color) {
       const group = groups.get(id)
       if (group) group.color = color
+    },
+    async setGroupCover(id, cover) {
+      if (failCoverUpdate) {
+        failCoverUpdate = false
+        throw new Error('falha simulada')
+      }
+      const group = groups.get(id)
+      if (group) group.cover = cover
+    },
+    async saveCoverFile(image) {
+      const id = `f${++counter}`
+      covers.set(id, image)
+      return id
+    },
+    async deleteCoverFile(fileId) {
+      covers.delete(fileId)
     },
     async setGroupExclusions(id, exclusions) {
       const group = groups.get(id)

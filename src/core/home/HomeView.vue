@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ArrowRight, Download, Search, SearchX, Wrench, Zap } from '@lucide/vue'
-import { computed, ref } from 'vue'
+import { ArrowRight, Download, Search, SearchX, Wrench, X, Zap } from '@lucide/vue'
+import { computed, ref, useTemplateRef } from 'vue'
 import { RouterLink } from 'vue-router'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
@@ -15,8 +15,12 @@ import { tools } from '@/core/modules/registry'
 const query = ref('')
 const visibleTools = computed(() => filterTools(tools, query.value, null))
 
+const searchInput = useTemplateRef<{ $el: HTMLInputElement }>('searchInput')
+
+/** Limpa a busca e devolve o foco ao campo, para a pessoa já digitar outra coisa. */
 function clearFilters() {
   query.value = ''
+  searchInput.value?.$el?.focus()
 }
 </script>
 
@@ -27,7 +31,7 @@ function clearFilters() {
       size="lg"
       :icon="Wrench"
       title="Ferramentas para o dia a dia"
-      description="Abra, resolva e compartilhe o resultado. Sem cadastro para usar."
+      description="Escolha uma ferramenta e use na hora, sem criar conta."
     >
       <FactList>
         <FactTile :icon="Wrench" label="Ferramentas">{{ tools.length }}</FactTile>
@@ -36,15 +40,39 @@ function clearFilters() {
       </FactList>
     </PageHeader>
 
-    <InputGroup class="bg-card sm:max-w-sm">
-      <InputGroupAddon>
-        <Search aria-hidden="true" />
-      </InputGroupAddon>
-      <InputGroupInput v-model="query" type="search" aria-label="Buscar ferramenta" placeholder="Buscar ferramenta" />
-      <InputGroupAddon align="inline-end" class="max-sm:hidden">
-        <Kbd>/</Kbd>
-      </InputGroupAddon>
-    </InputGroup>
+    <div class="space-y-2 sm:max-w-md">
+      <InputGroup class="h-12 rounded-xl bg-card">
+        <InputGroupAddon class="pl-4">
+          <Search class="size-5" aria-hidden="true" />
+        </InputGroupAddon>
+        <InputGroupInput
+          ref="searchInput"
+          v-model="query"
+          type="search"
+          enterkeyhint="search"
+          data-home-search
+          aria-label="Buscar ferramenta"
+          placeholder="Buscar ferramenta"
+          class="h-12 text-base [&::-webkit-search-cancel-button]:appearance-none"
+          @keydown.esc="clearFilters"
+        />
+        <InputGroupAddon align="inline-end" class="pr-1.5">
+          <button
+            v-if="query"
+            type="button"
+            class="flex size-11 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-hidden"
+            aria-label="Limpar busca"
+            @click="clearFilters"
+          >
+            <span class="flex size-6 items-center justify-center rounded-full bg-muted"><X class="size-3.5" aria-hidden="true" /></span>
+          </button>
+          <Kbd v-else class="mr-2 max-sm:hidden">/</Kbd>
+        </InputGroupAddon>
+      </InputGroup>
+      <p v-if="query && visibleTools.length > 0" class="px-1 text-sm text-muted-foreground tabular-nums" aria-live="polite">
+        {{ visibleTools.length === 1 ? '1 ferramenta encontrada' : `${visibleTools.length} ferramentas encontradas` }}
+      </p>
+    </div>
 
     <EmptyState v-if="visibleTools.length === 0" :icon="SearchX" description="Nenhuma ferramenta encontrada. Tente outra palavra.">
       <button type="button" class="text-sm font-medium underline underline-offset-4" @click="clearFilters">Limpar busca</button>

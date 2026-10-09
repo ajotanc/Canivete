@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { getLocalTimeZone, today, type DateValue } from '@internationalized/date'
-import { ArrowLeft, CalendarDays, CalendarIcon, Check, Clock, Copy, Dices, EllipsisVertical, Gift, KeyRound, Link2, Lock, LogOut, Palette, Pencil, RotateCcw, RefreshCw, SearchX, Trash2, TriangleAlert, UserPlus, Users } from '@lucide/vue'
+import { ArrowLeft, CalendarDays, Check, Clock, Dices, EllipsisVertical, Gift, ImagePlus, KeyRound, Link2, Lock, LogOut, Palette, Pencil, RotateCcw, RefreshCw, SearchX, Trash2, TriangleAlert, UserPlus, Users } from '@lucide/vue'
 import CardHeading from './components/CardHeading.vue'
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
@@ -17,6 +16,7 @@ import {
 import WhatsappIcon from '@/components/icons/WhatsappIcon.vue'
 import { applyGroupColor, COLOR_LABELS, colorLabel, colorProblem, isHexColor } from './lib/groupColor'
 import ConfirmDelete from '@/components/ConfirmDelete.vue'
+import CopyField from '@/components/CopyField.vue'
 import BoardPanel from './components/BoardPanel.vue'
 import ExclusionsCard from './components/ExclusionsCard.vue'
 import FactList from '@/components/FactList.vue'
@@ -24,15 +24,16 @@ import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Calendar } from '@/components/ui/calendar'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import EmptyState from '@/components/EmptyState.vue'
+import FileField from '@/components/FileField.vue'
+import { santaCoverUrl } from '@/core/services/appwrite'
+import { blobToBase64, coverFileProblem, toCoverWebp } from './lib/cover'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import { Item, ItemActions, ItemContent, ItemDescription, ItemGroup, ItemTitle } from '@/components/ui/item'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import CardSkeleton from '@/components/skeletons/CardSkeleton.vue'
@@ -55,14 +56,14 @@ import {
   resetPin,
   SantaApiError,
   setColor,
+  setCover,
   setSlug,
   updateGroup,
   type ParticipantSummary,
 } from './lib/api'
-import { dateValueToIso, eventYearRange, formatDateValue, isoToDateValue } from '@/lib/date'
+import DateField from '@/components/DateField.vue'
+import { DATE_PICKER } from '@/core/config'
 import { formatMoney, parseMoney } from '@/lib/money'
-import { makeRoomBelow } from '@/lib/scroll'
-import { cn } from '@/lib/utils'
 import { GROUP_COLORS, LIMITS, MIN_PARTICIPANTS_TO_DRAW } from './constants'
 import { eventCountdown, formatEventDate } from './lib/event'
 import { slugifyInput, trimSlug } from './lib/slug'
@@ -84,6 +85,11 @@ const resettingDraw = ref(false)
 const color = ref('berry')
 const customColor = ref('#0f766e')
 const savingColor = ref(false)
+/** Id da imagem de capa no bucket; null sem imagem. */
+const cover = ref<string | null>(null)
+const savingCover = ref(false)
+const removeCoverOpen = ref(false)
+const coverSrc = computed(() => santaCoverUrl(cover.value))
 const participants = ref<ParticipantSummary[]>([])
 const exclusions = ref<[string, string][]>([])
 const groupName = ref('')
@@ -95,16 +101,6 @@ const eventDate = ref('')
 const editName = ref('')
 const editBudget = ref('')
 const editDate = ref('')
-const editDateOpen = ref(false)
-const editYears = computed(() => eventYearRange(editDateValue.value))
-/** O Calendar usa `DateValue`; o grupo guarda a data como texto AAAA-MM-DD. */
-const editDateValue = computed<DateValue | undefined>({
-  get: () => isoToDateValue(editDate.value),
-  set: (value) => {
-    editDate.value = dateValueToIso(value)
-    editDateOpen.value = false
-  },
-})
 let editLoaded = false
 const savingGroup = ref(false)
 const renameTarget = ref<string | null>(null)
@@ -161,6 +157,7 @@ async function refresh(silent = false) {
     color.value = group.color
     if (isHexColor(group.color)) customColor.value = group.color
     applyGroupColor(group.color)
+    cover.value = group.cover ?? null
     groupName.value = group.name
     eventDate.value = group.eventDate
     budget.value = group.budget
@@ -209,15 +206,6 @@ async function onLoggedIn() {
 async function onLogout() {
   await logout()
   await router.push('/secret-santa')
-}
-
-async function copy(text: string, label: string) {
-  try {
-    await navigator.clipboard.writeText(text)
-    toast.success(`${label} copiado.`)
-  } catch {
-    toast.error('Não foi possível copiar. Selecione o texto e copie manualmente.')
-  }
 }
 
 async function onAdd() {
@@ -371,6 +359,41 @@ async function onColor(next: string) {
   }
 }
 
+/** A foto escolhida vira WebP no navegador e sobe pela Function, que apaga a imagem anterior do bucket. */
+async function onCoverFile(file: File) {
+  const problem = coverFileProblem(file)
+  if (problem) {
+    toast.error(problem)
+    return
+  }
+  savingCover.value = true
+  try {
+    const image = await blobToBase64(await toCoverWebp(file))
+    const result = await setCover({ groupId: groupId.value, image })
+    const replaced = cover.value !== null
+    cover.value = result.cover
+    toast.success(replaced ? 'Imagem trocada. A anterior foi apagada.' : 'Imagem do cabeçalho salva.')
+  } catch (e) {
+    toast.error(e instanceof SantaApiError || e instanceof Error ? e.message : 'Não foi possível salvar a imagem.')
+  } finally {
+    savingCover.value = false
+  }
+}
+
+async function onRemoveCover() {
+  savingCover.value = true
+  try {
+    await setCover({ groupId: groupId.value, image: null })
+    cover.value = null
+    removeCoverOpen.value = false
+    toast.success('Imagem tirada. O cabeçalho voltou a ficar só na cor do grupo.')
+  } catch (e) {
+    toast.error(e instanceof SantaApiError ? e.message : 'Não foi possível tirar a imagem.')
+  } finally {
+    savingCover.value = false
+  }
+}
+
 async function onRemove(name: string) {
   removing.value = true
   try {
@@ -463,6 +486,7 @@ async function onDraw() {
       <PageHeader
         filled
         :icon="Gift"
+        :image="coverSrc"
         :title="groupName"
         :description="
           status === 'drawn'
@@ -485,7 +509,7 @@ async function onDraw() {
           <Badge variant="glass" class="rounded-md">{{ status === 'drawn' ? 'Sorteado' : 'Aberto' }}</Badge>
         </template>
         <FactList>
-          <FactTile :icon="Users" label="Participantes">{{ participants.length }} {{ participants.length === 1 ? 'pessoa' : 'pessoas' }}</FactTile>
+          <FactTile :icon="Users" label="Pessoas">{{ participants.length }}</FactTile>
           <FactTile :icon="KeyRound" label="PIN criado">{{ participants.length - pendingCount }} de {{ participants.length }}</FactTile>
           <FactTile v-if="eventDate" :icon="CalendarDays" :label="eventCountdown(eventDate)" tone="paper">{{ formatEventDate(eventDate) }}</FactTile>
           <FactTile v-else :icon="Gift" label="Sorteio" tone="paper">{{ status === 'drawn' ? 'Já foi feito' : 'Ainda não foi feito' }}</FactTile>
@@ -683,15 +707,7 @@ async function onDraw() {
           <Card>
             <CardHeader><CardHeading :icon="Link2">Convite</CardHeading></CardHeader>
             <CardContent class="space-y-4">
-              <InputGroup class="h-11 bg-card">
-                <InputGroupInput :model-value="invite" readonly aria-label="Link do convite" />
-                <InputGroupAddon align="inline-end">
-                  <InputGroupButton size="sm" aria-label="Copiar convite" @click="copy(invite, 'Convite')">
-                    <Copy aria-hidden="true" />
-                    Copiar
-                  </InputGroupButton>
-                </InputGroupAddon>
-              </InputGroup>
+              <CopyField :value="invite" label="Link do convite" message="Convite copiado." />
               <Button as-child size="lg" class="w-full bg-success text-white hover:bg-success/90">
                 <a :href="whatsappUrl(groupName, invite)" target="_blank" rel="noopener noreferrer">
                   <WhatsappIcon class="size-4" />
@@ -742,20 +758,7 @@ async function onDraw() {
                   </Field>
                   <Field>
                     <FieldLabel for="edit-date">Data da troca</FieldLabel>
-                    <Popover v-model:open="editDateOpen">
-                      <PopoverTrigger as-child>
-                        <Button id="edit-date" type="button" variant="outline" @click.capture="makeRoomBelow" :class="cn('w-full justify-start text-left font-normal', !editDateValue && 'text-muted-foreground')">
-                          <CalendarIcon aria-hidden="true" />
-                          {{ editDateValue ? formatDateValue(editDateValue) : 'Escolha a data' }}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent class="w-(--reka-popover-trigger-width) max-w-[22rem] p-0">
-                        <Calendar v-model="editDateValue" :default-placeholder="editDateValue" :year-range="editYears" locale="pt-BR" weekday-format="short" layout="month-and-year" initial-focus />
-                        <div class="border-t p-1">
-                          <Button type="button" variant="ghost" size="sm" class="w-full" @click="editDateValue = today(getLocalTimeZone())">Hoje</Button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                    <DateField id="edit-date" v-model="editDate" :past="1" :future="DATE_PICKER.yearsAhead" />
                   </Field>
                   <Button type="submit" size="lg" class="w-full" :disabled="savingGroup || !editName.trim() || !groupDataChanged">
                     <Spinner v-if="savingGroup" />
@@ -811,6 +814,29 @@ async function onDraw() {
             </CardContent>
           </Card>
 
+          <!-- Imagem do cabeçalho -->
+          <Card>
+            <CardHeader>
+              <CardHeading :icon="ImagePlus">Imagem do cabeçalho</CardHeading>
+              <CardDescription>Uma foto de fundo para o topo das páginas do grupo, que todos veem pelo link.</CardDescription>
+            </CardHeader>
+            <CardContent class="space-y-4">
+              <img v-if="coverSrc" :src="coverSrc" alt="Imagem atual do cabeçalho" class="aspect-[16/7] w-full rounded-xl border object-cover" />
+              <FileField
+                id="cover"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/heic"
+                :icon="savingCover ? Spinner : ImagePlus"
+                :disabled="savingCover"
+                :description="savingCover ? 'Enviando a foto…' : coverSrc ? 'Trocar foto (JPG, PNG ou WebP)' : 'Escolher foto (JPG, PNG ou WebP)'"
+              @select="onCoverFile"
+              />
+              <Button v-if="cover" variant="outline" class="w-full" :disabled="savingCover" @click="removeCoverOpen = true">
+                <Trash2 aria-hidden="true" />
+                Tirar imagem
+              </Button>
+            </CardContent>
+          </Card>
+
           <!-- Excluir -->
           <Card class="border-destructive/40">
             <CardHeader>
@@ -852,6 +878,15 @@ async function onDraw() {
           </form>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDelete
+        v-model:open="removeCoverOpen"
+        title="Tirar a imagem do cabeçalho?"
+        description="A foto é apagada e o cabeçalho volta a ficar só na cor do grupo. Dá para pôr outra quando quiser."
+        confirm-label="Tirar imagem"
+        :busy="savingCover"
+        @confirm="onRemoveCover"
+      />
 
       <ConfirmDelete
         v-model:open="resetDrawOpen"

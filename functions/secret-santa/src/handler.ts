@@ -8,6 +8,7 @@ import type { RandomInt } from './lib/random.js'
 import {
   decodeWish,
   parseBudget,
+  parseCoverImage,
   parseEventDate,
   parseGroupColor,
   parseGroupId,
@@ -67,6 +68,8 @@ export async function handleAction(db: SantaDb, body: unknown, deps: HandlerDeps
       return resetDraw(db, input, deps)
     case 'setColor':
       return setColor(db, input, deps)
+    case 'setCover':
+      return setCover(db, input, deps)
     case 'setExclusions':
       return setExclusions(db, input, deps)
     case 'deleteGroup':
@@ -136,7 +139,7 @@ async function createGroup(db: SantaDb, input: Input, deps: HandlerDeps) {
     if ((await db.getGroup(code)) === null) groupId = code
   }
   if (!groupId) throw new SantaError('INTERNAL', 'Não foi possível criar o grupo. Tente de novo.')
-  await db.createGroup(groupId, { name, budget, eventDate, status: 'open', ownerId: deps.userId, slug, exclusions: [], color: null })
+  await db.createGroup(groupId, { name, budget, eventDate, status: 'open', ownerId: deps.userId, slug, exclusions: [], color: null, cover: null })
 
   if (organizerData) {
     await db.createParticipant({
@@ -167,6 +170,7 @@ async function getGroup(db: SantaDb, input: Input) {
     eventDate: group.eventDate,
     status: group.status,
     color: group.color ?? DEFAULT_GROUP_COLOR,
+    cover: group.cover,
     participantCount: participants.length,
     // Os nomes não são segredo: a pessoa escolhe o próprio nome para entrar ou criar o PIN.
     members: participants.map((p) => ({ name: p.name, hasPin: p.pinHash !== null })),
@@ -483,6 +487,41 @@ async function setColor(db: SantaDb, input: Input, deps: HandlerDeps) {
   return { color }
 }
 
+/**
+ * O organizador põe, troca ou tira a imagem de capa do grupo (`image`: WebP em base64, ou null para tirar).
+ * A nova é gravada antes; só depois que o grupo aponta para ela a anterior sai do bucket.
+ */
+async function setCover(db: SantaDb, input: Input, deps: HandlerDeps) {
+  const group = await requireGroup(db, input.groupId)
+  requireOrganizer(group, deps)
+  const previous = group.cover
+  if (input.image === null) {
+    await db.setGroupCover(group.id, null)
+    if (previous) await deleteCoverQuietly(db, previous)
+    return { cover: null }
+  }
+  const image = parseCoverImage(input.image)
+  const cover = await db.saveCoverFile(image)
+  try {
+    await db.setGroupCover(group.id, cover)
+  } catch (error) {
+    // O grupo continua com a imagem antiga: a nova não pode ficar sobrando no bucket.
+    await deleteCoverQuietly(db, cover)
+    throw error
+  }
+  if (previous && previous !== cover) await deleteCoverQuietly(db, previous)
+  return { cover }
+}
+
+/** Apaga uma imagem de capa sem derrubar a ação: a troca já valeu, e um arquivo que sobrou não muda a tela de ninguém. */
+async function deleteCoverQuietly(db: SantaDb, fileId: string): Promise<void> {
+  try {
+    await db.deleteCoverFile(fileId)
+  } catch {
+    // Fica no bucket; nenhum grupo aponta mais para ele.
+  }
+}
+
 /** Define quem não pode se tirar: pares de nomes, valem nos dois sentidos. Só antes do sorteio. */
 async function setExclusions(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
@@ -509,6 +548,7 @@ async function deleteGroup(db: SantaDb, input: Input, deps: HandlerDeps) {
   const group = await requireGroup(db, input.groupId)
   requireOrganizer(group, deps)
   await db.deleteGroup(group.id)
+  if (group.cover) await deleteCoverQuietly(db, group.cover)
   return {}
 }
 

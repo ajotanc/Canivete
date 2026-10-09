@@ -39,6 +39,10 @@ export default defineConfig({
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
+  // O codificador WebP (capa do amigo secreto, só no Safari) acha o próprio .wasm por import.meta.url; o pré-empacotamento quebraria esse caminho.
+  optimizeDeps: {
+    exclude: ['@jsquash/webp'],
+  },
   test: {
     // Testes de lógica rodam em node; testes de componente declaram jsdom no próprio arquivo.
     environment: 'node',

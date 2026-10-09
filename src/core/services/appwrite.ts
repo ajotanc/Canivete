@@ -1,5 +1,5 @@
 import { Account, Client, Functions, TablesDB } from 'appwrite'
-import { DEFAULT_RAFFLES_TABLE_ID, ENV_NAMES, readEnv } from '@/core/config'
+import { DEFAULT_RAFFLES_TABLE_ID, DEFAULT_SANTA_COVERS_BUCKET_ID, ENV_NAMES, readEnv } from '@/core/config'
 
 /** Erro de configuração do Appwrite (variáveis de ambiente ausentes). */
 export class AppwriteConfigError extends Error {
@@ -48,6 +48,17 @@ export function getSantaFunctionId(): string {
     throw new AppwriteConfigError(`O Appwrite não está configurado. Defina ${ENV_NAMES.santaFunctionId}.`)
   }
   return functionId
+}
+
+/**
+ * Endereço público de uma imagem de capa do amigo secreto (o bucket libera leitura para todos).
+ * Sem endpoint ou projeto configurados, devolve null e a tela fica só com a cor.
+ */
+export function santaCoverUrl(fileId: string | null | undefined): string | null {
+  const { endpoint, projectId, santaCoversBucketId } = readEnv()
+  if (!fileId || !endpoint || !projectId) return null
+  const bucket = santaCoversBucketId || DEFAULT_SANTA_COVERS_BUCKET_ID
+  return `${endpoint.replace(/\/$/, '')}/storage/buckets/${encodeURIComponent(bucket)}/files/${encodeURIComponent(fileId)}/view?project=${encodeURIComponent(projectId)}`
 }
 
 /** Limpa o cliente em cache. Usado apenas nos testes. */

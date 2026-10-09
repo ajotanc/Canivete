@@ -24,6 +24,11 @@ export const TABLES = {
   posts: { envVar: 'SANTA_POSTS_TABLE_ID', fallback: 'santa_posts' },
 } as const
 
+/** Bucket do Storage com as imagens de capa dos grupos: variável que sobrescreve o id e o id padrão. */
+export const BUCKETS = {
+  covers: { envVar: 'SANTA_COVERS_BUCKET_ID', fallback: 'santa_covers' },
+} as const
+
 /** Cabeçalhos que a Appwrite manda em cada execução. */
 export const HEADERS = {
   /** Chave temporária da execução, usada quando `APPWRITE_API_KEY` não está definida. */
@@ -50,6 +55,8 @@ export const LIMITS = {
   participants: 100,
   /** Regras de "quem não pode se tirar" por grupo. */
   exclusions: 50,
+  /** Imagem de capa do grupo (WebP, já convertida no navegador), em bytes. */
+  coverBytes: 1_500_000,
 } as const
 
 /** Bloqueio por PIN errado: depois de `afterFailures` erros seguidos, a pessoa espera `minutes`. */
@@ -113,5 +120,6 @@ export function readConfig(env: Env) {
     participantsTableId: table('participants'),
     questionsTableId: table('questions'),
     postsTableId: table('posts'),
+    coversBucketId: env[BUCKETS.covers.envVar] || BUCKETS.covers.fallback,
   }
 }

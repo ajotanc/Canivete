@@ -45,9 +45,10 @@ function filterItems() {
   filterState.filtered.groups = new Set()
   let itemCount = 0
 
-  // Check which items should be included
+  // Cada palavra da busca precisa aparecer no item, em qualquer ordem ("calc horas" acha "Calculadora de horas").
+  const words = filterState.search.split(/\s+/).filter(Boolean)
   for (const [id, value] of allItems.value) {
-    const score = contains(value, filterState.search)
+    const score = words.every((word) => contains(value, word))
     filterState.filtered.items.set(id, score ? 1 : 0)
     if (score)
       itemCount++

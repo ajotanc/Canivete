@@ -47,8 +47,8 @@ const headline = computed(() => {
   <section class="space-y-8">
     <PageHeader filled :icon="Fuel" title="Gasolina ou etanol" description="Compare os preços do posto e descubra qual combustível compensa mais para o seu carro.">
       <FactList>
-        <FactTile :icon="Scale" label="Regra">70% do preço</FactTile>
-        <FactTile :icon="Gauge" label="Consumo">Do seu carro</FactTile>
+        <FactTile :icon="Scale" label="Regra dos">70%</FactTile>
+        <FactTile :icon="Gauge" label="Consumo">Seu carro</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>

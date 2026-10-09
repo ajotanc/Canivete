@@ -82,8 +82,8 @@ watch(
   <section class="space-y-8">
     <PageHeader filled :icon="Fingerprint" title="UUID e hash" description="Gere UUIDs v4 e v7 e calcule SHA-1, SHA-256, SHA-384 e SHA-512 (ou HMAC) de qualquer texto.">
       <FactList>
-        <FactTile :icon="Hash" label="Hashes">SHA e HMAC</FactTile>
-        <FactTile :icon="KeyRound" label="Texto">Não sai daqui</FactTile>
+        <FactTile :icon="Hash" label="SHA e HMAC">Calcula</FactTile>
+        <FactTile :icon="KeyRound" label="Texto">Fica aqui</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>
@@ -91,7 +91,7 @@ watch(
     <Card>
       <CardHeader>
         <CardTitle class="text-lg">O que gerar</CardTitle>
-        <CardDescription>Tudo é calculado no seu aparelho; nada é enviado.</CardDescription>
+        <CardDescription>O texto e a chave não saem do seu aparelho.</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs v-model="tab">

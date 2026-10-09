@@ -49,7 +49,7 @@ const formatBytes = (bytes: number) => (bytes < 1024 ? `${bytes} B` : `${(bytes 
     <PageHeader filled :icon="FileJson" title="Formatador de JSON" description="Cole um JSON para validar, deixar legível, compactar ou ordenar as chaves, com o erro apontado na linha certa.">
       <FactList>
         <FactTile :icon="CircleCheck" label="Valida">Na hora</FactTile>
-        <FactTile :icon="Braces" label="Ações">Formata e ordena</FactTile>
+        <FactTile :icon="Braces" label="Ordena">Chaves</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>
@@ -58,7 +58,7 @@ const formatBytes = (bytes: number) => (bytes < 1024 ? `${bytes} B` : `${(bytes 
       <Card>
         <CardHeader>
           <CardTitle class="text-lg">Seu JSON</CardTitle>
-          <CardDescription>O texto fica só no seu aparelho; nada é enviado.</CardDescription>
+          <CardDescription>O texto não sai do seu aparelho.</CardDescription>
         </CardHeader>
         <CardContent>
           <Field>

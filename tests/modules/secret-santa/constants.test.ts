@@ -5,7 +5,7 @@ import * as site from '@/modules/secret-santa/constants'
 // O site mostra os limites nos campos; quem decide de verdade é a Function. Os dois arquivos precisam concordar.
 describe('constantes do site e da Function', () => {
   it('têm os mesmos limites de texto e quantidade', () => {
-    const shared = ['groupName', 'personName', 'wishlistItems', 'wishlistText', 'wishlistUrl', 'question', 'answer', 'post', 'slugMin', 'slugMax'] as const
+    const shared = ['groupName', 'personName', 'wishlistItems', 'wishlistText', 'wishlistUrl', 'question', 'answer', 'post', 'slugMin', 'slugMax', 'coverBytes'] as const
     for (const key of shared) expect(site.LIMITS[key], key).toBe(fn.LIMITS[key])
   })
 

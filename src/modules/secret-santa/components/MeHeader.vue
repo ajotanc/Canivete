@@ -4,8 +4,9 @@ import { RouterLink } from 'vue-router'
 import FactList from '@/components/FactList.vue'
 import FactTile from '@/components/FactTile.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import { santaCoverUrl } from '@/core/services/appwrite'
 import { Button } from '@/components/ui/button'
-import { formatMoney } from '@/lib/money'
+import { formatMoneyShort } from '@/lib/money'
 import { eventCountdown, formatEventDate } from '../lib/event'
 import { adminPath, invitePath } from '../lib/links'
 import AddToCalendar from './AddToCalendar.vue'
@@ -15,6 +16,8 @@ export interface MeGroupInfo {
   budget: number | null
   eventDate: string
   participantCount: number
+  /** Id da imagem de capa do grupo, quando o organizador pôs uma. */
+  cover?: string | null
 }
 
 /** Cabeçalho do painel de quem participa: voltar ao grupo, painel do organizador, sair e dados do grupo. */
@@ -23,7 +26,7 @@ defineEmits<{ logout: [] }>()
 </script>
 
 <template>
-  <PageHeader filled size="lg" :icon="Gift" :title="group?.name ?? 'Seu amigo secreto'" :description="description">
+  <PageHeader filled size="lg" :icon="Gift" :title="group?.name ?? 'Seu amigo secreto'" :description="description" :image="santaCoverUrl(group?.cover)">
     <template #back>
       <Button as-child variant="ghost" size="sm">
         <RouterLink :to="invitePath(groupId)"><ArrowLeft aria-hidden="true" />Voltar ao grupo</RouterLink>
@@ -37,8 +40,8 @@ defineEmits<{ logout: [] }>()
     </template>
     <template #badge><slot name="badge" /></template>
     <FactList v-if="group">
-      <FactTile :icon="Users" label="Participantes">{{ group.participantCount }} {{ group.participantCount === 1 ? 'pessoa' : 'pessoas' }}</FactTile>
-      <FactTile :icon="Coins" label="Valor sugerido">{{ group.budget !== null ? formatMoney(group.budget) : 'A definir' }}</FactTile>
+      <FactTile :icon="Users" label="Pessoas">{{ group.participantCount }}</FactTile>
+      <FactTile :icon="Coins" label="Valor sugerido">{{ group.budget !== null ? formatMoneyShort(group.budget) : 'A definir' }}</FactTile>
       <FactTile :icon="CalendarDays" :label="group.eventDate ? eventCountdown(group.eventDate) : 'Data da troca'" tone="paper">{{ group.eventDate ? formatEventDate(group.eventDate) : 'A combinar' }}</FactTile>
     </FactList>
     <!-- Atalhos em linha própria: no celular "Voltar", "Painel" e "Sair" juntos não cabem lado a lado. -->

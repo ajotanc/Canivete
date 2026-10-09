@@ -69,7 +69,7 @@ function roll() {
   rollTimer = setTimeout(() => {
     rolling.value = false
     history.value = [{ id, label, total: result.total }, ...history.value].slice(0, 8)
-  }, ROLL_MS)
+  }, ROLL_MS + 210)
 }
 function onSides(value: unknown) {
   const amount = Number(value)
@@ -86,8 +86,8 @@ onBeforeUnmount(() => {
   <section class="space-y-8">
     <PageHeader filled :icon="Coins" title="Cara ou coroa e dados" description="Jogue uma moeda ou role de 1 a 10 dados, de 4 a 100 faces, para decidir qualquer coisa.">
       <FactList>
-        <FactTile :icon="Coins" label="Moeda">Cara ou coroa</FactTile>
-        <FactTile :icon="Dices" label="Dados">D4 a D100</FactTile>
+        <FactTile :icon="Coins" label="Cara ou coroa">50% cada</FactTile>
+        <FactTile :icon="Dices" label="Faces">4 a 100</FactTile>
         <FactTile :icon="Zap" label="Para usar" tone="paper">Sem cadastro</FactTile>
       </FactList>
     </PageHeader>
@@ -101,15 +101,30 @@ onBeforeUnmount(() => {
           </TabsList>
 
           <TabsContent value="coin" class="mt-6 space-y-6">
+            <!-- A própria moeda é o botão: só aceita outro toque depois que a jogada anterior pousou e entrou na contagem. -->
             <div class="flex min-h-[26rem] items-center justify-center">
-              <CoinPiece ref="coin" />
+              <button
+                type="button"
+                class="group/coin rounded-3xl p-4 outline-none focus-visible:ring-3 focus-visible:ring-ring/50 enabled:cursor-pointer disabled:cursor-default"
+                :disabled="flipping"
+                :aria-label="flipping ? 'A moeda está no ar' : 'Jogar a moeda'"
+                @click="flip"
+              >
+                <CoinPiece ref="coin" class="transition-transform duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] group-enabled/coin:group-hover/coin:-translate-y-1 group-enabled/coin:group-active/coin:scale-[0.97] motion-reduce:transition-none" />
+              </button>
             </div>
             <div class="text-center" role="status">
-              <p class="min-h-9 text-3xl font-semibold">{{ flipping ? '' : coinSide ? COIN_LABEL[coinSide] : 'Jogue a moeda' }}</p>
-              <p class="mt-1 text-sm text-muted-foreground tabular-nums">Cara {{ tally.heads }} · Coroa {{ tally.tails }}</p>
+              <p class="min-h-9 text-3xl font-semibold">{{ flipping ? '' : coinSide ? COIN_LABEL[coinSide] : 'Toque na moeda' }}</p>
+              <p class="mt-1 text-sm text-muted-foreground tabular-nums">
+                {{ flipping ? 'No ar…' : coinSide ? 'Toque de novo para jogar outra vez' : 'Nenhuma jogada ainda' }}
+              </p>
             </div>
-            <div class="flex flex-wrap justify-center gap-3">
-              <Button size="lg" class="min-w-40" :disabled="flipping" @click="flip"><Coins aria-hidden="true" />Jogar a moeda</Button>
+            <div class="flex flex-wrap items-center justify-center gap-3">
+              <p class="flex h-11 items-center gap-3 rounded-lg border bg-card px-4 text-sm tabular-nums">
+                <span><span class="text-muted-foreground">Cara</span> <span class="font-semibold">{{ tally.heads }}</span></span>
+                <span class="h-4 w-px bg-border" aria-hidden="true" />
+                <span><span class="text-muted-foreground">Coroa</span> <span class="font-semibold">{{ tally.tails }}</span></span>
+              </p>
               <Button size="lg" variant="outline" :disabled="flipping || (tally.heads === 0 && tally.tails === 0)" @click="resetCoin"><RotateCcw aria-hidden="true" />Zerar</Button>
             </div>
           </TabsContent>

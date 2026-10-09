@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
-import { Client, ID, Query, TablesDB } from 'node-appwrite'
+import { Client, ID, Query, Storage, TablesDB } from 'node-appwrite'
+import { InputFile } from 'node-appwrite/file'
 import { QUERY, readConfig, type Env } from './config.js'
 import { SantaError } from './lib/errors.js'
 import { storedPinHash } from './lib/pin.js'
@@ -10,7 +11,8 @@ export function createAppwriteDb(env: Env): SantaDb {
   const config = readConfig(env)
   const client = new Client().setEndpoint(config.endpoint).setProject(config.projectId).setKey(config.apiKey)
   const tables = new TablesDB(client)
-  const { databaseId, groupsTableId, participantsTableId, questionsTableId, postsTableId } = config
+  const storage = new Storage(client)
+  const { databaseId, groupsTableId, participantsTableId, questionsTableId, postsTableId, coversBucketId } = config
 
   const toGroup = (row: Record<string, any>): GroupRow => ({
     id: row.$id,
@@ -22,6 +24,7 @@ export function createAppwriteDb(env: Env): SantaDb {
     slug: row.slug ?? null,
     exclusions: Array.isArray(row.exclusions) ? row.exclusions : [],
     color: typeof row.color === 'string' && row.color !== '' ? row.color : null,
+    cover: typeof row.cover === 'string' && row.cover !== '' ? row.cover : null,
   })
 
   const toQuestion = (row: Record<string, any>): QuestionRow => ({
@@ -91,6 +94,21 @@ export function createAppwriteDb(env: Env): SantaDb {
     },
     async setGroupColor(id, color) {
       await tables.updateRow({ databaseId, tableId: groupsTableId, rowId: id, data: { color } })
+    },
+    async setGroupCover(id, cover) {
+      await tables.updateRow({ databaseId, tableId: groupsTableId, rowId: id, data: { cover } })
+    },
+    async saveCoverFile(image) {
+      // A leitura pública vem do bucket (read para any); o arquivo não precisa de permissão própria.
+      const file = await storage.createFile({ bucketId: coversBucketId, fileId: ID.unique(), file: InputFile.fromBuffer(image, 'cover.webp') })
+      return file.$id
+    },
+    async deleteCoverFile(fileId) {
+      try {
+        await storage.deleteFile({ bucketId: coversBucketId, fileId })
+      } catch (error) {
+        if (!isNotFound(error)) throw error
+      }
     },
     async setGroupExclusions(id, exclusions) {
       await tables.updateRow({ databaseId, tableId: groupsTableId, rowId: id, data: { exclusions } })
