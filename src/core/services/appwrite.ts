@@ -1,5 +1,5 @@
 import { Account, Client, Functions, TablesDB } from 'appwrite'
-import { DEFAULT_RAFFLES_TABLE_ID, DEFAULT_SANTA_COVERS_BUCKET_ID, ENV_NAMES, readEnv } from '@/core/config'
+import { APPWRITE_IDS, ENV_NAMES, readEnv } from '@/core/config'
 
 /** Erro de configuração do Appwrite (variáveis de ambiente ausentes). */
 export class AppwriteConfigError extends Error {
@@ -32,22 +32,14 @@ export function getAppwrite(): AppwriteInstance {
   return instance
 }
 
-/** Ids do banco de dados e da tabela de sorteios. */
+/** Ids do banco de dados e da tabela de sorteios (fixos, em `APPWRITE_IDS`). */
 export function getAppwriteIds(): { databaseId: string; rafflesTableId: string } {
-  const { databaseId, rafflesTableId } = readEnv()
-  if (!databaseId) {
-    throw new AppwriteConfigError(`O Appwrite não está configurado. Defina ${ENV_NAMES.databaseId}.`)
-  }
-  return { databaseId, rafflesTableId: rafflesTableId || DEFAULT_RAFFLES_TABLE_ID }
+  return { databaseId: APPWRITE_IDS.databaseId, rafflesTableId: APPWRITE_IDS.rafflesTableId }
 }
 
-/** Id da Function do amigo secreto. */
+/** Id da Function do amigo secreto (fixo, em `APPWRITE_IDS`). */
 export function getSantaFunctionId(): string {
-  const functionId = readEnv().santaFunctionId
-  if (!functionId) {
-    throw new AppwriteConfigError(`O Appwrite não está configurado. Defina ${ENV_NAMES.santaFunctionId}.`)
-  }
-  return functionId
+  return APPWRITE_IDS.santaFunctionId
 }
 
 /**
@@ -55,9 +47,9 @@ export function getSantaFunctionId(): string {
  * Sem endpoint ou projeto configurados, devolve null e a tela fica só com a cor.
  */
 export function santaCoverUrl(fileId: string | null | undefined): string | null {
-  const { endpoint, projectId, santaCoversBucketId } = readEnv()
+  const { endpoint, projectId } = readEnv()
   if (!fileId || !endpoint || !projectId) return null
-  const bucket = santaCoversBucketId || DEFAULT_SANTA_COVERS_BUCKET_ID
+  const bucket = APPWRITE_IDS.santaCoversBucketId
   return `${endpoint.replace(/\/$/, '')}/storage/buckets/${encodeURIComponent(bucket)}/files/${encodeURIComponent(fileId)}/view?project=${encodeURIComponent(projectId)}`
 }
 

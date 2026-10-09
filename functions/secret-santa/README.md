@@ -123,4 +123,4 @@ O deployment precisa chegar ao estado `ready`. Se o build falhar, os logs aparec
 
 ## Front-end
 
-O site chama a Function pelo id, configurado em `VITE_APPWRITE_SANTA_FUNCTION_ID=secret-santa`. A capa é lida direto do bucket; se ele tiver outro id, defina também `VITE_APPWRITE_SANTA_COVERS_BUCKET_ID` (padrão `santa_covers`).
+O site chama a Function pelo id `secret-santa` e lê as capas do bucket `santa_covers`; os dois ids estão em `APPWRITE_IDS`, em `src/core/config.ts` (não há variável de ambiente para eles).

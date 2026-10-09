@@ -275,7 +275,7 @@ Raio-base de 0,75rem (`--radius`). Escala: sm 8px, md 10px, lg 12px, xl 16px, 2x
 
 ### Cards / Containers (card de ferramenta)
 - **Corner Style:** 16px (`rounded-xl`), borda 1px, fundo `surface`.
-- **Estrutura:** faixa de cabo de 176px de altura (`bg-tool`) com a miniatura da ferramenta e, no canto, a estrela de favoritar (círculo de 44px em `bg-card/90`, preenchida na cor do cabo quando favorita), depois bloco de 20px de padding com o ícone da ferramenta num chip de 48px na cor do cabo (`rounded-chip`) ao lado do título (Gabarito 20px), descrição, Badge de categoria na cor da categoria (`variant="category"`) e "Abrir" com seta.
+- **Estrutura:** faixa de cabo de 176px de altura (`bg-tool`) com a miniatura da ferramenta e, no canto, a estrela de favoritar solta, sem fundo (ícone de 24px na cor do texto da faixa, vazada ou cheia, área de toque de 44px), depois bloco de 20px de padding com o ícone da ferramenta num chip de 48px na cor do cabo (`rounded-chip`) ao lado do título (Gabarito 20px), descrição, Badge de categoria na cor da categoria (`variant="category"`) e "Abrir" com seta.
 - **Hover:** sobe 2px, sombra elevada, seta anda 4px; sem transformação com `prefers-reduced-motion`.
 
 ### Inputs / Fields

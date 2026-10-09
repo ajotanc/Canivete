@@ -36,7 +36,7 @@ pnpm build
 | Calculadora de datas (diferença, dias úteis com feriados nacionais, idade) | `dates` | não |
 | Ferramentas de texto (caixa, camelCase, slug, linhas, Base64, URL) | `text-tools` | não |
 | Calculadora de porcentagem (%, desconto, variação, juros) | `percentage` | não |
-| Dados fictícios (pessoa com CPF válido, e-mail, telefone, endereço e avatar; copia em JSON) | `fake-data` | não |
+| Dados fictícios (pessoa com CPF válido, e-mail, telefone, endereço; copia em JSON) | `fake-data` | não |
 | Cores (HEX, RGB, HSL, tons e contraste WCAG) | `colors` | não |
 | Cronômetro, timer e Pomodoro (aviso sonoro ao fim) | `timer` | não |
 | Conversor de unidades (comprimento, peso, volume, temperatura, área, velocidade, tempo, dados) | `units` | não |
@@ -95,7 +95,7 @@ O projeto usa o serviço `TablesDB` do SDK do Appwrite (`createRow` / `getRow`).
 | `hash` | string | 64 | sim | não |
 
 4. Permissões da tabela: **Read** e **Create** para `Any`. **Não** conceda Update nem Delete.
-5. Preencha `.env.local` com `VITE_APPWRITE_ENDPOINT`, `VITE_APPWRITE_PROJECT_ID`, `VITE_APPWRITE_DATABASE_ID` e `VITE_APPWRITE_RAFFLES_TABLE_ID`.
+5. Preencha `.env.local` só com `VITE_APPWRITE_ENDPOINT` e `VITE_APPWRITE_PROJECT_ID`. Os ids do banco, da tabela, da Function e do bucket ficam no código, em `APPWRITE_IDS` (`src/core/config.ts`): se criar o banco com outro id, troque lá.
 
 ## Amigo secreto
 
@@ -103,7 +103,7 @@ O módulo `secret-santa` guarda segredos (PINs e pares do sorteio), então o nav
 
 - O organizador entra com uma conta do Appwrite Auth (e-mail e senha), cria o grupo, cadastra as pessoas pelo nome no painel e manda um único link para o grupo. Cada pessoa escolhe o próprio nome e, no primeiro acesso, cria o PIN. Se alguém escolher o nome errado ou esquecer o PIN, o organizador zera o PIN no painel.
 - O painel do organizador também define o endereço amigável do link, a cor do grupo, a imagem do cabeçalho, o valor sugerido, a data e as regras de quem não pode tirar quem, faz e refaz o sorteio e apaga o grupo. Cada pessoa tem lista de desejos, perguntas anônimas para quem tirou e o mural do grupo.
-- No front, defina `VITE_APPWRITE_SANTA_FUNCTION_ID` (normalmente `secret-santa`) além de `VITE_APPWRITE_ENDPOINT` e `VITE_APPWRITE_PROJECT_ID`. `VITE_APPWRITE_SANTA_COVERS_BUCKET_ID` só é preciso se o bucket das capas não se chamar `santa_covers`.
+- No front não há variável própria do amigo secreto: o id da Function (`secret-santa`) e o do bucket das capas (`santa_covers`) estão em `APPWRITE_IDS`, em `src/core/config.ts`.
 - A imagem do cabeçalho vira WebP no navegador e sobe pela Function, que grava no bucket `santa_covers` (leitura pública, só a Function grava) e apaga a anterior quando o organizador troca ou tira a foto.
 - Tabelas, bucket, variáveis e publicação da Function estão em [`functions/secret-santa/README.md`](functions/secret-santa/README.md).
 - O PIN serve só para a pessoa ver o próprio par, editar a lista de desejos, perguntar e escrever no mural. Ele é guardado como hash `scrypt`, nunca vai para a URL e só fica no `sessionStorage` da aba enquanto ela está aberta.

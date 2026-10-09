@@ -9,7 +9,8 @@ import { isFavorite, toggleFavorite } from './favorites'
 
 /**
  * Card de uma ferramenta na home: faixa na cor de cabo com a miniatura, ícone, título, descrição e a tag da categoria na cor dela.
- * A estrela (favoritar) fica sobre a faixa, fora do link, para não abrir a ferramenta ao tocar nela.
+ * A estrela (favoritar) fica solta no canto da faixa, na cor do texto da faixa (vazada ou cheia), fora do link,
+ * para não abrir a ferramenta ao tocar nela. A área de toque continua com 44px.
  */
 const props = defineProps<{ tool: ToolManifest }>()
 const favorite = computed(() => isFavorite(props.tool.id))
@@ -47,14 +48,14 @@ const favorite = computed(() => isFavorite(props.tool.id))
     </RouterLink>
     <button
       type="button"
-      class="absolute top-3 right-3 flex size-11 items-center justify-center rounded-full bg-card/90 text-card-foreground shadow-[0_6px_16px_-6px_rgb(14_20_32/0.45)] backdrop-blur-sm transition-transform duration-200 outline-none hover:scale-105 focus-visible:ring-3 focus-visible:ring-ring/60 active:scale-95 motion-reduce:transition-none"
+      class="absolute top-1.5 right-1.5 flex size-11 items-center justify-center rounded-lg text-tool-foreground transition-transform duration-200 outline-none hover:scale-110 focus-visible:ring-3 focus-visible:ring-tool-foreground/70 active:scale-95 motion-reduce:transition-none"
       :data-tool="toolColor(tool)"
       :aria-pressed="favorite"
       :aria-label="favorite ? `Tirar ${tool.title} das favoritas` : `Favoritar ${tool.title}`"
       :title="favorite ? 'Tirar das favoritas' : 'Favoritar'"
       @click="toggleFavorite(tool.id)"
     >
-      <Star class="size-5 transition-colors duration-200 motion-reduce:transition-none" :class="favorite ? 'fill-tool text-tool' : 'text-muted-foreground'" aria-hidden="true" />
+      <Star class="size-6 transition-[fill,opacity] duration-200 motion-reduce:transition-none" :class="favorite ? 'fill-current' : 'opacity-80 hover:opacity-100'" aria-hidden="true" />
     </button>
   </div>
 </template>

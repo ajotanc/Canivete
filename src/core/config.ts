@@ -3,14 +3,13 @@
  * Cada módulo tem o seu próprio `constants.ts`; o núcleo nunca importa de um módulo.
  */
 
-/** Variáveis de ambiente do site (documentadas em `.env.example`). */
+/**
+ * Variáveis de ambiente do site (documentadas em `.env.example`): só o que muda de um Appwrite para outro,
+ * o endereço e o projeto. Banco, tabelas, função e bucket são fixos e ficam em `APPWRITE_IDS`.
+ */
 export interface SiteEnv {
   endpoint: string | undefined
   projectId: string | undefined
-  databaseId: string | undefined
-  rafflesTableId: string | undefined
-  santaFunctionId: string | undefined
-  santaCoversBucketId: string | undefined
 }
 
 /**
@@ -21,10 +20,6 @@ export function readEnv(): SiteEnv {
   return {
     endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT,
     projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
-    databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,
-    rafflesTableId: import.meta.env.VITE_APPWRITE_RAFFLES_TABLE_ID,
-    santaFunctionId: import.meta.env.VITE_APPWRITE_SANTA_FUNCTION_ID,
-    santaCoversBucketId: import.meta.env.VITE_APPWRITE_SANTA_COVERS_BUCKET_ID,
   }
 }
 
@@ -32,15 +27,19 @@ export function readEnv(): SiteEnv {
 export const ENV_NAMES = {
   endpoint: 'VITE_APPWRITE_ENDPOINT',
   projectId: 'VITE_APPWRITE_PROJECT_ID',
-  databaseId: 'VITE_APPWRITE_DATABASE_ID',
-  santaFunctionId: 'VITE_APPWRITE_SANTA_FUNCTION_ID',
 } as const
 
-/** Id da tabela de sorteios quando `VITE_APPWRITE_RAFFLES_TABLE_ID` não está definida. */
-export const DEFAULT_RAFFLES_TABLE_ID = 'raffles'
-
-/** Bucket das capas do amigo secreto quando `VITE_APPWRITE_SANTA_COVERS_BUCKET_ID` não está definida (igual ao da Function). */
-export const DEFAULT_SANTA_COVERS_BUCKET_ID = 'santa_covers'
+/**
+ * Ids dos recursos do Appwrite que o site usa. Não mudam entre ambientes, então ficam no código e não no `.env`.
+ * O bucket das capas é o mesmo que a Function usa (`BUCKETS.covers` em `functions/secret-santa/src/config.ts`).
+ */
+export const APPWRITE_IDS = {
+  /** Banco do sorteador (e das tabelas do amigo secreto, lidas só pela Function). */
+  databaseId: '6ac4600700188c531e4f',
+  rafflesTableId: 'raffles',
+  santaFunctionId: 'secret-santa',
+  santaCoversBucketId: 'santa_covers',
+} as const
 
 /**
  * Política de privacidade e termos de uso (`/privacy` e `/terms`).
