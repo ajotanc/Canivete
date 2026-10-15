@@ -1,0 +1,2 @@
+# Rotas do app (/hours, /raffle/r/abc...) abrem o index.html; o Vue Router decide a página.
+/*    /index.html    200
