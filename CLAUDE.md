@@ -12,3 +12,12 @@
 - Tag = `Badge`: raio padrão (`rounded-md`, nunca totalmente arredondada) e sempre com borda. A tag de categoria na home usa `variant="category"` com `data-category`. Não ponha `rounded-*` na mão.
 - A cor da ferramenta é a cor da categoria dela (faixa e ícone do card, primário da página, tag): o manifest não tem `color`, `toolColor` em `src/core/modules/categories.ts` resolve, e as cores ficam em `--cat-*` no `style.css` (um teste confere o contraste). A home não tem botões de filtro por categoria.
 - Ferramentas em que o giro é o conteúdo (moeda, dados, roleta, sorteio) animam sempre, mesmo com "menos movimento" no sistema: sem aviso e sem pergunta, por decisão do dono. Só o confete mantém o próprio modo reduzido.
+
+## Exploração de código
+Antes de usar Grep, Glob ou ler arquivos direto, chame as ferramentas do `code-review-graph`:
+- `semantic_search_nodes_tool` para achar funções e componentes pela intenção.
+- `get_impact_radius_tool` antes de edições com grande raio de impacto.
+- `detect_changes_tool` + `get_review_context_tool` para revisões de código.
+Só use os comandos comuns de leitura se o grafo não responder.
+
+O grafo fica em `.code-review-graph/` (fora do git): `code-review-graph build` na primeira vez em cada máquina; o gancho da configuração do usuário atualiza a cada edição. Sem embeddings, a busca é por texto: procure pelo nome em inglês do código (`workHoursBetween`, `toolColor`), não pela descrição em português.

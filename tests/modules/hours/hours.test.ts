@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { between, exitTime, formatClock, formatSpan, parseClock, parseSpan, sumEntries, toDecimalHours } from '@/modules/hours/lib/hours'
+import { between, exitTime, formatClock, formatSpan, optionalHolidays, parseClock, parseSpan, sumEntries, toDecimalHours, workHoursBetween } from '@/modules/hours/lib/hours'
 
 describe('parseClock', () => {
   it('lê horas de 00:00 a 23:59', () => {
@@ -81,5 +81,50 @@ describe('sumEntries', () => {
     expect(sumEntries([{ sign: 1, minutes: 480 }, { sign: 1, minutes: 90 }, { sign: -1, minutes: 60 }])).toBe(510)
     expect(sumEntries([])).toBe(0)
     expect(sumEntries([{ sign: -1, minutes: 30 }])).toBe(-30)
+  })
+})
+
+describe('workHoursBetween', () => {
+  const eight = { weekdayMinutes: 480 }
+
+  it('conta as duas pontas: de segunda a sexta são 40 horas', () => {
+    expect(workHoursBetween('2026-10-05', '2026-10-09', eight)).toEqual({ minutes: 2400, workdays: 5, daysOff: [] })
+  })
+
+  it('tira o feriado nacional que cai em dia útil e diz qual foi', () => {
+    // 12/10/2026 é segunda, Nossa Senhora Aparecida.
+    expect(workHoursBetween('2026-10-12', '2026-10-16', eight)).toEqual({ minutes: 1920, workdays: 4, daysOff: [{ date: '2026-10-12', name: 'Nossa Senhora Aparecida' }] })
+  })
+
+  it('aceita as datas trocadas e um dia só', () => {
+    expect(workHoursBetween('2026-10-16', '2026-10-12', eight).minutes).toBe(1920)
+    expect(workHoursBetween('2026-10-13', '2026-10-13', eight).minutes).toBe(480)
+    expect(workHoursBetween('2026-10-18', '2026-10-18', eight).workdays).toBe(0)
+  })
+
+  it('conta o sábado só quando tem horas', () => {
+    expect(workHoursBetween('2026-10-13', '2026-10-18', eight).minutes).toBe(1920)
+    expect(workHoursBetween('2026-10-13', '2026-10-18', { weekdayMinutes: 480, saturdayMinutes: 240 })).toMatchObject({ minutes: 2160, workdays: 5 })
+  })
+
+  it('folga no Carnaval e em Corpus Christi só quando pedido', () => {
+    // Carnaval de 2026: 16 e 17 de fevereiro; Corpus Christi: 4 de junho.
+    expect(optionalHolidays(2026)).toEqual(new Map([['2026-02-16', 'Carnaval'], ['2026-02-17', 'Carnaval'], ['2026-06-04', 'Corpus Christi']]))
+    expect(workHoursBetween('2026-02-16', '2026-02-20', eight).minutes).toBe(2400)
+    expect(workHoursBetween('2026-02-16', '2026-02-20', { ...eight, optionalDaysOff: true }).workdays).toBe(3)
+  })
+
+  it('tira as folgas extras, sem contar duas vezes o que já é feriado', () => {
+    const result = workHoursBetween('2026-10-12', '2026-10-16', { ...eight, extraDaysOff: ['2026-10-12', '2026-10-15', '2026-10-17'] })
+    expect(result.workdays).toBe(3)
+    expect(result.daysOff).toEqual([
+      { date: '2026-10-12', name: 'Nossa Senhora Aparecida' },
+      { date: '2026-10-15', name: 'Folga' },
+    ])
+  })
+
+  it('passa de um ano para o outro', () => {
+    // 31/12/2026 (quinta) conta; 01/01/2027 (sexta) é feriado.
+    expect(workHoursBetween('2026-12-31', '2027-01-01', eight)).toMatchObject({ minutes: 480, workdays: 1 })
   })
 })

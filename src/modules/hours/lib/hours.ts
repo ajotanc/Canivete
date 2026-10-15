@@ -1,3 +1,5 @@
+import { addDays, easter, nationalHolidays, toUtc } from '@/modules/dates/lib/dates'
+
 /** Horas e durações em minutos inteiros. */
 
 const MINUTES_PER_DAY = 1440
@@ -65,3 +67,74 @@ export interface Entry {
 
 /** Soma as durações, somando ou subtraindo cada uma conforme o sinal. */
 export const sumEntries = (entries: readonly Entry[]): number => entries.reduce((total, entry) => total + entry.sign * entry.minutes, 0)
+
+export interface DayOff {
+  /** Data ISO (AAAA-MM-DD). */
+  date: string
+  name: string
+}
+
+export interface WorkHoursOptions {
+  /** Horas de trabalho de segunda a sexta, em minutos. */
+  weekdayMinutes: number
+  /** Horas de trabalho no sábado, em minutos (0 se não trabalha). */
+  saturdayMinutes?: number
+  /** Folga também na segunda e na terça de Carnaval e em Corpus Christi (pontos facultativos). */
+  optionalDaysOff?: boolean
+  /** Outras folgas (feriado do estado ou da cidade, emenda), em ISO. */
+  extraDaysOff?: readonly string[]
+}
+
+export interface WorkHours {
+  minutes: number
+  /** Dias com expediente no período. */
+  workdays: number
+  /** Feriados e folgas que caíram em dia de expediente e ficaram de fora, em ordem de data. */
+  daysOff: DayOff[]
+}
+
+/** Carnaval (segunda e terça) e Corpus Christi do ano: data ISO → nome. */
+export function optionalHolidays(year: number): Map<string, string> {
+  const sunday = easter(year)
+  return new Map([
+    [addDays(sunday, -48), 'Carnaval'],
+    [addDays(sunday, -47), 'Carnaval'],
+    [addDays(sunday, 60), 'Corpus Christi'],
+  ])
+}
+
+/**
+ * Horas úteis entre duas datas, contando as duas pontas (de 12 a 16 são cinco dias). Ordem trocada vale o mesmo.
+ * Domingo nunca conta; sábado só se tiver horas. Feriado nacional e folga extra não contam.
+ */
+export function workHoursBetween(from: string, to: string, options: WorkHoursOptions): WorkHours {
+  const [start, end] = from <= to ? [from, to] : [to, from]
+  const extra = new Set(options.extraDaysOff ?? [])
+  const yearHolidays = new Map<number, Map<string, string>>()
+  const holidaysOf = (year: number) => {
+    let map = yearHolidays.get(year)
+    if (!map) {
+      map = nationalHolidays(year)
+      if (options.optionalDaysOff) for (const [date, name] of optionalHolidays(year)) if (!map.has(date)) map.set(date, name)
+      yearHolidays.set(year, map)
+    }
+    return map
+  }
+
+  let minutes = 0
+  let workdays = 0
+  const daysOff: DayOff[] = []
+  for (let current = start; current <= end; current = addDays(current, 1)) {
+    const weekday = toUtc(current).getUTCDay()
+    const dayMinutes = weekday === 0 ? 0 : weekday === 6 ? (options.saturdayMinutes ?? 0) : options.weekdayMinutes
+    if (dayMinutes <= 0) continue
+    const holiday = holidaysOf(Number(current.slice(0, 4))).get(current) ?? (extra.has(current) ? 'Folga' : undefined)
+    if (holiday) {
+      daysOff.push({ date: current, name: holiday })
+      continue
+    }
+    minutes += dayMinutes
+    workdays++
+  }
+  return { minutes, workdays, daysOff }
+}

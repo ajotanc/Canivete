@@ -49,7 +49,7 @@ pnpm build
 | Comprimir imagem (reduz peso e largura; aceita JPEG, PNG, WebP, GIF, BMP, AVIF e SVG; saída JPEG, WebP ou PNG) | `image` | não |
 | Cara ou coroa e dados (toque na moeda; dados de D4 a D100) | `coin-dice` | não |
 | Roleta (2 a 24 opções, com opção de tirar cada sorteada) | `wheel` | não |
-| Calculadora de horas (entre horários, somar e subtrair, hora de saída) | `hours` | não |
+| Calculadora de horas (entre horários, somar e subtrair, hora de saída, horas úteis entre datas) | `hours` | não |
 | Decodificador de JWT (cabeçalho, conteúdo, validade e assinatura HS256/384/512) | `jwt` | não |
 | Comparador de texto (diff por linha e por palavra) | `diff` | não |
 | Conversor de moeda (cotação atualizada a cada minuto) | `currency` | não |

@@ -9,3 +9,5 @@ functions/*/node_modules
 .env
 # Service worker gerado pelo PWA no servidor de desenvolvimento
 dev-dist
+# Added by code-review-graph
+.code-review-graph/

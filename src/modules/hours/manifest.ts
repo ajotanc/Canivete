@@ -5,7 +5,7 @@ import type { ToolManifest } from '@/core/modules/types'
 const manifest: ToolManifest = {
   id: 'hours',
   title: 'Calculadora de horas',
-  description: 'Calcule as horas trabalhadas entre dois horários, some e subtraia durações e descubra a hora de saída.',
+  description: 'Calcule as horas trabalhadas entre dois horários, some e subtraia durações, descubra a hora de saída e conte as horas úteis entre datas.',
   icon: Clock,
   preview: PreviewHours,
   category: 'Calculadoras',
